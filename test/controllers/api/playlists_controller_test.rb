@@ -15,7 +15,7 @@ module Api
               "owner" => { "id" => "user-1" },
               "images" => [{ "url" => "playlist.jpg", "width" => 300 }],
               "external_urls" => { "spotify" => "https://playlist" },
-              "tracks" => { "total" => 4 }
+              "items" => { "total" => 4 }
             },
             { "id" => "private-1", "name" => "Private set", "public" => false }
           ]
@@ -30,6 +30,7 @@ module Api
       playlists = response.parsed_body["playlists"]
       assert_equal [ "public-1" ], playlists.map { |playlist| playlist["id"] }
       assert_equal "playlist.jpg", playlists.first["image_url"]
+      assert_equal 4, playlists.first["tracks_count"]
     end
 
     test "returns playable playlist tracks" do

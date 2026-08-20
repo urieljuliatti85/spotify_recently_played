@@ -13,7 +13,7 @@ module Api
             description: playlist["description"],
             image_url: Track.pick_image(playlist["images"]),
             spotify_url: playlist.dig("external_urls", "spotify"),
-            tracks_count: playlist.dig("tracks", "total")
+            tracks_count: playlist.dig("items", "total") || playlist.dig("tracks", "total") || 0
           }
         end
       }
