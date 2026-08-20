@@ -9,13 +9,19 @@ import PlayerBar from "./PlayerBar"
 import PlaylistView from "./PlaylistView"
 import SetupNotice from "./SetupNotice"
 import Sidebar from "./Sidebar"
-import TopBar from "./TopBar"
+import TopBar, { VIEWS } from "./TopBar"
 import { AlbumCard, ArtistCard, Shelf } from "./Shelf"
 
 const AUTOPLAY_KEY = "autoplay"
 const SIDEBAR_TRACKS = 8
 const SHELF_SIZE = 20
 const ARTIST_GRID_SIZE = 60
+const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
+
+function viewFromUrl() {
+  const requested = new URLSearchParams(window.location.search).get("view")
+  return VIEW_IDS.has(requested) ? requested : "overview"
+}
 
 // Autoplay is on by default: playback only ever starts from a click, so
 // continuing down the feed is what someone who pressed play expects.
@@ -33,7 +39,7 @@ export default function App({ connectPath, flash }) {
   const [selected, setSelected] = useState(null)
   const [autoplay, setAutoplay] = useState(readAutoplayPreference)
   const [range, setRange] = useState("all")
-  const [view, setView] = useState("overview")
+  const [view, setView] = useState(viewFromUrl)
   const [query, setQuery] = useState("")
   const [openArtist, setOpenArtist] = useState(null)
   // Which list next/prev walks. null means the visible feed; a credit key
@@ -47,6 +53,16 @@ export default function App({ connectPath, flash }) {
       .then(setAccount)
       .catch(() => {})
     return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    function handlePopState() {
+      setView(viewFromUrl())
+      setOpenArtist(null)
+    }
+
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
   // The range is a global lens; the search only narrows what is on screen. The
@@ -94,12 +110,23 @@ export default function App({ connectPath, flash }) {
   const showArtist = useCallback(({ key, name }) => {
     setOpenArtist({ key, name })
     setView("artists")
+    const url = new URL(window.location.href)
+    url.searchParams.set("view", "artists")
+    window.history.pushState({ view: "artists" }, "", url)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
 
   function changeView(next) {
     setView(next)
     setOpenArtist(null)
+
+    const url = new URL(window.location.href)
+    if (next === "overview") {
+      url.searchParams.delete("view")
+    } else {
+      url.searchParams.set("view", next)
+    }
+    window.history.pushState({ view: next }, "", url)
   }
 
   function changeRange(next) {

@@ -66,36 +66,39 @@ export default function PlaylistView({ onSelect, connectPath }) {
 
   return (
     <section className="section playlists">
-      <header className="section__head">
-        <div>
-          <h1 className="section__title">Public playlists</h1>
-          <p className="section__hint">Choose a playlist to play its tracks.</p>
-        </div>
-      </header>
+      {!selected && (
+        <>
+          <header className="section__head">
+            <div>
+              <h1 className="section__title">Public playlists</h1>
+              <p className="section__hint">Choose a playlist to play its tracks.</p>
+            </div>
+          </header>
 
-      {playlists.length === 0 && <p className="section__hint">No public playlists found.</p>}
+          {playlists.length === 0 && <p className="section__hint">No public playlists found.</p>}
 
-      <div className="playlist-picker">
-        {playlists.map((playlist) => (
-          <button
-            key={playlist.id}
-            type="button"
-            className={`playlist-card ${selected?.id === playlist.id ? "playlist-card--selected" : ""}`}
-            onClick={() => openPlaylist(playlist)}
-            aria-pressed={selected?.id === playlist.id}
-          >
-            <span className="playlist-card__art">
-              {playlist.image_url ? (
-                <img src={playlist.image_url} alt="" loading="lazy" width="160" height="160" />
-              ) : (
-                <span className="cover--empty" />
-              )}
-            </span>
-            <span className="playlist-card__name">{playlist.name}</span>
-            <span className="playlist-card__meta">{playlist.tracks_count ?? 0} tracks</span>
-          </button>
-        ))}
-      </div>
+          <div className="playlist-picker">
+            {playlists.map((playlist) => (
+              <button
+                key={playlist.id}
+                type="button"
+                className="playlist-card"
+                onClick={() => openPlaylist(playlist)}
+              >
+                <span className="playlist-card__art">
+                  {playlist.image_url ? (
+                    <img src={playlist.image_url} alt="" loading="lazy" width="160" height="160" />
+                  ) : (
+                    <span className="cover--empty" />
+                  )}
+                </span>
+                <span className="playlist-card__name">{playlist.name}</span>
+                <span className="playlist-card__meta">{playlist.tracks_count ?? 0} tracks</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {selected && (
         <div className="playlist-tracks">
