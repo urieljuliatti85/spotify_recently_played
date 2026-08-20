@@ -38,6 +38,20 @@ module Spotify
       fetch_each("/v1/artists", ids)
     end
 
+    def artist_top_tracks(id, market: nil)
+      params = {}
+      params[:market] = market if market.present?
+      get("/v1/artists/#{URI.encode_www_form_component(id)}/top-tracks", params)
+    end
+
+    def playlists(limit: 50)
+      get("/v1/me/playlists", limit: limit.clamp(1, 50))
+    end
+
+    def playlist_tracks(id, limit: 100)
+      get("/v1/playlists/#{URI.encode_www_form_component(id)}/items", limit: limit.clamp(1, 100))
+    end
+
     private
 
     attr_reader :account

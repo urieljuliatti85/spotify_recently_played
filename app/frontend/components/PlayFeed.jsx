@@ -2,7 +2,15 @@ import { plural } from "../lib/derive"
 import { groupByDay } from "../lib/format"
 import PlayRow from "./PlayRow"
 
-export default function PlayFeed({ plays, selectedPlayId, onSelect, hasMore, loadingMore, onLoadMore }) {
+export default function PlayFeed({
+  plays,
+  selectedPlayId,
+  onSelect,
+  onOpenArtist,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+}) {
   const groups = groupByDay(plays)
 
   return (
@@ -22,6 +30,7 @@ export default function PlayFeed({ plays, selectedPlayId, onSelect, hasMore, loa
                 index={index}
                 isSelected={play.id === selectedPlayId}
                 onSelect={onSelect}
+                onOpenArtist={onOpenArtist}
               />
             ))}
           </ul>

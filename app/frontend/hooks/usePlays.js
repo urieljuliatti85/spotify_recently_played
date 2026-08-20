@@ -53,6 +53,26 @@ export function usePlays({ pageSize = 30 } = {}) {
     }
   }, [cursor, loadingMore, pageSize])
 
+  const loadAll = useCallback(async () => {
+    if (!cursor || loadingMore) return
+
+    setLoadingMore(true)
+    let nextCursor = cursor
+
+    try {
+      while (nextCursor) {
+        const data = await fetchPlays({ before: nextCursor, limit: pageSize })
+        setPlays((current) => [...current, ...data.plays])
+        nextCursor = data.next_cursor
+        setCursor(nextCursor)
+      }
+    } catch (cause) {
+      setError(cause)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [cursor, loadingMore, pageSize])
+
   // Poll for fresher plays without disturbing what's already on screen.
   useEffect(() => {
     const timer = setInterval(async () => {
@@ -74,5 +94,5 @@ export function usePlays({ pageSize = 30 } = {}) {
     return () => clearInterval(timer)
   }, [pageSize])
 
-  return { plays, status, error, loadMore, loadingMore, hasMore: Boolean(cursor) }
+  return { plays, status, error, loadMore, loadAll, loadingMore, hasMore: Boolean(cursor) }
 }

@@ -20,3 +20,15 @@ export function fetchPlays({ before, limit = 30, signal } = {}) {
 export function fetchStatus({ signal } = {}) {
   return request("/api/status", { signal })
 }
+
+export function fetchArtistTracks(artistId, { signal } = {}) {
+  return request(`/api/artists/${encodeURIComponent(artistId)}/tracks`, { signal })
+}
+
+export function fetchPlaylists({ signal } = {}) {
+  return request("/api/playlists", { signal })
+}
+
+export function fetchPlaylistTracks(playlistId, { signal } = {}) {
+  return request(`/api/playlists/${encodeURIComponent(playlistId)}/tracks`, { signal })
+}

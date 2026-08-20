@@ -6,6 +6,7 @@ import ArtistView from "./ArtistView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
 import PlayerBar from "./PlayerBar"
+import PlaylistView from "./PlaylistView"
 import SetupNotice from "./SetupNotice"
 import Sidebar from "./Sidebar"
 import TopBar from "./TopBar"
@@ -27,7 +28,7 @@ function readAutoplayPreference() {
 }
 
 export default function App({ connectPath, flash }) {
-  const { plays, status: feedStatus, error, loadMore, loadingMore, hasMore } = usePlays()
+  const { plays, status: feedStatus, error, loadMore, loadAll, loadingMore, hasMore } = usePlays()
   const [account, setAccount] = useState(null)
   const [selected, setSelected] = useState(null)
   const [autoplay, setAutoplay] = useState(readAutoplayPreference)
@@ -99,6 +100,11 @@ export default function App({ connectPath, flash }) {
     setOpenArtist(null)
   }
 
+  function changeRange(next) {
+    setRange(next)
+    loadAll()
+  }
+
   function toggleAutoplay() {
     setAutoplay((current) => {
       const next = !current
@@ -148,7 +154,7 @@ export default function App({ connectPath, flash }) {
       <Sidebar
         account={account}
         range={range}
-        onRangeChange={setRange}
+        onRangeChange={changeRange}
         recent={queue.slice(0, SIDEBAR_TRACKS)}
         selectedPlayId={selected?.id}
         onSelect={handleSelect}
@@ -177,7 +183,7 @@ export default function App({ connectPath, flash }) {
             </div>
           )}
 
-          {isReady && plays.length === 0 && !showSetup && (
+          {isReady && plays.length === 0 && !showSetup && view !== "playlists" && (
             <div className="notice">
               <h2>Nothing here yet</h2>
               <p>
@@ -197,7 +203,11 @@ export default function App({ connectPath, flash }) {
             />
           )}
 
-          {isReady && plays.length > 0 && !profile && (
+          {isReady && !profile && view === "playlists" && (
+            <PlaylistView onSelect={handleSelect} connectPath={connectPath} />
+          )}
+
+          {isReady && plays.length > 0 && !profile && view !== "playlists" && (
             <>
               {view === "overview" && (
                 <>
@@ -254,6 +264,7 @@ export default function App({ connectPath, flash }) {
                       plays={queue}
                       selectedPlayId={selected?.id}
                       onSelect={handleSelect}
+                      onOpenArtist={showArtist}
                       hasMore={hasMore}
                       loadingMore={loadingMore}
                       onLoadMore={loadMore}

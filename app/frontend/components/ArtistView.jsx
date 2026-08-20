@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react"
+import { fetchArtistTracks } from "../lib/api"
 import { plural } from "../lib/derive"
 import { dayLabel, duration } from "../lib/format"
 import PlayFeed from "./PlayFeed"
@@ -6,6 +8,48 @@ import { ChevronLeftIcon, PauseIcon, PlayIcon, ShuffleIcon } from "./icons"
 
 export default function ArtistView({ profile, selectedPlayId, onSelect, onBack, onShuffle }) {
   const { name, imageUrl, count, trackCount, albumCount, topTracks, albums, plays } = profile
+  const [catalogTracks, setCatalogTracks] = useState([])
+  const [catalogState, setCatalogState] = useState("idle")
+  const [catalogError, setCatalogError] = useState(null)
+
+  useEffect(() => {
+    if (!profile.id) {
+      setCatalogTracks([])
+      setCatalogState("idle")
+      return undefined
+    }
+
+    const controller = new AbortController()
+    setCatalogState("loading")
+    setCatalogError(null)
+
+    fetchArtistTracks(profile.id, { signal: controller.signal })
+      .then(({ tracks }) => {
+        setCatalogTracks(tracks ?? [])
+        setCatalogState("ready")
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        setCatalogError(error)
+        setCatalogState("error")
+      })
+
+    return () => controller.abort()
+  }, [profile.id])
+
+  const playedTrackIds = useMemo(
+    () => new Set(plays.map((play) => play.track.spotify_id).filter(Boolean)),
+    [plays]
+  )
+  const otherTracks = catalogTracks.filter((track) => !playedTrackIds.has(track.spotify_id))
+
+  function playCatalogTrack(track) {
+    onSelect({
+      id: `spotify:${track.spotify_id}`,
+      played_at: new Date().toISOString(),
+      track,
+    })
+  }
 
   return (
     <div className="artist">
@@ -116,6 +160,60 @@ export default function ArtistView({ profile, selectedPlayId, onSelect, onBack, 
               )
             })}
           </ol>
+        </section>
+      )}
+
+      {profile.id && (catalogState === "loading" || otherTracks.length > 0 || catalogError) && (
+        <section className="section">
+          <h2 className="section__title">More from {name}</h2>
+
+          {catalogState === "loading" && (
+            <p className="section__hint">Loading tracks from Spotify…</p>
+          )}
+
+          {catalogState === "error" && (
+            <p className="section__hint">Couldn&apos;t load more tracks from Spotify.</p>
+          )}
+
+          {catalogState === "ready" && otherTracks.length > 0 && (
+            <ol className="ranking">
+              {otherTracks.map((track, index) => (
+                <li key={track.spotify_id} className="ranking__row">
+                  <button
+                    type="button"
+                    className="ranking__main"
+                    onClick={() => playCatalogTrack(track)}
+                    aria-label={`Play ${track.name}`}
+                  >
+                    <span className="ranking__index">{index + 1}</span>
+                    <span className="ranking__cover">
+                      {track.album_image_url ? (
+                        <img
+                          src={track.album_image_url}
+                          alt=""
+                          loading="lazy"
+                          width="42"
+                          height="42"
+                        />
+                      ) : (
+                        <span className="cover--empty" />
+                      )}
+                      <span className="ranking__cover-overlay">
+                        <PlayIcon size={15} />
+                      </span>
+                    </span>
+                    <span className="ranking__meta">
+                      <span className="ranking__title">{track.name}</span>
+                      <span className="ranking__album">{track.album}</span>
+                    </span>
+                    {track.duration_ms && (
+                      <span className="ranking__duration">{duration(track.duration_ms)}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
         </section>
       )}
 

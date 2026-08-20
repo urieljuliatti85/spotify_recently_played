@@ -29,7 +29,7 @@ module Spotify
   # No account has been linked yet.
   class NotConnectedError < Error; end
 
-  SCOPES = %w[user-read-recently-played].freeze
+  SCOPES = %w[user-read-recently-played playlist-read-private].freeze
 
   class << self
     def client_id
