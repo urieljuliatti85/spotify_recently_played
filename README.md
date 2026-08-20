@@ -69,7 +69,7 @@ processos do `Procfile.dev`; se ele não estiver instalado, o script instala na
 primeira execução. O Rails fica fixado na porta 3000 (o foreman usaria 5000 por
 padrão, e o Redirect URI precisa bater exatamente).
 
-Abra <http://127.0.0.1:3000> e clique em **Conectar Spotify** (ou vá direto em
+Abra <http://127.0.0.1:3000> e clique em **Connect Spotify** (ou vá direto em
 `/spotify/connect`). Você autoriza uma vez; o refresh token fica salvo,
 criptografado, e as sincronizações seguintes acontecem sozinhas.
 
@@ -129,9 +129,11 @@ app/
 │   │   └── admin_authenticated.rb
 │   └── spotify/              # sessions (OAuth), syncs
 ├── frontend/                 # React
-│   ├── components/           # App, PlayFeed, PlayRow, PlayerDock, SetupNotice
+│   ├── components/           # App, Sidebar, TopBar, Hero, Shelf, ArtistView,
+│   │                         #   PlayFeed, PlayRow, PlayerBar, SetupNotice, icons
 │   ├── hooks/                # usePlays, useSpotifyEmbed
-│   ├── lib/                  # api.js, format.js
+│   ├── images/               # logo e wordmark
+│   ├── lib/                  # api.js, derive.js, format.js
 │   └── styles/
 ├── jobs/
 │   └── sync_recently_played_job.rb

@@ -4,16 +4,23 @@ module Spotify
   class RecentlyPlayedSyncTest < ActiveSupport::TestCase
     # Stands in for Spotify::Client and records how it was called.
     class FakeClient
-      attr_reader :calls
+      attr_reader :calls, :artist_calls
 
-      def initialize(pages)
+      def initialize(pages, artists: [])
         @pages = Array(pages)
+        @artists = artists
         @calls = []
+        @artist_calls = []
       end
 
       def recently_played(after: nil, **)
         @calls << after
         { "items" => @pages.shift || [] }
+      end
+
+      def artists(ids)
+        @artist_calls << Array(ids)
+        @artists.select { |a| Array(ids).include?(a["id"]) }
       end
     end
 
@@ -29,7 +36,7 @@ module Spotify
         "track" => {
           "id" => spotify_id,
           "name" => name,
-          "artists" => [ { "name" => "Artist" } ],
+          "artists" => [ { "id" => "art1", "name" => "Artist" } ],
           "album" => { "name" => "Album", "images" => [] },
           "external_urls" => { "spotify" => "https://track" },
           "duration_ms" => 1000,
@@ -93,6 +100,48 @@ module Spotify
 
     test "refuses to run without a linked account" do
       assert_raises(NotConnectedError) { RecentlyPlayedSync.new(nil) }
+    end
+
+    test "imported plays bring their artists with them" do
+      client = FakeClient.new([ [ item(spotify_id: "a", played_at: 1.hour.ago.round) ] ])
+
+      RecentlyPlayedSync.new(@account, client:).call
+
+      assert_equal [ "Artist" ], Track.sole.artists.map(&:name)
+      assert_equal "art1", Artist.sole.spotify_id
+    end
+
+    test "fetches a photo for an artist it has just met" do
+      client = FakeClient.new(
+        [ [ item(spotify_id: "a", played_at: 1.hour.ago.round) ] ],
+        artists: [ { "id" => "art1", "name" => "Artist",
+                     "images" => [ { "url" => "photo.jpg", "width" => 320 } ] } ]
+      )
+
+      RecentlyPlayedSync.new(@account, client:).call
+
+      assert_equal [ [ "art1" ] ], client.artist_calls
+      assert_equal "photo.jpg", Artist.sole.image_url
+    end
+
+    test "a sync that imports nothing does not go looking for photos" do
+      client = FakeClient.new([ [] ])
+
+      RecentlyPlayedSync.new(@account, client:).call
+
+      assert_empty client.artist_calls
+    end
+
+    # The photo lookup is a nicety; losing it must never cost us the plays.
+    test "keeps the imported plays when the photo lookup fails" do
+      client = FakeClient.new([ [ item(spotify_id: "a", played_at: 1.hour.ago.round) ] ])
+      client.define_singleton_method(:artists) { |_ids| raise Spotify::Error, "boom" }
+
+      result = RecentlyPlayedSync.new(@account, client:).call
+
+      assert_equal 1, result.imported
+      assert_equal 1, Play.count
+      assert_not_nil @account.reload.last_synced_at
     end
   end
 end

@@ -23,6 +23,9 @@ module Spotify
     end
   end
 
+  # Spotify has no such track/artist any more.
+  class NotFoundError < Error; end
+
   # No account has been linked yet.
   class NotConnectedError < Error; end
 

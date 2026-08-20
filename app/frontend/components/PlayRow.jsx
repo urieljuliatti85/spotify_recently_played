@@ -1,73 +1,66 @@
 import { duration, relativeTime, timeOfDay } from "../lib/format"
+import { ExternalIcon, PauseIcon, PlayIcon } from "./icons"
 
-export default function PlayRow({ play, isSelected, onSelect }) {
+export default function PlayRow({ play, index, isSelected, onSelect }) {
   const { track } = play
   const relative = relativeTime(play.played_at)
 
   return (
-    <li className={`play ${isSelected ? "play--selected" : ""}`}>
+    <li className={`row ${isSelected ? "row--selected" : ""}`}>
       <button
         type="button"
-        className="play__main"
+        className="row__main"
         onClick={() => onSelect(play)}
         aria-pressed={isSelected}
-        aria-label={`Tocar ${track.name}, de ${track.artists}`}
+        aria-label={`Play ${track.name} by ${track.artists}`}
       >
-        <span className="play__cover">
+        <span className="row__index">{String(index + 1).padStart(2, "0")}</span>
+
+        <span className="row__cover">
           {track.album_image_url ? (
-            <img src={track.album_image_url} alt="" loading="lazy" width="56" height="56" />
+            <img src={track.album_image_url} alt="" loading="lazy" width="48" height="48" />
           ) : (
-            <span className="play__cover--empty" aria-hidden="true" />
+            <span className="cover--empty" />
           )}
-          <span className="play__cover-overlay" aria-hidden="true">
-            {isSelected ? <PauseGlyph /> : <PlayGlyph />}
+          <span className="row__cover-overlay">
+            {isSelected ? <PauseIcon size={16} /> : <PlayIcon size={16} />}
           </span>
         </span>
 
-        <span className="play__meta">
-          <span className="play__title">
+        <span className="row__meta">
+          <span className="row__title">
             {track.name}
-            {track.explicit && <span className="play__explicit" title="Conteúdo explícito">E</span>}
+            {track.explicit && (
+              <span className="row__explicit" title="Explicit content">
+                E
+              </span>
+            )}
           </span>
-          <span className="play__artists">{track.artists}</span>
+          <span className="row__artists">{track.artists}</span>
         </span>
 
-        <span className="play__timing">
-          <time dateTime={play.played_at} title={new Date(play.played_at).toLocaleString("pt-BR")}>
+        <span className="row__album">{track.album}</span>
+
+        <span className="row__timing">
+          <time dateTime={play.played_at} title={new Date(play.played_at).toLocaleString("en-US")}>
             {timeOfDay(play.played_at)}
           </time>
-          {relative && <span className="play__relative">{relative}</span>}
+          {relative && <span className="row__relative">{relative}</span>}
         </span>
 
-        {track.duration_ms && <span className="play__duration">{duration(track.duration_ms)}</span>}
+        {track.duration_ms && <span className="row__duration">{duration(track.duration_ms)}</span>}
       </button>
 
       <a
-        className="play__external"
+        className="row__external"
         href={track.spotify_url}
         target="_blank"
         rel="noreferrer noopener"
-        title="Abrir no Spotify"
-        aria-label={`Abrir ${track.name} no Spotify`}
+        title="Open in Spotify"
+        aria-label={`Open ${track.name} in Spotify`}
       >
-        ↗
+        <ExternalIcon size={15} />
       </a>
     </li>
-  )
-}
-
-function PlayGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-      <path d="M8 5.5v13l11-6.5z" />
-    </svg>
-  )
-}
-
-function PauseGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-      <path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z" />
-    </svg>
   )
 }

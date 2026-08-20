@@ -1,3 +1,41 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="345" height="548" viewBox="0 0 345 548">
+  <defs>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#061526" />
+      <stop offset="18%" stop-color="#7f9fbd" />
+      <stop offset="34%" stop-color="#f4f7fa" />
+      <stop offset="50%" stop-color="#0a0d12" />
+      <stop offset="67%" stop-color="#e8edf2" />
+      <stop offset="84%" stop-color="#294a68" />
+      <stop offset="100%" stop-color="#05080c" />
+    </linearGradient>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#091b2f" />
+      <stop offset="35%" stop-color="#173d61" />
+      <stop offset="70%" stop-color="#a8c0d7" />
+      <stop offset="100%" stop-color="#0a223a" />
+    </linearGradient>
+    <clipPath id="clip">
+      <path d="M 51.0,44.0 L 51.0,58.0 L 65.0,71.0 L 93.0,115.0 L 125.0,159.0 L 124.0,161.0 L 109.0,161.0 L 108.0,168.0 L 127.0,194.0 L 126.0,363.0 L 113.0,390.0 L 108.0,396.0 L 106.0,404.0 L 81.0,452.0 L 67.0,484.0 L 60.0,493.0 L 60.0,496.0 L 55.0,504.0 L 52.0,523.0 L 56.0,523.0 L 267.0,346.0 L 280.0,337.0 L 298.0,334.0 L 301.0,331.0 L 301.0,328.0 L 296.0,319.0 L 292.0,317.0 L 287.0,310.0 L 287.0,182.0 L 264.0,156.0 L 260.0,149.0 L 249.0,139.0 L 238.0,134.0 L 234.0,130.0 L 231.0,130.0 L 196.0,110.0 L 183.0,105.0 L 179.0,101.0 L 173.0,100.0 L 157.0,90.0 L 154.0,90.0 L 84.0,54.0 L 60.0,44.0 Z M 194.0,198.0 L 192.0,235.0 L 193.0,317.0 L 194.0,315.0 L 203.0,310.0 L 205.0,306.0 L 214.0,301.0 L 217.0,296.0 L 217.0,214.0 L 207.0,207.0 L 204.0,207.0 Z" fill="#fff" fill-rule="evenodd" />
+    </clipPath>
+  </defs>
+  <path d="M 51.0,44.0 L 51.0,58.0 L 65.0,71.0 L 93.0,115.0 L 125.0,159.0 L 124.0,161.0 L 109.0,161.0 L 108.0,168.0 L 127.0,194.0 L 126.0,363.0 L 113.0,390.0 L 108.0,396.0 L 106.0,404.0 L 81.0,452.0 L 67.0,484.0 L 60.0,493.0 L 60.0,496.0 L 55.0,504.0 L 52.0,523.0 L 56.0,523.0 L 267.0,346.0 L 280.0,337.0 L 298.0,334.0 L 301.0,331.0 L 301.0,328.0 L 296.0,319.0 L 292.0,317.0 L 287.0,310.0 L 287.0,182.0 L 264.0,156.0 L 260.0,149.0 L 249.0,139.0 L 238.0,134.0 L 234.0,130.0 L 231.0,130.0 L 196.0,110.0 L 183.0,105.0 L 179.0,101.0 L 173.0,100.0 L 157.0,90.0 L 154.0,90.0 L 84.0,54.0 L 60.0,44.0 Z" fill="#030509" stroke="#050505" stroke-width="10" stroke-linejoin="round" />
+  <path d="M 51.0,44.0 L 51.0,58.0 L 65.0,71.0 L 93.0,115.0 L 125.0,159.0 L 124.0,161.0 L 109.0,161.0 L 108.0,168.0 L 127.0,194.0 L 126.0,363.0 L 113.0,390.0 L 108.0,396.0 L 106.0,404.0 L 81.0,452.0 L 67.0,484.0 L 60.0,493.0 L 60.0,496.0 L 55.0,504.0 L 52.0,523.0 L 56.0,523.0 L 267.0,346.0 L 280.0,337.0 L 298.0,334.0 L 301.0,331.0 L 301.0,328.0 L 296.0,319.0 L 292.0,317.0 L 287.0,310.0 L 287.0,182.0 L 264.0,156.0 L 260.0,149.0 L 249.0,139.0 L 238.0,134.0 L 234.0,130.0 L 231.0,130.0 L 196.0,110.0 L 183.0,105.0 L 179.0,101.0 L 173.0,100.0 L 157.0,90.0 L 154.0,90.0 L 84.0,54.0 L 60.0,44.0 Z" fill="url(#metal)" stroke="#f20b18" stroke-width="4.5" stroke-linejoin="round" fill-rule="evenodd" />
+  <path d="M 194.0,198.0 L 192.0,235.0 L 193.0,317.0 L 194.0,315.0 L 203.0,310.0 L 205.0,306.0 L 214.0,301.0 L 217.0,296.0 L 217.0,214.0 L 207.0,207.0 L 204.0,207.0 Z" fill="none" stroke="#ef101c" stroke-width="3.5" />
+  <g clip-path="url(#clip)">
+    <path d="M 50,45 L 245,145 L 285,190 L 135,130 Z" fill="url(#blue)" stroke="#dfe8f1" stroke-width="3" stroke-linejoin="round" />
+    <path d="M 112,166 L 160,176 L 145,185 L 115,180 Z" fill="#0a0e14" stroke="#dfe8f1" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 132,185 L 160,194 L 160,365 L 136,405 Z" fill="url(#metal)" stroke="#dfe8f1" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 160,365 L 278,292 L 292,327 L 150,415 Z" fill="url(#blue)" stroke="#dfe8f1" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 150,415 L 65,520 L 132,365 Z" fill="url(#metal)" stroke="#dfe8f1" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 160,194 L 215,225 L 215,292 L 160,330 Z" fill="#070a0f" stroke="#dfe8f1" stroke-width="3" stroke-linejoin="round" />
+    <path d="M 170,218 L 201,238 L 201,283 L 170,304 Z" fill="none" stroke="#dfe8f1" stroke-width="3" stroke-linejoin="round" />
+    <path d="M 194.0,198.0 L 192.0,235.0 L 193.0,317.0 L 194.0,315.0 L 203.0,310.0 L 205.0,306.0 L 214.0,301.0 L 217.0,296.0 L 217.0,214.0 L 207.0,207.0 L 204.0,207.0 Z" fill="none" stroke="#ff1723" stroke-width="2" />
+    <path d="M 55,48 L 246,146 L 277,181" fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round" />
+    <path d="M 67,507 L 135,369" fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round" />
+    <path d="M 165,411 L 275,326" fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round" />
+  </g>
+  <title>Emblema metálico vetorizado</title>
+  <desc>SVG editável com contornos, gradientes e detalhes vetoriais.</desc>
 </svg>

@@ -1,3 +1,4 @@
+import { plural } from "../lib/derive"
 import { groupByDay } from "../lib/format"
 import PlayRow from "./PlayRow"
 
@@ -8,12 +9,17 @@ export default function PlayFeed({ plays, selectedPlayId, onSelect, hasMore, loa
     <div className="feed">
       {groups.map((group) => (
         <section className="feed__day" key={group.key}>
-          <h2 className="feed__day-label">{group.label}</h2>
+          <header className="feed__day-head">
+            <h3 className="feed__day-label">{group.label}</h3>
+            <span className="feed__day-count">{plural(group.plays.length, "track")}</span>
+          </header>
+
           <ul className="feed__list">
-            {group.plays.map((play) => (
+            {group.plays.map((play, index) => (
               <PlayRow
                 key={play.id}
                 play={play}
+                index={index}
                 isSelected={play.id === selectedPlayId}
                 onSelect={onSelect}
               />
@@ -23,8 +29,8 @@ export default function PlayFeed({ plays, selectedPlayId, onSelect, hasMore, loa
       ))}
 
       {hasMore && (
-        <button type="button" className="feed__more" onClick={onLoadMore} disabled={loadingMore}>
-          {loadingMore ? "Carregando…" : "Carregar mais"}
+        <button type="button" className="btn btn--ghost feed__more" onClick={onLoadMore} disabled={loadingMore}>
+          {loadingMore ? "Loading…" : "Load more"}
         </button>
       )}
     </div>

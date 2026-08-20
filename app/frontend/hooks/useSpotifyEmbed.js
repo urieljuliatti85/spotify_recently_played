@@ -6,6 +6,8 @@ const READY_TIMEOUT = 8000
 // tolerate the gap between the last report and the real duration.
 const ENDED_EPSILON = 1500
 
+const IDLE_PLAYBACK = { position: 0, duration: 0, isPaused: true }
+
 // Resolves once Spotify's iframe API is on the page. The layout registers the
 // global callback before the script loads, so this can't miss the event.
 function whenApiReady() {
@@ -34,12 +36,16 @@ function whenApiReady() {
  * plays. Falls back to a plain embed iframe if the API script is unavailable
  * (ad blockers, offline), which still plays — it just needs an extra click.
  *
- * `onEnded` fires once per track, when playback runs out.
+ * `onEnded` fires once per track, when playback runs out. `playback` mirrors
+ * the embed's own position so the page can draw its own transport controls;
+ * position and duration are milliseconds, while `seek` takes seconds — that
+ * mismatch is the embed API's, not ours.
  */
 export function useSpotifyEmbed(spotifyId, { onEnded } = {}) {
   const containerRef = useRef(null)
   const controllerRef = useRef(null)
   const [state, setState] = useState("loading") // loading | ready | unavailable
+  const [playback, setPlayback] = useState(IDLE_PLAYBACK)
 
   // The listener is registered once for the embed's whole life, so the
   // callback and the per-track bookkeeping live in refs it can read without
@@ -60,6 +66,8 @@ export function useSpotifyEmbed(spotifyId, { onEnded } = {}) {
   // mistaken for either.
   const handlePlaybackUpdate = useCallback((event) => {
     const { position = 0, duration = 0, isPaused = false } = event?.data ?? {}
+
+    setPlayback({ position, duration, isPaused })
 
     const startedPlaying = furthestRef.current > 0
     const rewound = isPaused && position === 0 && startedPlaying
@@ -115,6 +123,7 @@ export function useSpotifyEmbed(spotifyId, { onEnded } = {}) {
     // progress would make the new one look finished on its first report.
     furthestRef.current = 0
     endedRef.current = false
+    setPlayback(IDLE_PLAYBACK)
 
     controller.loadUri(`spotify:track:${spotifyId}`)
 
@@ -132,5 +141,24 @@ export function useSpotifyEmbed(spotifyId, { onEnded } = {}) {
     return () => clearTimeout(timer)
   }, [spotifyId, state])
 
-  return { containerRef, state }
+  const togglePlay = useCallback(() => {
+    try {
+      controllerRef.current?.togglePlay()
+    } catch {
+      // Same story as autoplay: the embed's own controls remain the fallback.
+    }
+  }, [])
+
+  // Optimistic: the embed only reports the new position on its next update, so
+  // moving the knob locally keeps a drag from snapping backwards mid-gesture.
+  const seek = useCallback((positionMs) => {
+    try {
+      controllerRef.current?.seek(positionMs / 1000)
+      setPlayback((current) => ({ ...current, position: positionMs }))
+    } catch {
+      // Ignored: the progress bar just stays where the embed reports it.
+    }
+  }, [])
+
+  return { containerRef, state, playback, togglePlay, seek }
 }

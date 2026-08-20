@@ -1,7 +1,7 @@
-const RELATIVE = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" })
-const TIME = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" })
-const LONG_DAY = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" })
-const WITH_YEAR = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" })
+const RELATIVE = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" })
+const TIME = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit" })
+const LONG_DAY = new Intl.DateTimeFormat("en-US", { weekday: "long", day: "numeric", month: "long" })
+const WITH_YEAR = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" })
 
 const MINUTE = 60
 const HOUR = MINUTE * 60
@@ -15,7 +15,7 @@ export function relativeTime(isoString, now = Date.now()) {
   const seconds = Math.round((new Date(isoString).getTime() - now) / 1000)
   const elapsed = Math.abs(seconds)
 
-  if (elapsed < MINUTE) return "agora mesmo"
+  if (elapsed < MINUTE) return "just now"
   if (elapsed < HOUR) return RELATIVE.format(Math.round(seconds / MINUTE), "minute")
   if (elapsed < DAY) return RELATIVE.format(Math.round(seconds / HOUR), "hour")
   if (elapsed < DAY * 7) return RELATIVE.format(Math.round(seconds / DAY), "day")
@@ -25,7 +25,7 @@ export function relativeTime(isoString, now = Date.now()) {
   return null
 }
 
-// Groups plays under "Hoje" / "Ontem" / a written-out date.
+// Groups plays under "Today" / "Yesterday" / a written-out date.
 export function dayKey(isoString) {
   const date = new Date(isoString)
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
@@ -36,8 +36,8 @@ export function dayLabel(isoString, now = new Date()) {
   const today = dayKey(now.toISOString())
   const yesterday = dayKey(new Date(now.getTime() - DAY * 1000).toISOString())
 
-  if (dayKey(isoString) === today) return "Hoje"
-  if (dayKey(isoString) === yesterday) return "Ontem"
+  if (dayKey(isoString) === today) return "Today"
+  if (dayKey(isoString) === yesterday) return "Yesterday"
   if (date.getFullYear() === now.getFullYear()) return LONG_DAY.format(date)
 
   return WITH_YEAR.format(date)

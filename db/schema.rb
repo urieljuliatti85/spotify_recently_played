@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_201433) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_223555) do
+  create_table "artists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "image_url"
+    t.string "name", null: false
+    t.string "spotify_id", null: false
+    t.string "spotify_url"
+    t.datetime "updated_at", null: false
+    t.index ["spotify_id"], name: "index_artists_on_spotify_id", unique: true
+  end
+
   create_table "plays", force: :cascade do |t|
     t.string "context_type"
     t.string "context_url"
@@ -36,6 +46,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_201433) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "track_artists", force: :cascade do |t|
+    t.integer "artist_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["artist_id"], name: "index_track_artists_on_artist_id"
+    t.index ["track_id", "artist_id"], name: "index_track_artists_on_track_id_and_artist_id", unique: true
+    t.index ["track_id", "position"], name: "index_track_artists_on_track_id_and_position"
+    t.index ["track_id"], name: "index_track_artists_on_track_id"
+  end
+
   create_table "tracks", force: :cascade do |t|
     t.string "album_image_url"
     t.string "album_name"
@@ -51,4 +73,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_201433) do
   end
 
   add_foreign_key "plays", "tracks"
+  add_foreign_key "track_artists", "artists"
+  add_foreign_key "track_artists", "tracks"
 end

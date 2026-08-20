@@ -16,6 +16,8 @@ module Spotify
       items = Array(client.recently_played(after: account.last_played_at)&.fetch("items", nil))
       imported = items.sum { |item| import(item) }
 
+      fill_new_artist_images if imported.positive?
+
       account.update!(
         last_synced_at: Time.current,
         last_played_at: [ account.last_played_at, latest_played_at(items) ].compact.max
@@ -42,6 +44,15 @@ module Spotify
       1
     rescue ActiveRecord::RecordNotUnique
       # A concurrent sync already stored this play.
+      0
+    end
+
+    # Artists arrive from the plays feed without photos. This costs one extra
+    # request while there are new ones and nothing once they all have a photo,
+    # and a failure here must never cost us the plays just imported.
+    def fill_new_artist_images
+      ArtistBackfill.new(account, client: client).fill_images(max_batches: 1)
+    rescue Spotify::Error
       0
     end
 

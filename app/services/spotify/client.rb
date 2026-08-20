@@ -26,9 +26,37 @@ module Spotify
       get("/v1/me")
     end
 
+    # Full track objects, including each artist's id. The plays feed only
+    # carries simplified ones, so backfilling credits means asking again.
+    def tracks(ids)
+      fetch_each("/v1/tracks", ids)
+    end
+
+    # Artist objects carry the photos that simplified ones inside a track do
+    # not, which is the only place a real artist image comes from.
+    def artists(ids)
+      fetch_each("/v1/artists", ids)
+    end
+
     private
 
     attr_reader :account
+
+    # One request per id, deliberately. Spotify's batch forms of these two
+    # endpoints (/v1/tracks?ids=, /v1/artists?ids=) answer 403 for this app
+    # while the single-resource forms are fine, so the obvious `?ids=` call is
+    # not available to us. Callers only ever ask about rows they have yet to
+    # fill in, which is what keeps an interrupted run cheap to resume.
+    #
+    # A rate limit is left to propagate for that reason; a resource that has
+    # simply gone away is skipped.
+    def fetch_each(path, ids)
+      Array(ids).compact_blank.uniq.filter_map do |id|
+        get("#{path}/#{id}")
+      rescue NotFoundError
+        nil
+      end
+    end
 
     def get(path, params = {})
       uri = URI.join(API_HOST, path)
@@ -57,6 +85,8 @@ module Spotify
       when 204 then nil
       when 401
         raise AuthError.new("Spotify rejected the access token", status:, body: response.body)
+      when 404
+        raise NotFoundError.new("Spotify has no such resource", status:, body: response.body)
       when 429
         raise RateLimitedError.new("Rate limited by Spotify",
                                    retry_after: response["Retry-After"].to_i,

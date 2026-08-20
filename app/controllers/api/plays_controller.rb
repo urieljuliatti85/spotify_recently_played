@@ -7,7 +7,7 @@ module Api
     def index
       plays = Play.recent
                   .before(cursor)
-                  .includes(:track)
+                  .includes(track: { track_artists: :artist })
                   .limit(limit + 1)
                   .to_a
 
@@ -53,7 +53,18 @@ module Api
           album_image_url: track.album_image_url,
           spotify_url: track.spotify_url,
           duration_ms: track.duration_ms,
-          explicit: track.explicit
+          explicit: track.explicit,
+          # `artists` stays the display string; this is the same credit list
+          # split into addressable records, in Spotify's order.
+          artist_list: track.track_artists.map do |credit|
+            artist = credit.artist
+            {
+              id: artist.spotify_id,
+              name: artist.name,
+              url: artist.spotify_url,
+              image_url: artist.image_url
+            }
+          end
         }
       }
     end
