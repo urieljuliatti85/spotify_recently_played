@@ -1,0 +1,16 @@
+default: &default
+  sync_spotify_recently_played:
+    class: SyncRecentlyPlayedJob
+    queue: default
+    # Spotify only keeps the last 50 plays, so poll often enough to never
+    # lose history — 5 minutes is far inside that window for normal listening.
+    schedule: every 5 minutes
+
+development:
+  <<: *default
+
+production:
+  <<: *default
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12

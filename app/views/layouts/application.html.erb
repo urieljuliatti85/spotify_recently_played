@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title><%= content_for(:title) || "Tocando ultimamente" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#0b0b0f">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Spotify's embed controller — lets one persistent player switch tracks.
+        The callback is registered before the async script so the ready event
+        can never fire into an empty handler. %>
+    <script>
+      window.spotifyIframeApi = null;
+      window.onSpotifyIframeApiReady = function (api) {
+        window.spotifyIframeApi = api;
+        window.dispatchEvent(new Event("spotify-iframe-api-ready"));
+      };
+    </script>
+    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
+    <%= vite_client_tag %>
+    <%= vite_react_refresh_tag %>
+    <%= vite_javascript_tag 'application.jsx' %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>
