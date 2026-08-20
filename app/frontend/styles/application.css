@@ -547,6 +547,21 @@ button {
   margin-top: 46px;
 }
 
+.playlist-tracks__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.playlist-tracks__head .section__title {
+  margin: 0;
+}
+
+.playlist-tracks__back {
+  flex-shrink: 0;
+}
+
 /* A name inside a sentence that opens the artist behind it. */
 .linkish {
   padding: 0;
@@ -735,6 +750,15 @@ button {
   overflow: hidden;
   background: var(--bg-panel);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.card--album {
+  width: 208px;
+}
+
+.card--album .card__art {
+  width: 208px;
+  height: 208px;
 }
 
 .card__art--round {

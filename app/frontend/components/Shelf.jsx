@@ -41,13 +41,13 @@ export function AlbumCard({ album, onSelect }) {
   return (
     <button
       type="button"
-      className="card"
+      className="card card--album"
       onClick={() => onSelect(album.latestPlay)}
       title={`Play ${album.latestPlay.track.name}`}
     >
       <span className="card__art">
         {album.imageUrl ? (
-          <img src={album.imageUrl} alt="" loading="lazy" width="180" height="180" />
+          <img src={album.imageUrl} alt="" loading="lazy" width="208" height="208" />
         ) : (
           <span className="cover--empty" />
         )}

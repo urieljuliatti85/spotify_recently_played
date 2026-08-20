@@ -39,6 +39,7 @@ export default function App({ connectPath, flash }) {
   // Which list next/prev walks. null means the visible feed; a credit key
   // means the player stays inside that artist until something else is played.
   const [playScope, setPlayScope] = useState(null)
+  const [playQueue, setPlayQueue] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -70,8 +71,8 @@ export default function App({ connectPath, flash }) {
   // Derived rather than stored, so a poll that adds plays extends the queue the
   // player is already walking.
   const activeQueue = useMemo(
-    () => (playScope ? playsOfArtist(ranged, playScope) : queue),
-    [playScope, ranged, queue]
+    () => playQueue ?? (playScope ? playsOfArtist(ranged, playScope) : queue),
+    [playQueue, playScope, ranged, queue]
   )
 
   const selectedIndex = selected ? activeQueue.findIndex((play) => play.id === selected.id) : -1
@@ -79,8 +80,9 @@ export default function App({ connectPath, flash }) {
   const hasNext = selectedIndex !== -1 && selectedIndex < activeQueue.length - 1
 
   // Clicking the playing track closes the player.
-  const handleSelect = useCallback((play, scope = null) => {
+  const handleSelect = useCallback((play, scope = null, queueOverride = null) => {
     setPlayScope(scope)
+    setPlayQueue(queueOverride)
     setSelected((current) => (current?.id === play.id ? null : play))
   }, [])
 

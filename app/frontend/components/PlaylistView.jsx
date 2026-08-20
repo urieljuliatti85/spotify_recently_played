@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { fetchPlaylistTracks, fetchPlaylists } from "../lib/api"
 import { duration } from "../lib/format"
-import { PlayIcon } from "./icons"
+import { ChevronLeftIcon, PlayIcon } from "./icons"
 
 export default function PlaylistView({ onSelect, connectPath }) {
   const [playlists, setPlaylists] = useState([])
@@ -43,6 +43,12 @@ export default function PlaylistView({ onSelect, connectPath }) {
       })
   }
 
+  const playlistPlays = tracks.map((track, index) => ({
+      id: `playlist:${selected?.id}:${index}:${track.spotify_id}`,
+      played_at: new Date().toISOString(),
+      track,
+  }))
+
   if (state === "loading") return <p className="section__hint">Loading public playlists…</p>
   if (state === "error" && !selected) {
     return (
@@ -76,6 +82,7 @@ export default function PlaylistView({ onSelect, connectPath }) {
             type="button"
             className={`playlist-card ${selected?.id === playlist.id ? "playlist-card--selected" : ""}`}
             onClick={() => openPlaylist(playlist)}
+            aria-pressed={selected?.id === playlist.id}
           >
             <span className="playlist-card__art">
               {playlist.image_url ? (
@@ -92,30 +99,38 @@ export default function PlaylistView({ onSelect, connectPath }) {
 
       {selected && (
         <div className="playlist-tracks">
-          <h2 className="section__title">{selected.name}</h2>
+          <div className="playlist-tracks__head">
+            <button
+              type="button"
+              className="btn btn--ghost playlist-tracks__back"
+              onClick={() => {
+                setSelected(null)
+                setTracks([])
+                setState("ready")
+              }}
+            >
+              <ChevronLeftIcon size={16} />
+              All playlists
+            </button>
+            <h2 className="section__title">{selected.name}</h2>
+          </div>
           {state === "loading-tracks" && <p className="section__hint">Loading tracks…</p>}
           {state === "error" && <p className="section__hint">Couldn&apos;t load this playlist.</p>}
 
           {state === "tracks-ready" && (
             <ol className="ranking">
-              {tracks.map((track, index) => (
-                <li key={`${selected.id}:${track.spotify_id}`} className="ranking__row">
+              {playlistPlays.map((playlistPlay, index) => (
+                <li key={playlistPlay.id} className="ranking__row">
                   <button
                     type="button"
                     className="ranking__main"
-                    onClick={() =>
-                      onSelect({
-                        id: `playlist:${selected.id}:${track.spotify_id}`,
-                        played_at: new Date().toISOString(),
-                        track,
-                      })
-                    }
-                    aria-label={`Play ${track.name} by ${track.artists}`}
+                    onClick={() => onSelect(playlistPlay, null, playlistPlays)}
+                    aria-label={`Play ${playlistPlay.track.name} by ${playlistPlay.track.artists}`}
                   >
                     <span className="ranking__index">{index + 1}</span>
                     <span className="ranking__cover">
-                      {track.album_image_url ? (
-                        <img src={track.album_image_url} alt="" width="42" height="42" />
+                      {playlistPlay.track.album_image_url ? (
+                        <img src={playlistPlay.track.album_image_url} alt="" width="42" height="42" />
                       ) : (
                         <span className="cover--empty" />
                       )}
@@ -124,11 +139,11 @@ export default function PlaylistView({ onSelect, connectPath }) {
                       </span>
                     </span>
                     <span className="ranking__meta">
-                      <span className="ranking__title">{track.name}</span>
-                      <span className="ranking__album">{track.artists}</span>
+                      <span className="ranking__title">{playlistPlay.track.name}</span>
+                      <span className="ranking__album">{playlistPlay.track.artists}</span>
                     </span>
-                    {track.duration_ms && (
-                      <span className="ranking__duration">{duration(track.duration_ms)}</span>
+                    {playlistPlay.track.duration_ms && (
+                      <span className="ranking__duration">{duration(playlistPlay.track.duration_ms)}</span>
                     )}
                   </button>
                 </li>
