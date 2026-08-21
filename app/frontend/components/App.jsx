@@ -171,6 +171,10 @@ export default function App({ connectPath, flash }) {
   function shuffleFrom(list, scope = null) {
     if (list.length === 0) return
     setPlayScope(scope)
+    // Shuffling walks the list it was handed, so any playlist queue left over
+    // from the Playlists tab has to go — otherwise next/prev would be looking
+    // for the picked play inside a queue that never contained it.
+    setPlayQueue(null)
     setSelected(list[Math.floor(Math.random() * list.length)])
   }
 

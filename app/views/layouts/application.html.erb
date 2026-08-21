@@ -22,7 +22,12 @@
         window.dispatchEvent(new Event("spotify-iframe-api-ready"));
       };
     <% end %>
-    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+    <%# The nonce matters: this tag is a loader that injects the real API from
+        Spotify's CDN, copying its own nonce onto that script. Without one here
+        there is nothing to copy, and the injected script has to survive on the
+        host allowlist alone. %>
+    <%= javascript_include_tag "https://open.spotify.com/embed/iframe-api/v1",
+                               async: true, nonce: true %>
 
     <%= vite_client_tag %>
     <%= vite_react_refresh_tag %>

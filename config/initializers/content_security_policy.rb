@@ -18,7 +18,13 @@ Rails.application.configure do
     policy.img_src     :self, :data, :https
 
     # The embed player and the iframe API that drives it.
-    policy.script_src  :self, "https://open.spotify.com"
+    #
+    # open.spotify.com/embed/iframe-api/v1 is only a loader: it injects the real
+    # API from embed-cdn.spotifycdn.com, so allowing just open.spotify.com gets
+    # the stub and blocks the script that actually defines the controller. The
+    # loader also copies its own nonce onto the script it injects, which is what
+    # covers Spotify rotating that CDN hostname — see the tag in the layout.
+    policy.script_src  :self, "https://open.spotify.com", "https://embed-cdn.spotifycdn.com"
     policy.frame_src   "https://open.spotify.com"
 
     # The page only ever talks to its own /api routes; the embed does its own

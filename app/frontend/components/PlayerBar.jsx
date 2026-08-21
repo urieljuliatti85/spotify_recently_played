@@ -20,9 +20,11 @@ export default function PlayerBar({
   hasPrev,
   hasNext,
 }) {
+  // The play id, not the track id, is what restarts the embed: the same track
+  // turns up all over the feed, and picking one of those has to play it again.
   const { containerRef, state, playback, togglePlay, seek } = useSpotifyEmbed(
     play?.track?.spotify_id,
-    { onEnded }
+    { onEnded, restartKey: play?.id }
   )
 
   const { track } = play
