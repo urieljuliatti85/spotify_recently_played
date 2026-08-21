@@ -47,12 +47,15 @@ jobs:
           restore-keys: |
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
+      - name: Autocorrect RuboCop offenses
+        run: |
+          bin/rubocop -A -f github
+
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
-      - name: Check autocorrectable RuboCop offenses
+      - name: Check for uncommitted RuboCop corrections
         run: |
-          bin/rubocop -A -f github
           git diff --exit-code
 
   test:
