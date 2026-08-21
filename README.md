@@ -11,18 +11,21 @@ deixa quem visita ouvir cada faixa sem sair da página.
 ## Como funciona
 
 O Spotify guarda apenas as **50 reproduções mais recentes** de uma conta. Por
-isso o app não consulta a API a cada visita: um job roda a cada 5 minutos,
-busca o que é novo e grava no SQLite. O histórico do site cresce com o tempo,
-mesmo que o Spotify já tenha descartado as faixas antigas.
+isso o app não consulta a API a cada visita: um job roda a cada minuto, busca o
+que é novo e grava no SQLite. O histórico do site cresce com o tempo, mesmo que
+o Spotify já tenha descartado as faixas antigas.
 
 ```
-Spotify API  ──(a cada 5 min)──▶  SyncRecentlyPlayedJob  ──▶  SQLite
+Spotify API  ──(a cada 1 min)──▶  SyncRecentlyPlayedJob  ──▶  SQLite
                                                                 │
                               React  ◀──  /api/plays  ◀─────────┘
 ```
 
 Cada reprodução é identificada pelo instante em que tocou (`played_at`), que
-tem índice único — sincronizar duas vezes a mesma janela não duplica nada.
+tem índice único — sincronizar duas vezes a mesma janela não duplica nada. A
+sincronização carrega os `played_at` da página inteira numa consulta só, em vez
+de perguntar ao banco faixa por faixa: o poll comum traz 50 reproduções que já
+estão gravadas e não importa nenhuma.
 
 ## Configuração
 
@@ -34,6 +37,11 @@ tem índice único — sincronizar duas vezes a mesma janela não duplica nada.
    O Spotify exige o IP de loopback (`127.0.0.1`), não aceita `localhost`.
 3. Em **APIs used**, marque **Web API**.
 4. Copie o **Client ID** e o **Client Secret**.
+
+O app pede dois escopos: `user-read-recently-played` (o histórico) e
+`playlist-read-private` (a aba de playlists). Se você conectou a conta antes da
+aba de playlists existir, refaça o `/spotify/connect` — sem o segundo escopo a
+aba responde 403 e explica isso na tela.
 
 ### 2. Configure o projeto
 
@@ -76,6 +84,26 @@ criptografado, e as sincronizações seguintes acontecem sozinhas.
 > Use `127.0.0.1:3000`, e não `localhost:3000` — o endereço precisa bater com o
 > Redirect URI cadastrado.
 
+## O site
+
+A navegação tem quatro abas, e a aba escolhida vai para a URL (`?view=tracks`),
+então o botão de voltar do navegador funciona:
+
+- **Overview:** o feed recente, mais prateleiras de álbuns e artistas.
+- **Tracks:** o histórico completo, agrupado por dia.
+- **Artists:** a grade de artistas; clicar em um abre a página dele, com os
+  destaques do seu histórico e as top tracks que a API do Spotify devolve.
+- **Playlists:** suas playlists públicas e as faixas de cada uma.
+
+Há ainda uma busca (que filtra só o que está na tela) e um filtro de período,
+que é a lente global — a página do artista lê do conjunto já filtrado, e não do
+que estiver digitado na busca.
+
+O botão de **autoplay** no rodapé, ligado por padrão, faz o player seguir para a
+próxima faixa sozinho; a preferência fica no `localStorage`. O próximo/anterior
+anda pela lista de onde a faixa saiu: se você começou a tocar dentro de uma
+página de artista, o player continua ali até você tocar outra coisa.
+
 ## Rotas
 
 | Rota | Acesso | O que faz |
@@ -83,14 +111,25 @@ criptografado, e as sincronizações seguintes acontecem sozinhas.
 | `GET /` | público | O app React |
 | `GET /api/plays?limit=&before=` | público | Feed paginado por cursor |
 | `GET /api/status` | público | Se a conta está conectada, total de reproduções |
+| `GET /api/artists/:id/tracks` | público | Top tracks do artista (cache de 1h) |
+| `GET /api/playlists` | público | Playlists públicas do dono (cache de 5min) |
+| `GET /api/playlists/:id/tracks` | público | Faixas de uma playlist |
 | `GET /spotify/connect` | dono | Inicia o OAuth |
 | `GET /spotify/callback` | dono | Recebe o código e salva os tokens |
 | `POST /spotify/sync` | dono | Sincroniza agora, sem esperar o job |
 | `DELETE /spotify` | dono | Desvincula a conta |
 
+As rotas públicas gastam a quota do Spotify do dono, então todas passam por um
+`rate_limit` de 60 requisições por minuto: uma rajada levaria o app inteiro a um
+429 na Spotify, o que também travaria a sincronização — e sincronização travada,
+com só 50 reproduções guardadas do outro lado, é histórico perdido de vez. As
+respostas do Spotify ficam em cache para não repetir a chamada a cada visita.
+
 As rotas do dono são protegidas por HTTP Basic com a `ADMIN_PASSWORD` (qualquer
-usuário, a senha é o que importa). Em desenvolvimento, se a variável não estiver
-definida, a proteção é dispensada; em produção ela é obrigatória.
+usuário, a senha é o que importa). Em desenvolvimento, sem a variável definida,
+a proteção só é dispensada para requisições da própria máquina — um servidor
+ligado em `0.0.0.0` ou exposto por túnel continua pedindo senha. Em produção ela
+é obrigatória.
 
 Sincronizar manualmente:
 
@@ -124,34 +163,54 @@ no botão de play.
 ```
 app/
 ├── controllers/
-│   ├── api/                  # plays#index, status#show (JSON público)
+│   ├── api/                  # base (rate limit), plays, status, artists,
+│   │                         #   playlists (JSON público)
 │   ├── concerns/
 │   │   └── admin_authenticated.rb
 │   └── spotify/              # sessions (OAuth), syncs
 ├── frontend/                 # React
 │   ├── components/           # App, Sidebar, TopBar, Hero, Shelf, ArtistView,
-│   │                         #   PlayFeed, PlayRow, PlayerBar, SetupNotice, icons
+│   │                         #   PlaylistView, PlayFeed, PlayRow, PlayerBar,
+│   │                         #   SetupNotice, icons
 │   ├── hooks/                # usePlays, useSpotifyEmbed
 │   ├── images/               # logo e wordmark
 │   ├── lib/                  # api.js, derive.js, format.js
 │   └── styles/
 ├── jobs/
 │   └── sync_recently_played_job.rb
-├── models/                   # Track, Play, SpotifyAccount
-└── services/spotify/         # client, authorization, recently_played_sync
+├── models/                   # Track, Play, Artist, TrackArtist, SpotifyAccount
+└── services/spotify/         # client, authorization, recently_played_sync,
+                              #   artist_backfill
 ```
 
 `Track` guarda a música; `Play` guarda cada vez que ela tocou. A mesma faixa
-ouvida cinco vezes vira um `Track` e cinco `Play`.
+ouvida cinco vezes vira um `Track` e cinco `Play`. `Artist` existe à parte
+porque o payload de reprodução não traz a foto do artista — o `ArtistBackfill`
+busca essas imagens depois, quando aparece gente nova.
 
-## Testes
+## Qualidade
 
 ```bash
-bin/rails test
+bin/rails test     # testes
+bin/rubocop        # estilo
 ```
 
-Cobrem a normalização do payload do Spotify, a idempotência da sincronização, a
-criptografia dos tokens, a paginação por cursor e as recusas do fluxo OAuth.
+Os testes cobrem a normalização do payload do Spotify, a idempotência da
+sincronização, a criptografia dos tokens, a paginação por cursor, as recusas do
+fluxo OAuth, a proteção da rota de sync e os endpoints de artistas e playlists.
+O ambiente de teste usa chaves de criptografia fixas, então nem os testes locais
+nem a CI precisam da `master.key`.
+
+O hook em `.githooks/pre-commit` roda RuboCop e os testes antes de cada commit.
+Para ativá-lo num clone novo:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+A CI (`.github/workflows/ci.yml`) roda o mesmo, mais Brakeman, bundler-audit e o
+build do frontend. Há também uma skill de review em
+`.claude/skills/code-reviewer/`, usada pelo Claude Code.
 
 ## Deploy
 
@@ -166,9 +225,13 @@ Antes de expor o site publicamente:
   tokens do Spotify;
 - cadastre o Redirect URI de produção (HTTPS) no dashboard do Spotify e ajuste
   `SPOTIFY_REDIRECT_URI`;
-- considere ativar uma Content Security Policy em
-  `config/initializers/content_security_policy.rb`, liberando `open.spotify.com`
-  em `script-src`/`frame-src` e `i.scdn.co` em `img-src`.
+- defina `APP_HOST` com o domínio canônico, que liga a proteção contra DNS
+  rebinding (`/up` fica de fora, porque load balancer chega por IP).
+
+A Content Security Policy já vem ativa em
+`config/initializers/content_security_policy.rb`: libera `open.spotify.com` em
+`script-src`/`frame-src`, imagens por HTTPS (as capas vêm de CDNs que o Spotify
+troca sem aviso) e nada de `object-src` ou de ser embutido em outra página.
 
 ## Privacidade
 
