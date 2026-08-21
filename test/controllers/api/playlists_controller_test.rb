@@ -13,7 +13,7 @@ module Api
               "name" => "Public set",
               "public" => true,
               "owner" => { "id" => "user-1" },
-              "images" => [{ "url" => "playlist.jpg", "width" => 300 }],
+              "images" => [ { "url" => "playlist.jpg", "width" => 300 } ],
               "external_urls" => { "spotify" => "https://playlist" },
               "items" => { "total" => 4 }
             },
@@ -42,7 +42,7 @@ module Api
               "item" => {
                 "id" => "track-1",
                 "name" => "Playlist song",
-                "artists" => [{ "name" => "Artist" }],
+                "artists" => [ { "name" => "Artist" } ],
                 "album" => { "name" => "Album", "images" => [] },
                 "duration_ms" => 200_000,
                 "external_urls" => { "spotify" => "https://track" }

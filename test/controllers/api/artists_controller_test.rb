@@ -15,7 +15,7 @@ module Api
               ],
               "album" => {
                 "name" => "New album",
-                "images" => [{ "url" => "cover.jpg", "width" => 300 }]
+                "images" => [ { "url" => "cover.jpg", "width" => 300 } ]
               },
               "external_urls" => { "spotify" => "track-url" },
               "duration_ms" => 180_000,
