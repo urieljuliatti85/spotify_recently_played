@@ -44,11 +44,12 @@ module Spotify
       assert_response :bad_request
     end
 
-    test "the callback reports a denied authorization" do
+    test "the callback reports a denied authorization without echoing the reason" do
       get spotify_callback_path, params: { error: "access_denied" }, headers: admin_headers
 
       assert_response :bad_request
-      assert_match "access_denied", response.body
+      assert_match "Spotify denied the request", response.body
+      assert_no_match(/access_denied/, response.body)
     end
   end
 end

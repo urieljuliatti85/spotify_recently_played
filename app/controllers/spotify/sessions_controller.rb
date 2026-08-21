@@ -23,7 +23,10 @@ module Spotify
       expected_state = session.delete(:spotify_oauth_state)
 
       if params[:error].present?
-        return render plain: "Spotify denied the request: #{params[:error]}", status: :bad_request
+        # Spotify's reason is worth having, but it arrives as an arbitrary query
+        # parameter — it belongs in the log, not echoed back to the caller.
+        Rails.logger.info("[spotify] authorization denied: #{params[:error]}")
+        return render plain: "Spotify denied the request. Start again at /spotify/connect.", status: :bad_request
       end
 
       if expected_state.blank? || !ActiveSupport::SecurityUtils.secure_compare(params[:state].to_s, expected_state)

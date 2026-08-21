@@ -1,7 +1,9 @@
 module Api
   class PlaylistsController < BaseController
     def index
-      payload = Spotify::Client.new.playlists
+      payload = Rails.cache.fetch("spotify:playlists", expires_in: 5.minutes) do
+        Spotify::Client.new.playlists
+      end
 
       render json: {
         playlists: Array(payload["items"]).filter_map do |playlist|

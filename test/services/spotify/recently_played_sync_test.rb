@@ -69,6 +69,18 @@ module Spotify
       assert_equal 1, Play.count
     end
 
+    # Spotify timestamps carry milliseconds, and telling plays apart is what
+    # decides whether one gets imported. Two that share a second are still two.
+    test "two plays milliseconds apart are both imported" do
+      client = FakeClient.new([ [ item(spotify_id: "a", played_at: Time.utc(2026, 8, 21, 1, 4, 53, 133_000)),
+                                 item(spotify_id: "b", played_at: Time.utc(2026, 8, 21, 1, 4, 53, 777_000)) ] ])
+
+      result = RecentlyPlayedSync.new(@account, client:).call
+
+      assert_equal 2, result.imported
+      assert_equal 2, Play.count
+    end
+
     test "asks Spotify only for plays after the last one it stored" do
       previous = 30.minutes.ago.round
       @account.update!(last_played_at: previous)

@@ -15,13 +15,13 @@
     <%# Spotify's embed controller — lets one persistent player switch tracks.
         The callback is registered before the async script so the ready event
         can never fire into an empty handler. %>
-    <script>
+    <%= javascript_tag nonce: true do %>
       window.spotifyIframeApi = null;
       window.onSpotifyIframeApiReady = function (api) {
         window.spotifyIframeApi = api;
         window.dispatchEvent(new Event("spotify-iframe-api-ready"));
       };
-    </script>
+    <% end %>
     <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 
     <%= vite_client_tag %>

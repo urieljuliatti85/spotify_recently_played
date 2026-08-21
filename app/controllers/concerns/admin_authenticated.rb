@@ -13,8 +13,11 @@ module AdminAuthenticated
     password = ENV["ADMIN_PASSWORD"].presence
 
     if password.nil?
-      # Convenience for local development; production must set a password.
-      return if Rails.env.development?
+      # Convenience for local development, and only from the machine itself:
+      # a dev server bound to 0.0.0.0 or shared through a tunnel (which is how
+      # the Spotify callback usually gets tested) would otherwise hand these
+      # routes to anyone who can reach it.
+      return if Rails.env.development? && request.local?
 
       render plain: "Set ADMIN_PASSWORD to use the owner-only routes.", status: :service_unavailable
       return

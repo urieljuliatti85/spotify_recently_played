@@ -1,7 +1,13 @@
 module Api
   class ArtistsController < BaseController
+    # An artist's top tracks barely change from hour to hour, and this route is
+    # public: without the cache every visitor costs one Spotify request against
+    # the owner's quota. A failure raises out of `fetch`, so only real payloads
+    # are ever stored.
     def tracks
-      payload = Spotify::Client.new.artist_top_tracks(params[:id])
+      payload = Rails.cache.fetch("spotify:artist_top_tracks:#{params[:id]}", expires_in: 1.hour) do
+        Spotify::Client.new.artist_top_tracks(params[:id])
+      end
 
       render json: { tracks: Array(payload["tracks"]).filter_map { |track| serialize(track) } }
     rescue Spotify::NotConnectedError => e

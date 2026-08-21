@@ -14,13 +14,28 @@ module Spotify
 
     def call
       items = Array(client.recently_played(after: account.last_played_at)&.fetch("items", nil))
-      imported = items.sum { |item| import(item) }
+      played_ats = items.map { |item| Time.parse(item["played_at"]) }
+
+      # One lookup for the whole page rather than one per item: the ordinary
+      # poll brings back plays we already have and imports none of them.
+      stored = stored_played_ats(played_ats)
+
+      imported = items.zip(played_ats).sum do |item, played_at|
+        key = key_for(played_at)
+        next 0 if stored.include?(key)
+
+        # Marked before the insert, so a payload that somehow lists the same
+        # instant twice still imports it once — the per-item `exists?` this
+        # replaced covered that case by accident.
+        stored << key
+        import(item, played_at)
+      end
 
       fill_new_artist_images if imported.positive?
 
       account.update!(
         last_synced_at: Time.current,
-        last_played_at: [ account.last_played_at, latest_played_at(items) ].compact.max
+        last_played_at: [ account.last_played_at, played_ats.max ].compact.max
       )
 
       Result.new(imported:, latest_played_at: account.last_played_at)
@@ -30,10 +45,7 @@ module Spotify
 
     attr_reader :account, :client
 
-    def import(item)
-      played_at = Time.parse(item["played_at"])
-      return 0 if Play.exists?(played_at: played_at)
-
+    def import(item, played_at)
       track = Track.upsert_from_spotify!(item["track"])
       Play.create!(
         track: track,
@@ -56,8 +68,18 @@ module Spotify
       0
     end
 
-    def latest_played_at(items)
-      items.filter_map { |item| Time.parse(item["played_at"]) }.max
+    # A play is identified by the exact instant it happened, so both sides are
+    # compared as the same UTC string: what comes back from the database is not
+    # the same class as what was just parsed out of the payload, and the two
+    # only agree on the instant, not on `eql?`.
+    def stored_played_ats(played_ats)
+      return Set.new if played_ats.empty?
+
+      Play.where(played_at: played_ats).pluck(:played_at).map { |stored| key_for(stored) }.to_set
+    end
+
+    def key_for(time)
+      time.getutc.iso8601(3)
     end
   end
 end
