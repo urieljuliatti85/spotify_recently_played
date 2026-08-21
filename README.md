@@ -1,137 +1,138 @@
-# Tocando ultimamente
+# Recently played
 
-Um site que mostra as últimas músicas tocadas na sua conta pessoal do Spotify e
-deixa quem visita ouvir cada faixa sem sair da página.
+A site that shows the latest tracks played on your personal Spotify account and
+lets visitors listen to each track without leaving the page.
 
-- **Backend:** Ruby on Rails 8.1 (API + páginas)
+- **Backend:** Ruby on Rails 8.1 (API + pages)
 - **Frontend:** React 19 via Vite (`vite_rails`)
-- **Banco:** SQLite
-- **Player:** embed oficial do Spotify
+- **Database:** SQLite
+- **Player:** official Spotify embed
 
-## Como funciona
+## How it works
 
-O Spotify guarda apenas as **50 reproduções mais recentes** de uma conta. Por
-isso o app não consulta a API a cada visita: um job roda a cada minuto, busca o
-que é novo e grava no SQLite. O histórico do site cresce com o tempo, mesmo que
-o Spotify já tenha descartado as faixas antigas.
+Spotify stores only the **50 most recent plays** for an account. The app therefore
+does not query the API on every visit: a job runs every minute, fetches new
+plays, and stores them in SQLite. The site's history grows over time, even after
+Spotify has discarded older tracks.
 
 ```
-Spotify API  ──(a cada 1 min)──▶  SyncRecentlyPlayedJob  ──▶  SQLite
+Spotify API  ──(every 1 min)──▶  SyncRecentlyPlayedJob  ──▶  SQLite
                                                                 │
                               React  ◀──  /api/plays  ◀─────────┘
 ```
 
-Cada reprodução é identificada pelo instante em que tocou (`played_at`), que
-tem índice único — sincronizar duas vezes a mesma janela não duplica nada. A
-sincronização carrega os `played_at` da página inteira numa consulta só, em vez
-de perguntar ao banco faixa por faixa: o poll comum traz 50 reproduções que já
-estão gravadas e não importa nenhuma.
+Each play is identified by the time it was played (`played_at`), which has a
+unique index—syncing the same window twice does not create duplicates. Syncing
+loads all `played_at` values for the page in a single query instead of asking
+the database about each track: the usual poll brings back 50 plays that are
+already stored and imports none.
 
-## Configuração
+## Configuration
 
-### 1. Crie um app no Spotify
+### 1. Create a Spotify app
 
-1. Acesse <https://developer.spotify.com/dashboard> e clique em **Create app**.
-2. Em **Redirect URIs**, adicione exatamente:
+1. Go to <https://developer.spotify.com/dashboard> and click **Create app**.
+2. Under **Redirect URIs**, add exactly:
    `http://127.0.0.1:3000/spotify/callback`
-   O Spotify exige o IP de loopback (`127.0.0.1`), não aceita `localhost`.
-3. Em **APIs used**, marque **Web API**.
-4. Copie o **Client ID** e o **Client Secret**.
+   Spotify requires the loopback IP (`127.0.0.1`) and does not accept `localhost`.
+3. Under **APIs used**, select **Web API**.
+4. Copy the **Client ID** and **Client Secret**.
 
-O app pede dois escopos: `user-read-recently-played` (o histórico) e
-`playlist-read-private` (a aba de playlists). Se você conectou a conta antes da
-aba de playlists existir, refaça o `/spotify/connect` — sem o segundo escopo a
-aba responde 403 e explica isso na tela.
+The app requests two scopes: `user-read-recently-played` (history) and
+`playlist-read-private` (the playlists tab). If you connected the account before
+the playlists tab existed, redo `/spotify/connect`—without the second scope, the
+tab returns 403 and explains this on screen.
 
-### 2. Configure o projeto
+### 2. Configure the project
 
 ```bash
 cp .env.example .env
 ```
 
-Preencha o `.env`:
+Fill in `.env`:
 
 ```
-SPOTIFY_CLIENT_ID=seu_client_id
-SPOTIFY_CLIENT_SECRET=seu_client_secret
+SPOTIFY_CLIENT_ID=your_client_id
+SPOTIFY_CLIENT_SECRET=your_client_secret
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/spotify/callback
-ADMIN_PASSWORD=uma_senha_qualquer
+ADMIN_PASSWORD=any_password
 ```
 
-O `.env` já está no `.gitignore`. As credenciais também podem ficar em
-`config/credentials.yml.enc`, sob a chave `spotify:` — o `.env` tem prioridade.
+`.env` is already in `.gitignore`. Credentials can also be stored in
+`config/credentials.yml.enc` under the `spotify:` key—`.env` takes precedence.
 
-### 3. Suba a aplicação
+### 3. Start the application
 
-Requisitos: Ruby 3.3+, Node 20+ e SQLite 3.8+.
+Requirements: Ruby 3.3+, Node 20+, and SQLite 3.8+.
 
 
 ```bash
-bin/setup     # instala gems e pacotes npm, cria o .env, prepara o banco e sobe tudo
+bin/setup     # installs gems and npm packages, creates .env, prepares the database, and starts everything
 ```
 
-Nas vezes seguintes, `bin/dev` sozinho já basta.
+After that, `bin/dev` alone is enough.
 
-`bin/dev` usa o [foreman](https://github.com/ddollar/foreman) para tocar os três
-processos do `Procfile.dev`; se ele não estiver instalado, o script instala na
-primeira execução. O Rails fica fixado na porta 3000 (o foreman usaria 5000 por
-padrão, e o Redirect URI precisa bater exatamente).
+`bin/dev` uses [foreman](https://github.com/ddollar/foreman) to run the three
+processes in `Procfile.dev`; if it is not installed, the script installs it on
+the first run. Rails is pinned to port 3000 (foreman would use 5000 by default,
+and the Redirect URI must match exactly).
 
-Abra <http://127.0.0.1:3000> e clique em **Connect Spotify** (ou vá direto em
-`/spotify/connect`). Você autoriza uma vez; o refresh token fica salvo,
-criptografado, e as sincronizações seguintes acontecem sozinhas.
+Open <http://127.0.0.1:3000> and click **Connect Spotify** (or go directly to
+`/spotify/connect`). Authorize once; the refresh token is stored encrypted, and
+subsequent syncs happen automatically.
 
-> Use `127.0.0.1:3000`, e não `localhost:3000` — o endereço precisa bater com o
-> Redirect URI cadastrado.
+> Use `127.0.0.1:3000`, not `localhost:3000`—the address must match the
+> registered Redirect URI.
 
-## O site
+## The site
 
-A navegação tem quatro abas, e a aba escolhida vai para a URL (`?view=tracks`),
-então o botão de voltar do navegador funciona:
+The navigation has four tabs, and the selected tab is reflected in the URL
+(`?view=tracks`), so the browser's back button works:
 
-- **Overview:** o feed recente, mais prateleiras de álbuns e artistas.
-- **Tracks:** o histórico completo, agrupado por dia.
-- **Artists:** a grade de artistas; clicar em um abre a página dele, com os
-  destaques do seu histórico e as top tracks que a API do Spotify devolve.
-- **Playlists:** suas playlists públicas e as faixas de cada uma.
+- **Overview:** the recent feed, plus album and artist shelves.
+- **Tracks:** the complete history, grouped by day.
+- **Artists:** the artist grid; clicking one opens its page, with highlights from
+  your history and the top tracks returned by Spotify's API.
+- **Playlists:** your public playlists and each playlist's tracks.
 
-Há ainda uma busca (que filtra só o que está na tela) e um filtro de período,
-que é a lente global — a página do artista lê do conjunto já filtrado, e não do
-que estiver digitado na busca.
+There is also a search (which filters only what is currently on screen) and a
+time-period filter, which is the global lens—the artist page reads from the
+already-filtered set, not from what is entered in the search.
 
-O botão de **autoplay** no rodapé, ligado por padrão, faz o player seguir para a
-próxima faixa sozinho; a preferência fica no `localStorage`. O próximo/anterior
-anda pela lista de onde a faixa saiu: se você começou a tocar dentro de uma
-página de artista, o player continua ali até você tocar outra coisa.
+The **autoplay** button in the footer, enabled by default, makes the player
+advance to the next track automatically; the preference is stored in
+`localStorage`. Next/previous navigates the list the track came from: if you
+started playing on an artist page, the player stays there until you play
+something else.
 
-## Rotas
+## Routes
 
-| Rota | Acesso | O que faz |
+| Route | Access | Description |
 | --- | --- | --- |
-| `GET /` | público | O app React |
-| `GET /api/plays?limit=&before=` | público | Feed paginado por cursor |
-| `GET /api/status` | público | Se a conta está conectada, total de reproduções |
-| `GET /api/artists/:id/tracks` | público | Top tracks do artista (cache de 1h) |
-| `GET /api/playlists` | público | Playlists públicas do dono (cache de 5min) |
-| `GET /api/playlists/:id/tracks` | público | Faixas de uma playlist |
-| `GET /spotify/connect` | dono | Inicia o OAuth |
-| `GET /spotify/callback` | dono | Recebe o código e salva os tokens |
-| `POST /spotify/sync` | dono | Sincroniza agora, sem esperar o job |
-| `DELETE /spotify` | dono | Desvincula a conta |
+| `GET /` | public | React app |
+| `GET /api/plays?limit=&before=` | public | Cursor-paginated feed |
+| `GET /api/status` | public | Whether the account is connected and total plays |
+| `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
+| `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
+| `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
+| `GET /spotify/connect` | owner | Starts OAuth |
+| `GET /spotify/callback` | owner | Receives the code and saves tokens |
+| `POST /spotify/sync` | owner | Syncs immediately, without waiting for the job |
+| `DELETE /spotify` | owner | Disconnects the account |
 
-As rotas públicas gastam a quota do Spotify do dono, então todas passam por um
-`rate_limit` de 60 requisições por minuto: uma rajada levaria o app inteiro a um
-429 na Spotify, o que também travaria a sincronização — e sincronização travada,
-com só 50 reproduções guardadas do outro lado, é histórico perdido de vez. As
-respostas do Spotify ficam em cache para não repetir a chamada a cada visita.
+Public routes use the owner's Spotify quota, so they all pass through a
+`rate_limit` of 60 requests per minute: a burst would cause a Spotify 429 for the
+entire app, also blocking synchronization—and a blocked sync, with only 50 plays
+stored on Spotify's side, means permanently lost history. Spotify responses are
+cached to avoid repeating the call on every visit.
 
-As rotas do dono são protegidas por HTTP Basic com a `ADMIN_PASSWORD` (qualquer
-usuário, a senha é o que importa). Em desenvolvimento, sem a variável definida,
-a proteção só é dispensada para requisições da própria máquina — um servidor
-ligado em `0.0.0.0` ou exposto por túnel continua pedindo senha. Em produção ela
-é obrigatória.
+Owner routes are protected by HTTP Basic with `ADMIN_PASSWORD` (the username can
+be anything; only the password matters). In development, when the variable is
+not set, protection is waived only for requests from the local machine—a server
+bound to `0.0.0.0` or exposed through a tunnel still requires a password. In
+production it is mandatory.
 
-Sincronizar manualmente:
+Manual sync:
 
 ```bash
 bin/rails spotify:sync
@@ -139,32 +140,32 @@ bin/rails spotify:sync
 curl -u owner:$ADMIN_PASSWORD -X POST http://127.0.0.1:3000/spotify/sync
 ```
 
-## O player
+## The player
 
-Cada faixa abre no player fixo no rodapé, usando o
-[iframe embed do Spotify](https://developer.spotify.com/documentation/embeds).
-Um único player fica vivo na página e troca de faixa a cada clique.
+Each track opens in the fixed footer player, using the
+[Spotify iframe embed](https://developer.spotify.com/documentation/embeds).
+A single player remains on the page and changes tracks on each click.
 
-O que a pessoa ouve depende de quem ela é:
+What a person hears depends on who they are:
 
-- **Sem login no Spotify:** prévia de 30 segundos.
-- **Logada no Spotify:** a faixa inteira.
+- **Not logged in to Spotify:** 30-second preview.
+- **Logged in to Spotify:** the full track.
 
-Não é preciso Premium nem login no seu site. O campo `preview_url` da API foi
-descontinuado pelo Spotify para apps novos, então hospedar o áudio por conta
-própria não é uma alternativa viável — o embed é o caminho suportado.
+Premium and login to your site are not required. Spotify has deprecated the
+API's `preview_url` field for new apps, so hosting the audio yourself is not a
+viable alternative—the embed is the supported approach.
 
-Se o script do Spotify não carregar (bloqueador de anúncios, por exemplo), o app
-cai para um `<iframe>` simples, que continua tocando — só exige um clique a mais
-no botão de play.
+If Spotify's script does not load (because of an ad blocker, for example), the
+app falls back to a simple `<iframe>` that still plays—it just requires one
+extra click on the play button.
 
-## Estrutura
+## Structure
 
 ```
 app/
 ├── controllers/
 │   ├── api/                  # base (rate limit), plays, status, artists,
-│   │                         #   playlists (JSON público)
+│   │                         #   playlists (public JSON)
 │   ├── concerns/
 │   │   └── admin_authenticated.rb
 │   └── spotify/              # sessions (OAuth), syncs
@@ -173,7 +174,7 @@ app/
 │   │                         #   PlaylistView, PlayFeed, PlayRow, PlayerBar,
 │   │                         #   SetupNotice, icons
 │   ├── hooks/                # usePlays, useSpotifyEmbed
-│   ├── images/               # logo e wordmark
+│   ├── images/               # logo and wordmark
 │   ├── lib/                  # api.js, derive.js, format.js
 │   └── styles/
 ├── jobs/
@@ -183,59 +184,60 @@ app/
                               #   artist_backfill
 ```
 
-`Track` guarda a música; `Play` guarda cada vez que ela tocou. A mesma faixa
-ouvida cinco vezes vira um `Track` e cinco `Play`. `Artist` existe à parte
-porque o payload de reprodução não traz a foto do artista — o `ArtistBackfill`
-busca essas imagens depois, quando aparece gente nova.
+`Track` stores the song; `Play` stores each time it was played. The same track
+played five times becomes one `Track` and five `Play` records. `Artist` exists
+separately because the play payload does not include the artist's image—
+`ArtistBackfill` fetches those images later when new artists appear.
 
-## Qualidade
+## Quality
 
 ```bash
-bin/rails test     # testes
-bin/rubocop        # estilo
+bin/rails test     # tests
+bin/rubocop        # style
 ```
 
-Os testes cobrem a normalização do payload do Spotify, a idempotência da
-sincronização, a criptografia dos tokens, a paginação por cursor, as recusas do
-fluxo OAuth, a proteção da rota de sync e os endpoints de artistas e playlists.
-O ambiente de teste usa chaves de criptografia fixas, então nem os testes locais
-nem a CI precisam da `master.key`.
+The tests cover Spotify payload normalization, sync idempotency, token
+encryption, cursor pagination, OAuth flow rejections, sync route protection,
+and artist and playlist endpoints. The test environment uses fixed encryption
+keys, so neither local tests nor CI need `master.key`.
 
-O hook em `.githooks/pre-commit` roda RuboCop e os testes antes de cada commit.
-Para ativá-lo num clone novo:
+The hook in `.githooks/pre-commit` runs RuboCop and the tests before every
+commit. To enable it in a new clone:
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
-A CI (`.github/workflows/ci.yml`) roda o mesmo, mais Brakeman, bundler-audit e o
-build do frontend. Há também uma skill de review em
-`.claude/skills/code-reviewer/`, usada pelo Claude Code.
+CI (`.github/workflows/ci.yml`) runs the same checks, plus Brakeman,
+bundler-audit, and the frontend build. There is also a review skill in
+`.claude/skills/code-reviewer/`, used by Claude Code.
 
-## Deploy
+## Deployment
 
-O `config/recurring.yml` já agenda a sincronização em produção, então basta ter
-o Solid Queue rodando (`bin/jobs`) junto com o servidor web. Como o banco é
-SQLite, o disco precisa ser persistente.
+`config/recurring.yml` already schedules synchronization in production, so you
+only need to run Solid Queue (`bin/jobs`) alongside the web server. Since the
+database is SQLite, the disk must be persistent.
 
-Antes de expor o site publicamente:
+Before exposing the site publicly:
 
-- defina `ADMIN_PASSWORD` (sem ela, as rotas do dono se recusam a funcionar);
-- gere `RAILS_MASTER_KEY` a partir de `config/master.key` — é ela que decifra os
-  tokens do Spotify;
-- cadastre o Redirect URI de produção (HTTPS) no dashboard do Spotify e ajuste
+- set `ADMIN_PASSWORD` (without it, owner routes refuse to work);
+- generate `RAILS_MASTER_KEY` from `config/master.key`—it decrypts the Spotify
+  tokens;
+- register the production Redirect URI (HTTPS) in the Spotify dashboard and set
   `SPOTIFY_REDIRECT_URI`;
-- defina `APP_HOST` com o domínio canônico, que liga a proteção contra DNS
-  rebinding (`/up` fica de fora, porque load balancer chega por IP).
+- set `APP_HOST` to the canonical domain, which enables DNS rebinding
+  protection (`/up` is excluded because the load balancer connects by IP).
 
-A Content Security Policy já vem ativa em
-`config/initializers/content_security_policy.rb`: libera `open.spotify.com` em
-`script-src`/`frame-src`, imagens por HTTPS (as capas vêm de CDNs que o Spotify
-troca sem aviso) e nada de `object-src` ou de ser embutido em outra página.
+The Content Security Policy is already enabled in
+`config/initializers/content_security_policy.rb`: it allows `open.spotify.com`
+in `script-src`/`frame-src`, images over HTTPS (covers come from CDNs that
+Spotify may change without notice), and disallows `object-src` and embedding in
+another page.
 
-## Privacidade
+## Privacy
 
-O site publica o que você ouve. Só isso é exposto: nome da faixa, artistas,
-capa e horário. Tokens ficam criptografados no banco (Active Record Encryption)
-e nunca chegam ao frontend. Para parar de publicar, `DELETE /spotify` desvincula
-a conta — os registros já gravados continuam no banco até você apagá-los.
+The site publishes what you listen to. Only this is exposed: track name,
+artists, cover art, and time. Tokens are encrypted in the database (Active
+Record Encryption) and never reach the frontend. To stop publishing, `DELETE
+/spotify` disconnects the account—the records already stored remain in the
+database until you delete them.
