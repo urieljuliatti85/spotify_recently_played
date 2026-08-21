@@ -2,9 +2,9 @@ default: &default
   sync_spotify_recently_played:
     class: SyncRecentlyPlayedJob
     queue: default
-    # Spotify only keeps the last 50 plays, so poll often enough to never
-    # lose history — 5 minutes is far inside that window for normal listening.
-    schedule: every 5 minutes
+    # Spotify only keeps the last 50 plays, so poll often enough to avoid
+    # losing history while keeping API usage moderate.
+    schedule: every 1 minute
 
 development:
   <<: *default

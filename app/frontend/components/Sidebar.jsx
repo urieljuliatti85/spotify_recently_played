@@ -7,7 +7,9 @@ const RANGE_ICONS = { today: NoteIcon, week: ClockIcon, all: DiscIcon }
 export default function Sidebar({ account, range, onRangeChange, recent, selectedPlayId, onSelect }) {
   return (
     <aside className="sidebar">
-      <img className="sidebar__wordmark" src={wordmarkUrl} alt="DekSlayer" />
+      <a className="sidebar__home" href="/" aria-label="Go to the main page">
+        <img className="sidebar__wordmark" src={wordmarkUrl} alt="DekSlayer" />
+      </a>
 
       <nav className="sidebar__nav" aria-label="Time range">
         {RANGES.map(({ id, label }) => {

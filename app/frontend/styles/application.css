@@ -146,6 +146,16 @@ button {
   margin: 0 24px 30px;
 }
 
+.sidebar__home {
+  display: block;
+}
+
+.sidebar__home:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .sidebar__nav {
   display: flex;
   flex-direction: column;
