@@ -50,6 +50,11 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+      - name: Check autocorrectable RuboCop offenses
+        run: |
+          bin/rubocop -A -f github
+          git diff --exit-code
+
   test:
     runs-on: ubuntu-latest
 
