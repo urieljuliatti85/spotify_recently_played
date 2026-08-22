@@ -7,7 +7,18 @@ module Spotify
     OPEN_TIMEOUT = 5
     READ_TIMEOUT = 10
 
-    def initialize(account = SpotifyAccount.current)
+    # The OAuth callback has to ask who just authorized before it can know
+    # which row to write the tokens onto, so it needs a client backed by a bare
+    # token rather than by a stored account.
+    BareToken = Struct.new(:access_token) do
+      def fresh_access_token = access_token
+    end
+
+    def self.with_token(access_token)
+      new(BareToken.new(access_token))
+    end
+
+    def initialize(account = SpotifyAccount.owner)
       raise NotConnectedError, "No Spotify account linked yet" if account.nil?
 
       @account = account

@@ -131,6 +131,36 @@ export function plural(count, singular, plural = `${singular}s`) {
   return `${count.toLocaleString("en-US")} ${count === 1 ? singular : plural}`
 }
 
+/**
+ * What each listener has been playing, derived from the feed already in
+ * memory. Everyone on the roster gets an entry, including whoever has nothing
+ * in the current range — "Ana played nothing this week" is worth showing, and
+ * dropping her card would read as her having left.
+ *
+ * Plays arrive newest-first and the grouping preserves that, so `latestPlay` is
+ * the head of each bucket rather than something that has to be searched for.
+ */
+export function listenersFrom(plays, roster, { artists = 4, tracks = 3 } = {}) {
+  const grouped = new Map(roster.map((listener) => [listener.id, []]))
+
+  for (const play of plays) {
+    grouped.get(play.listener?.id)?.push(play)
+  }
+
+  return roster.map((listener) => {
+    const own = grouped.get(listener.id) ?? []
+
+    return {
+      ...listener,
+      plays: own,
+      count: own.length,
+      latestPlay: own[0] ?? null,
+      topArtists: artistsFrom(own, artists),
+      topTracks: topTracksFrom(own, tracks),
+    }
+  })
+}
+
 /** Every play the given artist appears on, still newest-first. */
 export function playsOfArtist(plays, key) {
   return plays.filter((play) => creditsOf(play.track).some((credit) => credit.key === key))

@@ -5,7 +5,7 @@ const REFRESH_INTERVAL = 60_000
 
 // Owns the feed: first page, cursor pagination, and a quiet poll that
 // prepends whatever the background sync has picked up since.
-export function usePlays({ pageSize = 30 } = {}) {
+export function usePlays({ pageSize = 30, listener = null } = {}) {
   const [plays, setPlays] = useState([])
   const [cursor, setCursor] = useState(null)
   const [status, setStatus] = useState("loading") // loading | ready | error
@@ -18,7 +18,7 @@ export function usePlays({ pageSize = 30 } = {}) {
   const loadFirstPage = useCallback(
     async (signal) => {
       try {
-        const data = await fetchPlays({ limit: pageSize, signal })
+        const data = await fetchPlays({ limit: pageSize, listener, signal })
         setPlays(data.plays)
         setCursor(data.next_cursor)
         newestPlayedAt.current = data.plays[0]?.played_at ?? null
@@ -29,10 +29,17 @@ export function usePlays({ pageSize = 30 } = {}) {
         setStatus("error")
       }
     },
-    [pageSize]
+    [pageSize, listener]
   )
 
   useEffect(() => {
+    // Switching listener is a different feed, not more of the same one: reset
+    // so the previous person's rows cannot linger behind the new first page.
+    setStatus("loading")
+    setPlays([])
+    setCursor(null)
+    newestPlayedAt.current = null
+
     const controller = new AbortController()
     loadFirstPage(controller.signal)
     return () => controller.abort()
@@ -43,7 +50,7 @@ export function usePlays({ pageSize = 30 } = {}) {
 
     setLoadingMore(true)
     try {
-      const data = await fetchPlays({ before: cursor, limit: pageSize })
+      const data = await fetchPlays({ before: cursor, limit: pageSize, listener })
       setPlays((current) => [...current, ...data.plays])
       setCursor(data.next_cursor)
     } catch (cause) {
@@ -51,7 +58,7 @@ export function usePlays({ pageSize = 30 } = {}) {
     } finally {
       setLoadingMore(false)
     }
-  }, [cursor, loadingMore, pageSize])
+  }, [cursor, loadingMore, pageSize, listener])
 
   const loadAll = useCallback(async () => {
     if (!cursor || loadingMore) return
@@ -61,7 +68,7 @@ export function usePlays({ pageSize = 30 } = {}) {
 
     try {
       while (nextCursor) {
-        const data = await fetchPlays({ before: nextCursor, limit: pageSize })
+        const data = await fetchPlays({ before: nextCursor, limit: pageSize, listener })
         setPlays((current) => [...current, ...data.plays])
         nextCursor = data.next_cursor
         setCursor(nextCursor)
@@ -71,7 +78,7 @@ export function usePlays({ pageSize = 30 } = {}) {
     } finally {
       setLoadingMore(false)
     }
-  }, [cursor, loadingMore, pageSize])
+  }, [cursor, loadingMore, pageSize, listener])
 
   // Poll for fresher plays without disturbing what's already on screen.
   useEffect(() => {
@@ -79,7 +86,7 @@ export function usePlays({ pageSize = 30 } = {}) {
       if (document.hidden) return
 
       try {
-        const data = await fetchPlays({ limit: pageSize })
+        const data = await fetchPlays({ limit: pageSize, listener })
         const boundary = newestPlayedAt.current
         const fresh = boundary ? data.plays.filter((play) => play.played_at > boundary) : data.plays
         if (fresh.length === 0) return
@@ -92,7 +99,7 @@ export function usePlays({ pageSize = 30 } = {}) {
     }, REFRESH_INTERVAL)
 
     return () => clearInterval(timer)
-  }, [pageSize])
+  }, [pageSize, listener])
 
   return { plays, status, error, loadMore, loadAll, loadingMore, hasMore: Boolean(cursor) }
 }

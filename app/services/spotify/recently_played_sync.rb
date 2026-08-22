@@ -5,7 +5,7 @@ module Spotify
 
     def self.call(...) = new(...).call
 
-    def initialize(account = SpotifyAccount.current, client: nil)
+    def initialize(account = SpotifyAccount.owner, client: nil)
       raise NotConnectedError, "No Spotify account linked yet" if account.nil?
 
       @account = account
@@ -48,6 +48,7 @@ module Spotify
     def import(item, played_at)
       track = Track.upsert_from_spotify!(item["track"])
       Play.create!(
+        spotify_account: account,
         track: track,
         played_at: played_at,
         context_type: item.dig("context", "type"),
@@ -68,14 +69,15 @@ module Spotify
       0
     end
 
-    # A play is identified by the exact instant it happened, so both sides are
+    # A play is identified by the exact instant it happened *within this
+    # listener's history*, so both sides are
     # compared as the same UTC string: what comes back from the database is not
     # the same class as what was just parsed out of the payload, and the two
     # only agree on the instant, not on `eql?`.
     def stored_played_ats(played_ats)
       return Set.new if played_ats.empty?
 
-      Play.where(played_at: played_ats).pluck(:played_at).map { |stored| key_for(stored) }.to_set
+      account.plays.where(played_at: played_ats).pluck(:played_at).map { |stored| key_for(stored) }.to_set
     end
 
     def key_for(time)

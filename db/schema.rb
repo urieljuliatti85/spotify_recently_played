@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_223555) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_210200) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "image_url"
@@ -21,29 +21,47 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_223555) do
     t.index ["spotify_id"], name: "index_artists_on_spotify_id", unique: true
   end
 
+  create_table "invites", force: :cascade do |t|
+    t.datetime "claimed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "label"
+    t.integer "spotify_account_id"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["spotify_account_id"], name: "index_invites_on_spotify_account_id"
+    t.index ["token_digest"], name: "index_invites_on_token_digest", unique: true
+  end
+
   create_table "plays", force: :cascade do |t|
     t.string "context_type"
     t.string "context_url"
     t.datetime "created_at", null: false
     t.datetime "played_at", null: false
+    t.integer "spotify_account_id", null: false
     t.integer "track_id", null: false
     t.datetime "updated_at", null: false
     t.index ["played_at", "track_id"], name: "index_plays_on_played_at_and_track_id"
-    t.index ["played_at"], name: "index_plays_on_played_at", unique: true
+    t.index ["played_at"], name: "index_plays_on_played_at"
+    t.index ["spotify_account_id", "played_at"], name: "index_plays_on_spotify_account_id_and_played_at", unique: true
     t.index ["track_id"], name: "index_plays_on_track_id"
   end
 
   create_table "spotify_accounts", force: :cascade do |t|
     t.text "access_token"
+    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.string "display_name"
     t.datetime "last_played_at"
     t.datetime "last_synced_at"
+    t.boolean "owner", default: false, null: false
     t.text "refresh_token"
     t.string "scope"
     t.string "spotify_user_id"
     t.datetime "token_expires_at"
     t.datetime "updated_at", null: false
+    t.boolean "visible", default: true, null: false
+    t.index ["owner"], name: "index_spotify_accounts_on_owner"
   end
 
   create_table "track_artists", force: :cascade do |t|
@@ -72,6 +90,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_223555) do
     t.index ["spotify_id"], name: "index_tracks_on_spotify_id", unique: true
   end
 
+  add_foreign_key "invites", "spotify_accounts"
+  add_foreign_key "plays", "spotify_accounts"
   add_foreign_key "plays", "tracks"
   add_foreign_key "track_artists", "artists"
   add_foreign_key "track_artists", "tracks"

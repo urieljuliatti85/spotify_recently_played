@@ -7,6 +7,8 @@ export default function PlayFeed({
   selectedPlayId,
   onSelect,
   onOpenArtist,
+  showListener,
+  onPickListener,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -31,6 +33,8 @@ export default function PlayFeed({
                 isSelected={play.id === selectedPlayId}
                 onSelect={onSelect}
                 onOpenArtist={onOpenArtist}
+                showListener={showListener}
+                onPickListener={onPickListener}
               />
             ))}
           </ul>

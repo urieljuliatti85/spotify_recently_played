@@ -29,7 +29,12 @@ module Spotify
   # No account has been linked yet.
   class NotConnectedError < Error; end
 
+  # What the owner grants: their history, plus the playlists the site lists.
   SCOPES = %w[user-read-recently-played playlist-read-private].freeze
+  # What a friend grants. The playlists tab only ever shows the owner's, so
+  # asking a friend for their private ones would be taking more than the site
+  # can use.
+  FRIEND_SCOPES = %w[user-read-recently-played].freeze
 
   class << self
     def client_id

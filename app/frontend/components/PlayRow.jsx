@@ -1,8 +1,9 @@
 import { creditsOf } from "../lib/derive"
 import { duration, relativeTime, timeOfDay } from "../lib/format"
+import { ListenerTag } from "./Listener"
 import { ExternalIcon, PauseIcon, PlayIcon } from "./icons"
 
-export default function PlayRow({ play, index, isSelected, onSelect, onOpenArtist }) {
+export default function PlayRow({ play, index, isSelected, onSelect, onOpenArtist, showListener, onPickListener }) {
   const { track } = play
   const relative = relativeTime(play.played_at)
 
@@ -70,6 +71,12 @@ export default function PlayRow({ play, index, isSelected, onSelect, onOpenArtis
         </span>
 
         <span className="row__album">{track.album}</span>
+
+        {showListener && (
+          <span className="row__listener">
+            <ListenerTag listener={play.listener} onSelect={onPickListener} />
+          </span>
+        )}
 
         <span className="row__timing">
           <time dateTime={play.played_at} title={new Date(play.played_at).toLocaleString("en-US")}>

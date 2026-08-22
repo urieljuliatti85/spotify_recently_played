@@ -1,15 +1,29 @@
 module Api
-  # Lets the frontend distinguish "nothing played yet" from "not linked yet".
+  # Lets the frontend distinguish "nothing played yet" from "not linked yet",
+  # and tells it who is on the feed.
   class StatusController < BaseController
     def show
-      account = SpotifyAccount.current
+      listeners = SpotifyAccount.listed.to_a
+      # One grouped count for everyone rather than one query per listener.
+      counts = Play.where(spotify_account_id: listeners.map(&:id)).group(:spotify_account_id).count
 
       render json: {
         configured: Spotify.configured?,
-        connected: SpotifyAccount.connected?,
-        display_name: account&.display_name,
-        last_synced_at: account&.last_synced_at&.iso8601,
-        plays_count: Play.count
+        connected: SpotifyAccount.any_connected?,
+        listeners: listeners.map { |listener| serialize(listener, counts) }
+      }
+    end
+
+    private
+
+    def serialize(listener, counts)
+      {
+        id: listener.id,
+        name: listener.display_name,
+        avatar_url: listener.avatar_url,
+        owner: listener.owner,
+        last_synced_at: listener.last_synced_at&.iso8601,
+        plays_count: counts.fetch(listener.id, 0)
       }
     end
   end

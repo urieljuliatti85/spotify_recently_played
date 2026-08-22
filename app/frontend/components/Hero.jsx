@@ -1,8 +1,21 @@
 import { PlayIcon, ShuffleIcon } from "./icons"
 import emblemUrl from "../images/logo.svg"
 
-export default function Hero({ account, visibleCount, onPlayLatest, onShuffle }) {
-  const owner = account?.display_name
+// Who the page is about right now: one listener when the feed is filtered,
+// otherwise the owner and however many friends have joined them.
+function describe(listeners, selected) {
+  if (selected) return `Every track ${selected.name} plays lands here, newest first.`
+
+  const owner = listeners.find((listener) => listener.owner) ?? listeners[0]
+  const friends = listeners.length - (owner ? 1 : 0)
+
+  if (!owner) return "Every track played lands here, newest first."
+  if (friends === 0) return `Every track ${owner.name} plays lands here, newest first.`
+
+  return `Every track ${owner.name} and ${friends === 1 ? "a friend" : `${friends} friends`} play lands here, newest first.`
+}
+
+export default function Hero({ listeners = [], selectedListener, visibleCount, onPlayLatest, onShuffle }) {
 
   return (
     <section className="hero">
@@ -13,9 +26,7 @@ export default function Hero({ account, visibleCount, onPlayLatest, onShuffle })
         <h1 className="hero__title">DekSlayer&apos;s Latest Activity</h1>
 
         <p className="hero__lead">
-          {owner
-            ? `Every track ${owner} plays lands here, newest first.`
-            : "Every track played lands here, newest first."}
+          {describe(listeners, selectedListener)}
           <br />
           {visibleCount > 0
             ? `${visibleCount.toLocaleString("en-US")} in view — click any one to listen.`

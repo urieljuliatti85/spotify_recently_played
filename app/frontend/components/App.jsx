@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { usePlays } from "../hooks/usePlays"
 import { fetchStatus } from "../lib/api"
-import { albumsFrom, artistProfile, artistsFrom, matching, playsOfArtist, withinRange } from "../lib/derive"
+import {
+  albumsFrom,
+  artistProfile,
+  artistsFrom,
+  listenersFrom,
+  matching,
+  playsOfArtist,
+  withinRange,
+} from "../lib/derive"
 import ArtistView from "./ArtistView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
+import ListenersView from "./ListenersView"
 import PlayerBar from "./PlayerBar"
 import PlaylistView from "./PlaylistView"
 import SetupNotice from "./SetupNotice"
@@ -34,8 +43,11 @@ function readAutoplayPreference() {
 }
 
 export default function App({ connectPath, flash }) {
-  const { plays, status: feedStatus, error, loadMore, loadAll, loadingMore, hasMore } = usePlays()
-  const [account, setAccount] = useState(null)
+  // null means "everyone"; an id narrows the feed to one person.
+  const [listenerId, setListenerId] = useState(null)
+  const { plays, status: feedStatus, error, loadMore, loadAll, loadingMore, hasMore } =
+    usePlays({ listener: listenerId })
+  const [site, setSite] = useState(null)
   const [selected, setSelected] = useState(null)
   const [autoplay, setAutoplay] = useState(readAutoplayPreference)
   const [range, setRange] = useState("all")
@@ -50,7 +62,7 @@ export default function App({ connectPath, flash }) {
   useEffect(() => {
     const controller = new AbortController()
     fetchStatus({ signal: controller.signal })
-      .then(setAccount)
+      .then(setSite)
       .catch(() => {})
     return () => controller.abort()
   }, [])
@@ -65,11 +77,32 @@ export default function App({ connectPath, flash }) {
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
+  const listeners = site?.listeners ?? []
+  const selectedListener = listeners.find((listener) => listener.id === listenerId) ?? null
+  // Only worth tagging every row once there is more than one person to tell
+  // apart — and never while the feed is already filtered to one of them.
+  const showListener = listeners.length > 1 && listenerId === null
+
+  // The most recent sync across everyone, which is what "Synced 14:02" means
+  // on a feed that mixes listeners.
+  const lastSyncedAt = useMemo(() => {
+    const stamps = listeners.map((listener) => listener.last_synced_at).filter(Boolean)
+    return stamps.length > 0 ? stamps.reduce((a, b) => (a > b ? a : b)) : null
+  }, [listeners])
+
   // The range is a global lens; the search only narrows what is on screen. The
   // artist page reads from the ranged set so opening an artist never inherits
   // whatever happened to be typed in the search box.
   const ranged = useMemo(() => withinRange(plays, range), [plays, range])
   const queue = useMemo(() => matching(ranged, query), [ranged, query])
+
+  // The Listeners tab reads the ranged feed rather than the searched one: the
+  // search box narrows what is on screen, and a card that hid everyone whose
+  // tracks did not match would read as them having stopped listening.
+  const listenerCards = useMemo(
+    () => (view === "listeners" ? listenersFrom(ranged, listeners) : []),
+    [view, ranged, listeners]
+  )
 
   const albums = useMemo(() => albumsFrom(queue, SHELF_SIZE), [queue])
   const artists = useMemo(
@@ -119,6 +152,9 @@ export default function App({ connectPath, flash }) {
   function changeView(next) {
     setView(next)
     setOpenArtist(null)
+    // The tab shows everyone side by side, so a filter left on one person would
+    // empty every other card.
+    if (next === "listeners") setListenerId(null)
 
     const url = new URL(window.location.href)
     if (next === "overview") {
@@ -132,6 +168,22 @@ export default function App({ connectPath, flash }) {
   function changeRange(next) {
     setRange(next)
     loadAll()
+  }
+
+  // Jump from a listener's card into the feed, filtered to them.
+  function openListenerFeed(id) {
+    changeListener(id)
+    changeView("tracks")
+  }
+
+  // Switching listener throws away everything derived from the old feed: the
+  // open artist page, the player's queue, and whatever was being played.
+  function changeListener(next) {
+    setListenerId(next)
+    setOpenArtist(null)
+    setSelected(null)
+    setPlayScope(null)
+    setPlayQueue(null)
   }
 
   function toggleAutoplay() {
@@ -178,14 +230,16 @@ export default function App({ connectPath, flash }) {
     setSelected(list[Math.floor(Math.random() * list.length)])
   }
 
-  const showSetup = account && !account.connected && plays.length === 0
+  const showSetup = site && !site.connected && plays.length === 0
   const isReady = feedStatus === "ready"
   const noMatches = isReady && plays.length > 0 && queue.length === 0
 
   return (
     <div className={`app ${selected ? "app--playing" : ""}`}>
       <Sidebar
-        account={account}
+        listeners={listeners}
+        selectedListenerId={listenerId}
+        onListenerChange={changeListener}
         range={range}
         onRangeChange={changeRange}
         recent={queue.slice(0, SIDEBAR_TRACKS)}
@@ -199,13 +253,13 @@ export default function App({ connectPath, flash }) {
           onViewChange={changeView}
           query={query}
           onQueryChange={setQuery}
-          account={account}
+          lastSyncedAt={lastSyncedAt}
         />
 
         <main className="main">
           {flash && <p className="flash">{flash}</p>}
 
-          {showSetup && <SetupNotice status={account} connectPath={connectPath} />}
+          {showSetup && <SetupNotice status={site} connectPath={connectPath} />}
 
           {feedStatus === "loading" && <SkeletonFeed />}
 
@@ -216,12 +270,14 @@ export default function App({ connectPath, flash }) {
             </div>
           )}
 
-          {isReady && plays.length === 0 && !showSetup && view !== "playlists" && (
+          {isReady && plays.length === 0 && !showSetup && view !== "playlists" && view !== "listeners" && (
             <div className="notice">
               <h2>Nothing here yet</h2>
               <p>
-                The account is connected, but no plays have come through. Play something on Spotify —
-                the sync runs every 5 minutes.
+                {selectedListener
+                  ? `${selectedListener.name} is connected, but nothing has come through yet.`
+                  : "Connected, but no plays have come through. Play something on Spotify —"}{" "}
+                the sync runs every minute.
               </p>
             </div>
           )}
@@ -240,12 +296,24 @@ export default function App({ connectPath, flash }) {
             <PlaylistView onSelect={handleSelect} connectPath={connectPath} />
           )}
 
-          {isReady && plays.length > 0 && !profile && view !== "playlists" && (
+          {isReady && !profile && view === "listeners" && (
+            <ListenersView
+              listeners={listenerCards}
+              onSelect={handleSelect}
+              onOpenArtist={showArtist}
+              onOpenFeed={openListenerFeed}
+              selectedPlayId={selected?.id}
+              connectPath={connectPath}
+            />
+          )}
+
+          {isReady && plays.length > 0 && !profile && view !== "playlists" && view !== "listeners" && (
             <>
               {view === "overview" && (
                 <>
                   <Hero
-                    account={account}
+                    listeners={listeners}
+                    selectedListener={selectedListener}
                     visibleCount={queue.length}
                     onPlayLatest={() => queue[0] && handleSelect(queue[0])}
                     onShuffle={() => shuffleFrom(queue)}
@@ -298,6 +366,8 @@ export default function App({ connectPath, flash }) {
                       selectedPlayId={selected?.id}
                       onSelect={handleSelect}
                       onOpenArtist={showArtist}
+                      showListener={showListener}
+                      onPickListener={(listener) => changeListener(listener.id)}
                       hasMore={hasMore}
                       loadingMore={loadingMore}
                       onLoadMore={loadMore}

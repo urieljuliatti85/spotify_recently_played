@@ -155,5 +155,45 @@ module Spotify
       assert_equal 1, Play.count
       assert_not_nil @account.reload.last_synced_at
     end
+  test "two listeners keep separate histories at the same instant" do
+      friend = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana",
+                                      refresh_token: "r", access_token: "a",
+                                      token_expires_at: 1.hour.from_now)
+      instant = 10.minutes.ago.round
+      shared = item(spotify_id: "same", played_at: instant)
+
+      RecentlyPlayedSync.call(@account, client: FakeClient.new([ [ shared ] ]))
+      RecentlyPlayedSync.call(friend, client: FakeClient.new([ [ shared ] ]))
+
+      assert_equal 1, @account.plays.count
+      assert_equal 1, friend.plays.count
+      assert_equal 2, Play.count, "the same instant is one play per listener, not one overall"
+      assert_equal 1, Track.count, "the track itself is shared"
+    end
+
+    test "a listener's sync ignores what everybody else already stored" do
+      friend = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana",
+                                      refresh_token: "r", access_token: "a",
+                                      token_expires_at: 1.hour.from_now)
+      played = 10.minutes.ago.round
+      RecentlyPlayedSync.call(@account, client: FakeClient.new([ [ item(spotify_id: "x", played_at: played) ] ]))
+
+      result = RecentlyPlayedSync.call(friend, client: FakeClient.new([ [ item(spotify_id: "x", played_at: played) ] ]))
+
+      assert_equal 1, result.imported, "the owner having it must not make it look already-imported"
+      assert_equal played, friend.reload.last_played_at
+    end
+
+    test "the cursor advances per listener" do
+      friend = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana",
+                                      refresh_token: "r", access_token: "a",
+                                      token_expires_at: 1.hour.from_now)
+      RecentlyPlayedSync.call(@account, client: FakeClient.new([ [ item(spotify_id: "x", played_at: 1.hour.ago.round) ] ]))
+
+      client = FakeClient.new([ [] ])
+      RecentlyPlayedSync.call(friend, client: client)
+
+      assert_equal [ nil ], client.calls, "a new listener starts from the beginning of their own history"
+    end
   end
 end

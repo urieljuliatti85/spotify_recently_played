@@ -4,11 +4,12 @@ export const VIEWS = [
   { id: "overview", label: "Overview" },
   { id: "tracks", label: "Tracks" },
   { id: "artists", label: "Artists" },
+  { id: "listeners", label: "Listeners" },
   { id: "playlists", label: "Playlists" },
 ]
 
-export default function TopBar({ view, onViewChange, query, onQueryChange, account }) {
-  const syncedAt = account?.last_synced_at && new Date(account.last_synced_at)
+export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt }) {
+  const syncedAt = lastSyncedAt && new Date(lastSyncedAt)
 
   return (
     <div className="topbar">

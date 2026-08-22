@@ -1,7 +1,8 @@
 # Recently played
 
-A site that shows the latest tracks played on your personal Spotify account and
-lets visitors listen to each track without leaving the page.
+A site that shows the latest tracks played on your Spotify account—and on your
+friends' accounts, once they've joined—and lets visitors listen to each track
+without leaving the page.
 
 - **Backend:** Ruby on Rails 8.1 (API + pages)
 - **Frontend:** React 19 via Vite (`vite_rails`)
@@ -16,16 +17,59 @@ plays, and stores them in SQLite. The site's history grows over time, even after
 Spotify has discarded older tracks.
 
 ```
-Spotify API  ──(every 1 min)──▶  SyncRecentlyPlayedJob  ──▶  SQLite
-                                                                │
-                              React  ◀──  /api/plays  ◀─────────┘
+                        ┌─▶ SyncRecentlyPlayedJob (you)     ─┐
+Spotify API ──(1 min)──▶│                                    ├─▶ SQLite
+      SyncAllAccountsJob └─▶ SyncRecentlyPlayedJob (friend)  ─┘      │
+                                                                     │
+                                   React  ◀──  /api/plays  ◀─────────┘
 ```
 
-Each play is identified by the time it was played (`played_at`), which has a
-unique index—syncing the same window twice does not create duplicates. Syncing
-loads all `played_at` values for the page in a single query instead of asking
-the database about each track: the usual poll brings back 50 plays that are
-already stored and imports none.
+One sync job per listener, rather than one job for everybody: a friend whose
+token has gone bad retries on its own without stalling anyone else's history.
+
+Each play is identified by the listener plus the time it was played, which
+together have a unique index—syncing the same window twice does not create
+duplicates, and two people playing something at the same second are still two
+plays. Syncing loads all `played_at` values for the page in a single query
+instead of asking the database about each track: the usual poll brings back 50
+plays that are already stored and imports none.
+
+## Friends
+
+The feed can mirror more than one account. Each friend links their own—there is
+no way to add someone else's listening without them authorizing it, and no
+Spotify API for reading a friend's activity.
+
+Issue a single-use invite:
+
+```bash
+bin/rails "spotify:invite[Ana]"
+# → http://your-site/spotify/join/<token>   (single use, expires in 7 days)
+```
+
+Send them the link. They authorize with Spotify and their plays start appearing
+on the feed, tagged with their name. The link never exposes `ADMIN_PASSWORD`,
+and only its digest is stored, so a database copy cannot be replayed into an
+account link.
+
+A friend is asked for `user-read-recently-played` and nothing else—the
+playlists tab only ever shows the owner's, so asking for a friend's private
+playlists would be taking more than the site can use.
+
+Managing who is on the feed:
+
+```bash
+bin/rails spotify:listeners          # who is linked, visible, and how many plays
+bin/rails spotify:invites            # every invite and what became of it
+bin/rails "spotify:revoke_invite[2]" # kill an unclaimed link
+bin/rails "spotify:hide[3]"          # off the public feed, plays kept and still syncing
+bin/rails "spotify:show[3]"          # back on
+bin/rails "spotify:unlink[3]"        # unlink and delete their history
+```
+
+For a friend to actually complete the flow, `SPOTIFY_REDIRECT_URI` has to point
+at a URL they can reach (not `127.0.0.1`) and that exact URI has to be
+registered in your Spotify app's dashboard.
 
 ## Configuration
 
@@ -110,15 +154,19 @@ something else.
 | Route | Access | Description |
 | --- | --- | --- |
 | `GET /` | public | React app |
-| `GET /api/plays?limit=&before=` | public | Cursor-paginated feed |
-| `GET /api/status` | public | Whether the account is connected and total plays |
+| `GET /api/plays?limit=&before=&listener=` | public | Cursor-paginated feed, optionally one listener |
+| `GET /api/status` | public | Who is on the feed, and their play counts |
 | `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
-| `GET /spotify/connect` | owner | Starts OAuth |
-| `GET /spotify/callback` | owner | Receives the code and saves tokens |
-| `POST /spotify/sync` | owner | Syncs immediately, without waiting for the job |
-| `DELETE /spotify` | owner | Disconnects the account |
+| `GET /spotify/connect` | owner | Starts OAuth for the owner |
+| `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
+| `GET /spotify/callback` | state | Receives the code and saves tokens |
+| `POST /spotify/sync` | owner | Syncs every listener now, without waiting for the job |
+| `GET/POST /spotify/invites` | owner | List and issue invite links |
+| `DELETE /spotify/invites/:id` | owner | Revoke an unclaimed invite |
+| `DELETE /spotify` | owner | Unlinks the owner |
+| `DELETE /spotify/listeners/:id` | owner | Unlinks one listener |
 
 Public routes use the owner's Spotify quota, so they all pass through a
 `rate_limit` of 60 requests per minute: a burst would cause a Spotify 429 for the
@@ -236,8 +284,18 @@ another page.
 
 ## Privacy
 
-The site publishes what you listen to. Only this is exposed: track name,
-artists, cover art, and time. Tokens are encrypted in the database (Active
-Record Encryption) and never reach the frontend. To stop publishing, `DELETE
-/spotify` disconnects the account—the records already stored remain in the
-database until you delete them.
+The site publishes what you listen to, and what anyone who accepts an invite
+listens to. Only this is exposed: track name, artists, cover art, time, and the
+listener's Spotify display name and avatar. Tokens are encrypted in the database
+(Active Record Encryption) and never reach the frontend.
+
+**Tell a friend this before you send them a link.** Spotify's consent screen says
+the app will read their recently played tracks; it does not say the result goes
+on a public web page. That part is on you.
+
+Coming off the feed:
+
+- `bin/rails "spotify:hide[id]"` takes a listener off the public feed while
+  keeping their history and their sync.
+- `bin/rails "spotify:unlink[id]"` unlinks them and **deletes their plays**.
+- `DELETE /spotify` does the same for the owner.

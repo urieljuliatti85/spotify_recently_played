@@ -1,10 +1,20 @@
-import { RANGES, plural } from "../lib/derive"
+import { RANGES } from "../lib/derive"
+import ListenerPicker from "./Listener"
 import { ClockIcon, DiscIcon, NoteIcon, PlayIcon } from "./icons"
 import wordmarkUrl from "../images/dekslayer.png"
 
 const RANGE_ICONS = { today: NoteIcon, week: ClockIcon, all: DiscIcon }
 
-export default function Sidebar({ account, range, onRangeChange, recent, selectedPlayId, onSelect }) {
+export default function Sidebar({
+  listeners,
+  selectedListenerId,
+  onListenerChange,
+  range,
+  onRangeChange,
+  recent,
+  selectedPlayId,
+  onSelect,
+}) {
   return (
     <aside className="sidebar">
       <a className="sidebar__home" href="/" aria-label="Go to the main page">
@@ -70,17 +80,11 @@ export default function Sidebar({ account, range, onRangeChange, recent, selecte
         {recent.length === 0 && <li className="sidebar__empty">Nothing in this range.</li>}
       </ol>
 
-      {account?.display_name && (
-        <div className="sidebar__account">
-          <span className="sidebar__avatar" aria-hidden="true">
-            {account.display_name.trim().charAt(0).toUpperCase()}
-          </span>
-          <span className="sidebar__account-meta">
-            <span className="sidebar__account-name">{account.display_name}</span>
-            <span className="sidebar__account-stat">{plural(account.plays_count ?? 0, "play")}</span>
-          </span>
-        </div>
-      )}
+      <ListenerPicker
+        listeners={listeners}
+        selectedId={selectedListenerId}
+        onChange={onListenerChange}
+      />
     </aside>
   )
 }

@@ -5,9 +5,12 @@ module Api
         Spotify::Client.new.playlists
       end
 
+      # Hoisted out of the loop: this used to be one SELECT per playlist.
+      owner_id = SpotifyAccount.owner&.spotify_user_id
+
       render json: {
         playlists: Array(payload["items"]).filter_map do |playlist|
-          next unless playlist["public"] && playlist.dig("owner", "id") == SpotifyAccount.current.spotify_user_id
+          next unless playlist["public"] && playlist.dig("owner", "id") == owner_id
 
           {
             id: playlist["id"],

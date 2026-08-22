@@ -1,17 +1,32 @@
-# Single-row table holding the OAuth tokens for the one account this site mirrors.
+# One row per listener whose history this site mirrors: the owner, plus any
+# friend who has claimed an invite and authorized their own account.
 class SpotifyAccount < ApplicationRecord
   encrypts :access_token
   encrypts :refresh_token
 
+  # Unlinking has to take the history with it — a friend who walks away is
+  # asking for their listening to come off the page, not just to stop growing.
+  has_many :plays, dependent: :destroy
+  has_many :invites, dependent: :nullify
+
   # Refresh a little early so a token never expires mid-request.
   EXPIRY_MARGIN = 60.seconds
 
-  def self.current
-    first
+  validates :spotify_user_id, uniqueness: true, allow_nil: true
+
+  scope :connected, -> { where.not(refresh_token: nil) }
+  # The owner first, then everyone else by name, so the feed's listener list
+  # has a stable order that does not shuffle as friends come and go.
+  scope :listed, -> { where(visible: true).order(owner: :desc, display_name: :asc, id: :asc) }
+
+  # The site belongs to one person; `owner` is the row that linked first and the
+  # one the owner-only routes act on.
+  def self.owner
+    find_by(owner: true) || order(:id).first
   end
 
-  def self.connected?
-    current&.refresh_token.present?
+  def self.any_connected?
+    connected.exists?
   end
 
   def token_expired?

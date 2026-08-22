@@ -1,6 +1,6 @@
 default: &default
   sync_spotify_recently_played:
-    class: SyncRecentlyPlayedJob
+    class: SyncAllAccountsJob
     queue: default
     # Spotify only keeps the last 50 plays, so poll often enough to avoid
     # losing history while keeping API usage moderate.

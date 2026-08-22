@@ -7,12 +7,12 @@ module Spotify
     ACCOUNTS_HOST = "https://accounts.spotify.com".freeze
 
     class << self
-      def authorize_url(state:)
+      def authorize_url(state:, scopes: Spotify::SCOPES)
         query = URI.encode_www_form(
           client_id: Spotify.client_id,
           response_type: "code",
           redirect_uri: Spotify.redirect_uri,
-          scope: Spotify::SCOPES.join(" "),
+          scope: Array(scopes).join(" "),
           state: state,
           # Force the consent screen so switching accounts is possible.
           show_dialog: "true"

@@ -1,13 +1,16 @@
 module Api
-  # Public read-only feed of what the owner has been listening to.
+  # Public read-only feed of what the owner and their friends have been
+  # listening to.
   class PlaysController < BaseController
     DEFAULT_LIMIT = 30
     MAX_LIMIT = 100
 
     def index
-      plays = Play.recent
+      plays = Play.on_the_feed
+                  .by_listener(params[:listener])
+                  .recent
                   .before(cursor)
-                  .includes(track: { track_artists: :artist })
+                  .includes(:spotify_account, track: { track_artists: :artist })
                   .limit(limit + 1)
                   .to_a
 
@@ -39,12 +42,21 @@ module Api
 
     def serialize(play)
       track = play.track
+      listener = play.spotify_account
 
       {
         id: play.id,
         played_at: play.played_at.iso8601(3),
         context_type: play.context_type,
         context_url: play.context_url,
+        # Who played it. The feed mixes several people, so a row means nothing
+        # without a name attached to it.
+        listener: {
+          id: listener.id,
+          name: listener.display_name,
+          avatar_url: listener.avatar_url,
+          owner: listener.owner
+        },
         track: {
           spotify_id: track.spotify_id,
           name: track.name,

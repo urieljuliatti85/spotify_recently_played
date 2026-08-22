@@ -10,9 +10,10 @@ async function request(path, { signal } = {}) {
   return response.json()
 }
 
-export function fetchPlays({ before, limit = 30, signal } = {}) {
+export function fetchPlays({ before, limit = 30, listener, signal } = {}) {
   const params = new URLSearchParams({ limit: String(limit) })
   if (before) params.set("before", before)
+  if (listener) params.set("listener", String(listener))
 
   return request(`/api/plays?${params}`, { signal })
 }
