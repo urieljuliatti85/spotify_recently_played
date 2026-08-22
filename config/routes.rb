@@ -25,5 +25,11 @@ Rails.application.routes.draw do
     delete "invites/:id", to: "invites#destroy", as: :invite
   end
 
+  # Where Spotify returns a *visitor* who signed in for volume control. It
+  # serves the same React app; the code exchange happens in their browser, and
+  # nothing about it reaches the server. Separate from /spotify/callback, which
+  # links the accounts this site mirrors.
+  get "listen/callback", to: "pages#index", as: :listen_callback
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

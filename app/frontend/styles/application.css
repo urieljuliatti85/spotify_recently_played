@@ -1987,6 +1987,84 @@ button {
   white-space: nowrap;
 }
 
+/* The real control, shown only when the SDK engine is playing. Same visual
+   language as the scrubber, at a smaller scale — it is the same kind of thing.
+   The track is drawn with a gradient rather than a filled pseudo-element so
+   both engines of the range input (WebKit and Gecko) get the same fill. */
+.volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume__mute {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.volume__mute:hover {
+  color: var(--accent);
+}
+
+.volume__range {
+  width: 84px;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--progress, 0%),
+    rgba(148, 175, 202, 0.22) var(--progress, 0%)
+  );
+  cursor: pointer;
+}
+
+.volume__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(242, 11, 24, 0.28);
+}
+
+.volume__range::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(242, 11, 24, 0.28);
+}
+
+/* Sits beside the toggles but is not one of them: no border, no hover, no
+   pointer — it reads as the caption it is. */
+.playerbar__volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  cursor: default;
+}
+
+.playerbar__volume-label {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* Kept in the layout so the controller keeps its iframe; only collapsed. */
 .playerbar__embed {
   grid-column: 1 / -1;
@@ -2122,6 +2200,20 @@ button {
 
   .icon-toggle__label {
     display: none;
+  }
+
+  /* The whole note goes, not just its words: a lone speaker icon with no
+     caption reads as a volume button, which is the confusion it exists to
+     prevent. Nobody hunts for an on-screen slider on a phone anyway. */
+  .playerbar__volume {
+    display: none;
+  }
+
+  /* The slider does stay — it works, and it is the one control the hardware
+     buttons cannot reach when the SDK owns playback — but the bar is tight, so
+     it gives up half its width. */
+  .volume__range {
+    width: 48px;
   }
 }
 

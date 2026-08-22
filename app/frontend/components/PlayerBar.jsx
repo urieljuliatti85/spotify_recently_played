@@ -1,11 +1,79 @@
-import { Fragment } from "react"
+import { Fragment, useCallback, useMemo } from "react"
 import { useSpotifyEmbed } from "../hooks/useSpotifyEmbed"
+import { useWebPlayback } from "../hooks/useWebPlayback"
 import { creditsOf } from "../lib/derive"
 import { duration as formatDuration } from "../lib/format"
-import { CloseIcon, ExternalIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon, ShuffleIcon } from "./icons"
+import {
+  CloseIcon,
+  ExternalIcon,
+  NextIcon,
+  PauseIcon,
+  PlayIcon,
+  PrevIcon,
+  ShuffleIcon,
+  VolumeIcon,
+} from "./icons"
+import VolumeControl from "./VolumeControl"
+
+const VOLUME_KEY = "volume"
 
 function clock(ms) {
   return formatDuration(ms) ?? "0:00"
+}
+
+/**
+ * Whatever belongs where a volume control would go, which depends on which
+ * engine is playing. Only the SDK can set a level; under the embed the honest
+ * thing is a note about where the volume actually lives, because a slider
+ * there would move without changing anything.
+ */
+function VolumeArea({ state, volume, onChange, onSignIn }) {
+  if (state === "ready") return <VolumeControl volume={volume} onChange={onChange} />
+
+  if (state === "starting") {
+    return (
+      <p className="playerbar__volume">
+        <VolumeIcon size={15} />
+        <span className="playerbar__volume-label">Connecting…</span>
+      </p>
+    )
+  }
+
+  // Without a client id there is nothing to sign in to, so the note stands in.
+  if (state === "signed-out" && onSignIn) {
+    return (
+      <button
+        type="button"
+        className="icon-toggle"
+        onClick={onSignIn}
+        title="Sign in with Spotify Premium to play full tracks and set the volume here."
+      >
+        <VolumeIcon size={15} />
+        <span className="icon-toggle__label">Sign in for volume</span>
+      </button>
+    )
+  }
+
+  // Signed in, but this account cannot stream — almost always a free
+  // account, since the SDK is Premium-only. The embed is playing instead.
+  return (
+    <p
+      className="playerbar__volume"
+      title="This Spotify account cannot stream here (the volume slider needs Premium), so the embedded player is being used. Use your device's volume."
+    >
+      <VolumeIcon size={15} />
+      <span className="playerbar__volume-label">System volume</span>
+    </p>
+  )
+}
+
+function readVolumePreference() {
+  try {
+    const stored = Number(window.localStorage.getItem(VOLUME_KEY))
+    return Number.isFinite(stored) && stored >= 0 && stored <= 1 ? stored : 0.7
+  } catch {
+    return 0.7
+  }
 }
 
 export default function PlayerBar({
@@ -19,19 +87,57 @@ export default function PlayerBar({
   onOpenArtist,
   hasPrev,
   hasNext,
+  clientId,
+  signedIn,
+  onSignIn,
+  onSignedOut,
 }) {
-  // The play id, not the track id, is what restarts the embed: the same track
-  // turns up all over the feed, and picking one of those has to play it again.
-  const { containerRef, state, playback, togglePlay, seek } = useSpotifyEmbed(
-    play?.track?.spotify_id,
-    { onEnded, restartKey: play?.id }
-  )
+  // The play id, not the track id, is what restarts either engine: the same
+  // track turns up all over the feed, and picking one has to play it again.
+  const restartKey = play?.id
+  const spotifyId = play?.track?.spotify_id
+
+  // Read once, not on every render: this is the level the device is created
+  // with, and later changes go through setVolume.
+  const initialVolume = useMemo(readVolumePreference, [])
+
+  const sdk = useWebPlayback({
+    clientId,
+    enabled: signedIn,
+    spotifyId,
+    restartKey,
+    onEnded,
+    onSignedOut,
+    initialVolume,
+  })
+
+  // Whichever engine is playing, only one may hold the track: handing the
+  // embed a uri while the SDK owns playback would play the song twice, out of
+  // sync with itself.
+  const sdkDriving = sdk.state === "ready"
+  const embed = useSpotifyEmbed(sdkDriving ? null : spotifyId, { onEnded, restartKey })
+
+  const { containerRef } = embed
+  const { playback, togglePlay, seek } = sdkDriving ? sdk : embed
 
   const { track } = play
-  // The embed reports the track's real duration once it loads; until then the
+  // The engine reports the track's real duration once it loads; until then the
   // stored duration keeps the scrubber from rendering at zero width.
   const total = playback.duration || track.duration_ms || 0
-  const controllable = state === "ready"
+  const controllable = sdkDriving || embed.state === "ready"
+
+  const { setVolume } = sdk
+  const changeVolume = useCallback(
+    (next) => {
+      setVolume(next)
+      try {
+        window.localStorage.setItem(VOLUME_KEY, String(next))
+      } catch {
+        // Private browsing: the level just won't survive a reload.
+      }
+    },
+    [setVolume]
+  )
 
   return (
     <div className="playerbar" role="region" aria-label="Player">
@@ -124,6 +230,13 @@ export default function PlayerBar({
       </div>
 
       <div className="playerbar__side">
+        <VolumeArea
+          state={sdk.state}
+          volume={sdk.volume}
+          onChange={changeVolume}
+          onSignIn={onSignIn}
+        />
+
         <button
           type="button"
           className={`icon-toggle ${autoplay ? "icon-toggle--on" : ""}`}

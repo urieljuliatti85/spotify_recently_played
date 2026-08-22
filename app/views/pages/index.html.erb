@@ -1,3 +1,8 @@
+<%# `client_id` is public by design: the visitor sign-in that powers the volume
+    slider is an OAuth *public client* (PKCE), so it carries no secret. The
+    client secret stays on the server and is never rendered. %>
 <div id="app"
      data-flash="<%= flash[:notice] %>"
-     data-connect-path="<%= spotify_connect_path %>"></div>
+     data-connect-path="<%= spotify_connect_path %>"
+     data-client-id="<%= Spotify.client_id %>"
+     data-listen-redirect-uri="<%= listen_callback_url %>"></div>

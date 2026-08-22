@@ -6,6 +6,11 @@ const mount = document.getElementById("app")
 
 if (mount) {
   createRoot(mount).render(
-    <App connectPath={mount.dataset.connectPath} flash={mount.dataset.flash || null} />
+    <App
+      connectPath={mount.dataset.connectPath}
+      flash={mount.dataset.flash || null}
+      clientId={mount.dataset.clientId || null}
+      listenRedirectUri={mount.dataset.listenRedirectUri}
+    />
   )
 }

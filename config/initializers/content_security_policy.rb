@@ -24,12 +24,17 @@ Rails.application.configure do
     # the stub and blocks the script that actually defines the controller. The
     # loader also copies its own nonce onto the script it injects, which is what
     # covers Spotify rotating that CDN hostname — see the tag in the layout.
-    policy.script_src  :self, "https://open.spotify.com", "https://embed-cdn.spotifycdn.com"
-    policy.frame_src   "https://open.spotify.com"
+    # sdk.scdn.co serves the Web Playback SDK and the iframe it creates
+    # (sdk.scdn.co/embedded/index.html) to do the actual decoding.
+    policy.script_src  :self, "https://open.spotify.com", "https://embed-cdn.spotifycdn.com",
+                       "https://sdk.scdn.co"
+    policy.frame_src   "https://open.spotify.com", "https://sdk.scdn.co"
 
-    # The page only ever talks to its own /api routes; the embed does its own
-    # networking from inside the iframe, under Spotify's origin, not ours.
-    policy.connect_src :self
+    # The page talks to its own /api routes, and — for a visitor who signed in
+    # for volume control — to Spotify directly: accounts.spotify.com for the
+    # PKCE token exchange, api.spotify.com to start playback on this device.
+    # The embeds do their own networking under their own origins, not ours.
+    policy.connect_src :self, "https://accounts.spotify.com", "https://api.spotify.com"
 
     # React writes element styles through the CSSOM, which CSP does not police,
     # but Vite injects real <style> tags — hence unsafe-inline for styles only.

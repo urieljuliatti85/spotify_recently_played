@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { usePlays } from "../hooks/usePlays"
 import { fetchStatus } from "../lib/api"
+import { beginLogin, completeLogin, isSignedIn } from "../lib/spotifyPkce"
 import {
   albumsFrom,
   artistProfile,
@@ -42,7 +43,11 @@ function readAutoplayPreference() {
   }
 }
 
-export default function App({ connectPath, flash }) {
+export default function App({ connectPath, flash, clientId, listenRedirectUri }) {
+  // A visitor signing in to get a volume slider is a different thing from the
+  // accounts this site mirrors: the token lives in their browser only, and no
+  // listener row is ever created for them.
+  const [signedIn, setSignedIn] = useState(isSignedIn)
   // null means "everyone"; an id narrows the feed to one person.
   const [listenerId, setListenerId] = useState(null)
   const { plays, status: feedStatus, error, loadMore, loadAll, loadingMore, hasMore } =
@@ -58,6 +63,21 @@ export default function App({ connectPath, flash }) {
   // means the player stays inside that artist until something else is played.
   const [playScope, setPlayScope] = useState(null)
   const [playQueue, setPlayQueue] = useState(null)
+
+  // Spotify sends the browser back here after the consent screen.
+  useEffect(() => {
+    if (!clientId) return
+
+    completeLogin({ clientId, redirectUri: listenRedirectUri }).then((justSignedIn) => {
+      if (justSignedIn) setSignedIn(true)
+    })
+  }, [clientId, listenRedirectUri])
+
+  const signIn = useCallback(() => {
+    beginLogin({ clientId, redirectUri: listenRedirectUri })
+  }, [clientId, listenRedirectUri])
+
+  const handleSignedOut = useCallback(() => setSignedIn(false), [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -412,6 +432,10 @@ export default function App({ connectPath, flash }) {
           onOpenArtist={showArtist}
           hasPrev={hasPrev}
           hasNext={hasNext}
+          clientId={clientId}
+          signedIn={signedIn}
+          onSignIn={clientId ? signIn : null}
+          onSignedOut={handleSignedOut}
         />
       )}
     </div>

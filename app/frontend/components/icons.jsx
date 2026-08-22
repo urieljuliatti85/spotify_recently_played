@@ -58,6 +58,12 @@ export const VolumeIcon = (props) => (
   </Glyph>
 )
 
+export const VolumeMuteIcon = (props) => (
+  <Glyph {...props}>
+    <path d="M11 4v16l-5-4H3V8h3zm3.3 4.1l1.4-1.4L18 9l2.3-2.3 1.4 1.4L19.4 10.4l2.3 2.3-1.4 1.4L18 11.8l-2.3 2.3-1.4-1.4 2.3-2.3z" />
+  </Glyph>
+)
+
 export const CloseIcon = (props) => (
   <Glyph {...props}>
     <path d="M18.3 5.7L13.4 12l4.9 6.3-1.6 1.4L12 13.6l-4.7 6.1-1.6-1.4 4.9-6.3-4.9-6.3 1.6-1.4L12 10.4l4.7-6.1z" />
