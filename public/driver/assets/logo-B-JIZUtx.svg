@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" role="img" aria-label="Logo">
-  <circle cx="24" cy="24" r="20" fill="none" stroke="#1ed760" stroke-width="3"/>
-  <circle cx="24" cy="24" r="4" fill="#1ed760"/>
-  <path d="M56 24h6l4-10 6 20 5-14 4 8h13" fill="none" stroke="#1ed760"
-        stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
