@@ -256,9 +256,20 @@ commit. To enable it in a new clone:
 git config core.hooksPath .githooks
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same checks, plus Brakeman,
-bundler-audit, and the frontend build. There is also a review skill in
-`.claude/skills/code-reviewer/`, used by Claude Code.
+CI (`.github/workflows/ci.yml`) runs the same checks, plus the frontend build
+and three vulnerability scans: Brakeman (Rails static analysis), bundler-audit
+(known CVEs in gems) and `npm audit` (known CVEs in npm packages, dev
+dependencies included — Vite builds the bundle this site ships).
+`.github/workflows/codeql.yml` adds CodeQL over both Ruby and JavaScript, which
+is what covers the browser-side OAuth and playback code that Brakeman does not
+read; its findings land in the repository's Security tab.
+
+Both workflows also run weekly on a schedule, because an advisory can be
+published against a dependency nobody has touched. Dependabot watches the
+bundler, npm and github-actions ecosystems.
+
+There is also a review skill in `.claude/skills/code-reviewer/`, used by Claude
+Code.
 
 ## Deployment
 
