@@ -148,6 +148,18 @@ export default function PlayerBar({
 
         {state === "loading" && <p className="playerbar__hint">Loading the player…</p>}
 
+        {/* The transport above talks to the embed through Spotify's script. With
+            the script blocked there is nothing on the other end, so the play
+            button and the scrubber are disabled — and a dead button with no
+            explanation reads as a broken site. The fallback below does play;
+            this says so. */}
+        {state === "unavailable" && (
+          <p className="playerbar__hint">
+            Something on this browser is blocking Spotify&apos;s player script, so the
+            controls above can&apos;t reach it. Play from here instead.
+          </p>
+        )}
+
         {state === "unavailable" && (
           <iframe
             title={`Player for ${track.name}`}
