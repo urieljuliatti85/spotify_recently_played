@@ -176,6 +176,17 @@ export default function App({ connectPath, flash }) {
     changeView("tracks")
   }
 
+  // The sidebar picker, which is reachable from every tab. On the Listeners
+  // tab it needs more than a filter change: that tab draws every card from the
+  // one feed, so narrowing the feed to one person empties everyone else's card
+  // and reads as them having stopped listening. Picking someone there means
+  // "show me them", and the feed is where that lives — the same place the
+  // card's own "See all plays" button goes.
+  function pickListener(next) {
+    changeListener(next)
+    if (next !== null && view === "listeners") changeView("tracks")
+  }
+
   // Switching listener throws away everything derived from the old feed: the
   // open artist page, the player's queue, and whatever was being played.
   function changeListener(next) {
@@ -239,7 +250,7 @@ export default function App({ connectPath, flash }) {
       <Sidebar
         listeners={listeners}
         selectedListenerId={listenerId}
-        onListenerChange={changeListener}
+        onListenerChange={pickListener}
         range={range}
         onRangeChange={changeRange}
         recent={queue.slice(0, SIDEBAR_TRACKS)}
