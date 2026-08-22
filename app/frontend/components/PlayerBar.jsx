@@ -54,12 +54,18 @@ function VolumeArea({ state, volume, onChange, onSignIn }) {
     )
   }
 
-  // Signed in, but this account cannot stream — almost always a free
-  // account, since the SDK is Premium-only. The embed is playing instead.
+  // Two ways to land here, and they are not the same sentence: signed in with
+  // an account that cannot stream (free — the SDK is Premium-only), or no way
+  // to sign in at all because the site has no Spotify client id configured.
+  // Either way the embed is playing; only the reason differs.
   return (
     <p
       className="playerbar__volume"
-      title="This Spotify account cannot stream here (the volume slider needs Premium), so the embedded player is being used. Use your device's volume."
+      title={
+        state === "unsupported"
+          ? "This Spotify account cannot stream here — the volume slider needs Premium — so the embedded player is being used. Use your device's volume."
+          : "The embedded player has no volume control. Use your device's volume."
+      }
     >
       <VolumeIcon size={15} />
       <span className="playerbar__volume-label">System volume</span>
@@ -259,21 +265,21 @@ export default function PlayerBar({
       <div className={`playerbar__embed ${controllable ? "playerbar__embed--hidden" : ""}`}>
         <div ref={containerRef} />
 
-        {state === "loading" && <p className="playerbar__hint">Loading the player…</p>}
+        {embed.state === "loading" && <p className="playerbar__hint">Loading the player…</p>}
 
         {/* The transport above talks to the embed through Spotify's script. With
             the script blocked there is nothing on the other end, so the play
             button and the scrubber are disabled — and a dead button with no
             explanation reads as a broken site. The fallback below does play;
             this says so. */}
-        {state === "unavailable" && (
+        {embed.state === "unavailable" && (
           <p className="playerbar__hint">
             Something on this browser is blocking Spotify&apos;s player script, so the
             controls above can&apos;t reach it. Play from here instead.
           </p>
         )}
 
-        {state === "unavailable" && (
+        {embed.state === "unavailable" && (
           <iframe
             title={`Player for ${track.name}`}
             src={`https://open.spotify.com/embed/track/${track.spotify_id}?theme=0`}
