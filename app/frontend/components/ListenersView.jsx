@@ -1,7 +1,8 @@
-import { plural } from "../lib/derive"
+import { useMemo, useState } from "react"
+import { matchingListeners, plural } from "../lib/derive"
 import { duration, relativeTime } from "../lib/format"
 import { ListenerAvatar } from "./Listener"
-import { PlayIcon } from "./icons"
+import { PlayIcon, SearchIcon } from "./icons"
 
 // One person's card: who they are, what they just played, and what they have
 // been playing most in whatever range is selected.
@@ -137,6 +138,12 @@ export default function ListenersView({
   selectedPlayId,
   connectPath,
 }) {
+  // Local to the tab, and deliberately not the top bar's search: that one
+  // filters tracks, and a card that vanished because its owner played nothing
+  // matching would read as them having left. This filters people by name.
+  const [filter, setFilter] = useState("")
+  const shown = useMemo(() => matchingListeners(listeners, filter), [listeners, filter])
+
   if (listeners.length === 0) {
     return (
       <div className="notice">
@@ -162,23 +169,45 @@ export default function ListenersView({
           <p className="section__hint">
             {listeners.length === 1
               ? "Just you so far — invite a friend and they show up here."
-              : `${listeners.length} people, and what each of them has been playing.`}
+              : filter
+                ? `${shown.length} of ${listeners.length} people.`
+                : `${listeners.length} people, and what each of them has been playing.`}
           </p>
         </div>
+
+        {/* Only worth the space once there is a roster to sift through. */}
+        {listeners.length > 1 && (
+          <label className="search">
+            <SearchIcon size={16} />
+            <input
+              type="search"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              placeholder="Filter listeners by name…"
+              aria-label="Filter listeners by name"
+            />
+          </label>
+        )}
       </header>
 
-      <div className="lcards">
-        {listeners.map((listener) => (
-          <ListenerCard
-            key={listener.id}
-            listener={listener}
-            onSelect={onSelect}
-            onOpenArtist={onOpenArtist}
-            onOpenFeed={onOpenFeed}
-            selectedPlayId={selectedPlayId}
-          />
-        ))}
-      </div>
+      {shown.length === 0 ? (
+        <p className="section__hint">
+          Nobody here is called “{filter}”.
+        </p>
+      ) : (
+        <div className="lcards">
+          {shown.map((listener) => (
+            <ListenerCard
+              key={listener.id}
+              listener={listener}
+              onSelect={onSelect}
+              onOpenArtist={onOpenArtist}
+              onOpenFeed={onOpenFeed}
+              selectedPlayId={selectedPlayId}
+            />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

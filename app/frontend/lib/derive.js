@@ -23,6 +23,25 @@ export function withinRange(plays, rangeId, now = Date.now()) {
   return plays.filter((play) => new Date(play.played_at).getTime() >= floor)
 }
 
+// Names are matched without accents so "joao" finds "João" and "ana" finds
+// "Ana Sofía" — a filter that demands the right diacritics is a filter that
+// fails the names most likely to have them.
+function fold(text) {
+  return (text ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .toLowerCase()
+}
+
+/** Listeners whose name matches, for the filter on the Listeners tab. */
+export function matchingListeners(listeners, query) {
+  const needle = fold(query)
+  if (!needle) return listeners
+
+  return listeners.filter((listener) => fold(listener.name).includes(needle))
+}
+
 export function matching(plays, query) {
   const needle = query.trim().toLowerCase()
   if (!needle) return plays

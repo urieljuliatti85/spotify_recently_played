@@ -130,13 +130,19 @@ subsequent syncs happen automatically.
 
 ## The site
 
-The navigation has four tabs, and the selected tab is reflected in the URL
+The navigation has five tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
 - **Overview:** the recent feed, plus album and artist shelves.
 - **Tracks:** the complete history, grouped by day.
 - **Artists:** the artist grid; clicking one opens its page, with highlights from
   your history and the top tracks returned by Spotify's API.
+- **Listeners:** one card per person on the feed—what they just played, who they
+  have on repeat, and their most played—with a name filter for when the roster
+  grows. Names match without accents, so `joao` finds `João`. Note that this
+  filter is the tab's own: the top bar's search looks inside tracks, and a card
+  that disappeared because its owner played nothing matching would read as them
+  having left.
 - **Playlists:** your public playlists and each playlist's tracks.
 
 There is also a search (which filters only what is currently on screen) and a
