@@ -5,6 +5,12 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+# The frontend was the one dependency tree nothing was watching.
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

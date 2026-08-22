@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  # A new advisory can land against a dependency nobody touched, so the scans
+  # re-run on their own rather than waiting for the next pull request.
+  schedule:
+    - cron: "27 5 * * 1"
 
 jobs:
   scan_ruby:
@@ -23,7 +27,27 @@ jobs:
       
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
+  scan_js:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # `npm audit` reads package-lock.json and asks the registry, so there is
+      # nothing to install first. Dev dependencies stay in scope on purpose:
+      # Vite builds the bundle this site ships, so a compromised build tool is
+      # a compromised page.
+      - name: Scan for known security vulnerabilities in npm packages
+        run: npm audit --audit-level=moderate
+
   lint:
     runs-on: ubuntu-latest
     env:

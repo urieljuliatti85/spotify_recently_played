@@ -1,0 +1,45 @@
+# Static analysis of the code itself, next to the dependency scans in ci.yml.
+#
+# It earns its place alongside Brakeman: Brakeman only reads Rails, and this
+# app keeps a growing amount of logic in the browser — OAuth, token handling,
+# playback — that nothing else here analyses.
+name: CodeQL
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "41 5 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Writing the findings to the repository's Security tab.
+      security-events: write
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ javascript-typescript, ruby ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Neither language is compiled, so CodeQL reads the source directly
+          # instead of watching a build.
+          build-mode: none
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
