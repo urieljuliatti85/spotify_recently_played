@@ -82,10 +82,12 @@ registered in your Spotify app's dashboard.
 3. Under **APIs used**, select **Web API**.
 4. Copy the **Client ID** and **Client Secret**.
 
-The app requests two scopes: `user-read-recently-played` (history) and
-`playlist-read-private` (the playlists tab). If you connected the account before
-the playlists tab existed, redo `/spotify/connect`—without the second scope, the
-tab returns 403 and explains this on screen.
+The app requests three scopes: `user-read-recently-played` (history),
+`playlist-read-private` (the playlists tab) and `playlist-modify-public`
+(building a playlist from that tab). Friends grant only the first. If you
+connected the account before one of these was asked for, redo
+`/spotify/connect`—without the scope, the feature returns 403 and explains this
+on screen.
 
 ### 2. Configure the project
 
@@ -145,7 +147,17 @@ The navigation has six tabs, and the selected tab is reflected in the URL
   filter is the tab's own: the top bar's search looks inside tracks, and a card
   that disappeared because its owner played nothing matching would read as them
   having left.
-- **Playlists:** your public playlists and each playlist's tracks.
+- **Playlists:** your public playlists and each playlist's tracks. As the owner
+  you also get **Add new playlist**, which gathers tracks by the artists already
+  on the feed that nobody here has played, lets you uncheck what you do not
+  want, and creates a public playlist out of the rest. It is owner-only because
+  it writes to your Spotify account—visitors are not shown the button. The
+  browser holds no `ADMIN_PASSWORD` until something asks for it, and nothing on
+  the public feed does, so the tab carries an **Owner sign-in** link that
+  triggers the prompt and drops you back here with the button showing. Spotify
+  refuses `/v1/artists/{id}/top-tracks` for this app, so the candidates come
+  from a catalogue search per artist instead; it walks the fifteen most played
+  artists and caches each answer for an hour.
 - **Discogs:** the records you own, and which of their tracks Spotify can
   actually play. See below.
 
@@ -172,10 +184,13 @@ something else.
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
+| `GET /spotify/owner?view=` | owner | Asks the browser for `ADMIN_PASSWORD`, then returns to the feed |
 | `GET /spotify/connect` | owner | Starts OAuth for the owner |
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
 | `GET /spotify/callback` | state | Receives the code and saves tokens |
 | `POST /spotify/sync` | owner | Syncs every listener now, without waiting for the job |
+| `GET /spotify/playlists/unheard` | owner | Tracks by the feed's artists that nobody has played |
+| `POST /spotify/playlists` | owner | Creates a public playlist from a chosen selection |
 | `GET/POST /spotify/invites` | owner | List and issue invite links |
 | `DELETE /spotify/invites/:id` | owner | Revoke an unclaimed invite |
 | `DELETE /spotify` | owner | Unlinks the owner |

@@ -105,3 +105,9 @@ export const ExternalIcon = (props) => (
     <path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h5v2H7v10h10v-3h2v5H5z" />
   </Glyph>
 )
+
+export const SparkIcon = (props) => (
+  <Glyph {...props}>
+    <path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9zM18.5 15l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
+  </Glyph>
+)

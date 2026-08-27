@@ -161,5 +161,13 @@ module Spotify
 
       assert SpotifyAccount.find_by(spotify_user_id: "first").owner
     end
+
+    test "the owner sign-in route challenges, then drops the browser back on the feed" do
+      get spotify_owner_path
+      assert_response :unauthorized
+
+      get spotify_owner_path, params: { view: "playlists" }, headers: admin_headers
+      assert_redirected_to root_path(view: "playlists")
+    end
   end
 end

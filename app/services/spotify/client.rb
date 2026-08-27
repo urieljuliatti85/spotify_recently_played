@@ -73,6 +73,22 @@ module Spotify
       get("/v1/search", params)
     end
 
+    # Always public: the playlists tab only lists the owner's public ones, so a
+    # private playlist would be built and then be invisible to the site that
+    # built it. Spotify has no form that creates and fills in one call — the
+    # playlist has to exist before anything can be added to it.
+    def create_playlist(name:, description: nil)
+      post("/v1/me/playlists", { name: name, public: true, description: description }.compact)
+    end
+
+    # Spotify takes at most 100 uris per call, so a longer selection goes up in
+    # order, one chunk at a time.
+    def add_playlist_items(playlist_id, uris)
+      Array(uris).each_slice(100).map do |chunk|
+        post("/v1/playlists/#{URI.encode_www_form_component(playlist_id)}/items", { uris: chunk })
+      end
+    end
+
     # Carries the first 50 tracks inline, which covers a double LP. With a
     # market each track also gets `is_playable`.
     def album(id, market: nil)
@@ -113,6 +129,18 @@ module Spotify
       handle(perform(uri, request))
     end
 
+    def post(path, body)
+      uri = URI.join(API_HOST, path)
+
+      request = Net::HTTP::Post.new(uri)
+      request["Authorization"] = "Bearer #{account.fresh_access_token}"
+      request["Accept"] = "application/json"
+      request["Content-Type"] = "application/json"
+      request.body = JSON.generate(body)
+
+      handle(perform(uri, request))
+    end
+
     def perform(uri, request)
       Net::HTTP.start(uri.host, uri.port, use_ssl: true,
                                           open_timeout: OPEN_TIMEOUT,
@@ -125,7 +153,7 @@ module Spotify
       status = response.code.to_i
 
       case status
-      when 200 then JSON.parse(response.body.presence || "{}")
+      when 200, 201 then JSON.parse(response.body.presence || "{}")
       when 204 then nil
       when 401
         raise AuthError.new("Spotify rejected the access token", status:, body: response.body)

@@ -20,6 +20,16 @@ module Spotify
       begin_authorization(invite: nil)
     end
 
+    # Signing in as the owner is nothing more than getting the browser to ask
+    # for ADMIN_PASSWORD: once it has, it replays those credentials on the
+    # feed's own fetches, and /api/status starts answering `admin`. Reaching
+    # this action at all means the guard already passed, so there is nothing
+    # left to do but go back. `view` only ever becomes a query string on the
+    # app's own root, so it cannot redirect anywhere else.
+    def owner
+      redirect_to root_path(view: params[:view].presence)
+    end
+
     # A friend's way in. The token is single-use and expiring; it is checked
     # here so a dead link fails before anyone is sent to Spotify, and again
     # after the callback so a link cannot be claimed twice by racing it.

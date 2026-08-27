@@ -37,5 +37,15 @@ module Api
       assert_equal true, response.parsed_body["connected"], "still linked, just not shown"
       assert_empty response.parsed_body["listeners"]
     end
+
+    test "tells the frontend whether the caller may use the owner-only actions" do
+      get api_status_path
+      assert_response :success
+      assert_equal false, response.parsed_body["admin"]
+
+      get api_status_path, headers: admin_headers
+      assert_response :success
+      assert_equal true, response.parsed_body["admin"]
+    end
   end
 end

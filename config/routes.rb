@@ -28,6 +28,17 @@ Rails.application.routes.draw do
     delete "listeners/:id", to: "sessions#destroy", as: :listener
     post   "sync",          to: "syncs#create",     as: :sync
 
+    # The only route that exists to be challenged. Nothing on the public feed
+    # ever asks for ADMIN_PASSWORD, so without somewhere to hand it over the
+    # owner-only actions can never appear in the browser: the guard answers
+    # 401, the frontend never sees `admin`, and the button stays hidden.
+    get "owner", to: "sessions#owner", as: :owner
+
+    # Owner-only: build a public playlist out of what the feed has not played.
+    get  "playlists/search", to: "playlists#search", as: :search_playlist_tracks
+    get  "playlists/unheard", to: "playlists#unheard", as: :unheard_playlist_tracks
+    post "playlists",         to: "playlists#create",  as: :playlists
+
     # Owner-only: the links friends use to add themselves.
     get    "invites",     to: "invites#index",   as: :invites
     post   "invites",     to: "invites#create"

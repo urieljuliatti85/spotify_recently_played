@@ -1,7 +1,16 @@
 const HEADERS = { Accept: "application/json" }
 
-async function request(path, { signal } = {}) {
-  const response = await fetch(path, { headers: HEADERS, signal })
+async function request(path, { signal, method = "GET", body } = {}) {
+  const headers = body ? { ...HEADERS, "Content-Type": "application/json" } : HEADERS
+  // Same-origin credentials on purpose: the owner-only routes are guarded by
+  // HTTP Basic, and the browser only replays those when it is allowed to.
+  const response = await fetch(path, {
+    headers,
+    method,
+    signal,
+    credentials: "same-origin",
+    body: body ? JSON.stringify(body) : undefined,
+  })
 
   if (!response.ok) {
     // Every endpoint here answers JSON on failure too, and its `error` says
@@ -10,7 +19,7 @@ async function request(path, { signal } = {}) {
     const message = await response
       .clone()
       .json()
-      .then((body) => body?.error)
+      .then((payload) => payload?.error)
       .catch(() => null)
 
     const failure = new Error(message || `Request to ${path} failed with ${response.status}`)
@@ -73,4 +82,24 @@ export function fetchDiscogsReleases({ list = "collection", signal, ...filters }
 
 export function fetchDiscogsRelease(discogsId, { signal } = {}) {
   return request(`/api/discogs/releases/${encodeURIComponent(discogsId)}`, { signal })
+}
+
+// Owner-only. Both of these spend the owner's Spotify quota — the first reads
+// one catalogue search per artist, the second writes to their account — so
+// they live outside /api and answer 401 to anyone else.
+export function fetchUnheardTracks({ signal } = {}) {
+  return request("/spotify/playlists/unheard", { signal })
+}
+
+export function searchPlaylistTracks(query, { signal } = {}) {
+  const params = new URLSearchParams({ q: query })
+  return request(`/spotify/playlists/search?${params}`, { signal })
+}
+
+export function createUnheardPlaylist({ name, trackIds, signal } = {}) {
+  return request("/spotify/playlists", {
+    method: "POST",
+    body: { name, track_ids: trackIds },
+    signal,
+  })
 }

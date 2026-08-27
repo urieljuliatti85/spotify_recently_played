@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { fetchPlaylistTracks, fetchPlaylists } from "../lib/api"
 import { duration } from "../lib/format"
-import { ChevronLeftIcon, PlayIcon } from "./icons"
+import { ChevronLeftIcon, PlayIcon, SparkIcon } from "./icons"
+import UnheardComposer from "./UnheardComposer"
 
 export default function PlaylistView({ onSelect, connectPath }) {
   const [playlists, setPlaylists] = useState([])
@@ -9,6 +10,11 @@ export default function PlaylistView({ onSelect, connectPath }) {
   const [tracks, setTracks] = useState([])
   const [state, setState] = useState("loading")
   const [error, setError] = useState(null)
+  const [composing, setComposing] = useState(false)
+  // Bumped after a playlist is created, to re-run the fetch below. The server
+  // drops its own five-minute cache on create, so this is all that stands
+  // between the new playlist and the grid.
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -25,7 +31,7 @@ export default function PlaylistView({ onSelect, connectPath }) {
       })
 
     return () => controller.abort()
-  }, [])
+  }, [reload])
 
   function openPlaylist(playlist) {
     setSelected(playlist)
@@ -49,6 +55,21 @@ export default function PlaylistView({ onSelect, connectPath }) {
       track,
   }))
 
+  // Ahead of the two returns below on purpose: what the owner has never played
+  // is worked out from the feed and from Spotify's catalogue, so the composer
+  // still works on a day the playlists themselves will not load.
+  if (composing) {
+    return (
+      <section className="section playlists">
+        <UnheardComposer
+          connectPath={connectPath}
+          onClose={() => setComposing(false)}
+          onCreated={() => setReload((n) => n + 1)}
+        />
+      </section>
+    )
+  }
+
   if (state === "loading") return <p className="section__hint">Loading public playlists…</p>
   if (state === "error" && !selected) {
     return (
@@ -60,6 +81,9 @@ export default function PlaylistView({ onSelect, connectPath }) {
             Reconnect Spotify
           </a>
         )}
+        <button type="button" className="btn btn--filled" onClick={() => setComposing(true)}>
+          <SparkIcon size={16} /> Add new playlist
+        </button>
       </div>
     )
   }
@@ -73,6 +97,9 @@ export default function PlaylistView({ onSelect, connectPath }) {
               <h1 className="section__title">Public playlists</h1>
               <p className="section__hint">Choose a playlist to play its tracks.</p>
             </div>
+            <button type="button" className="btn btn--filled" onClick={() => setComposing(true)}>
+              <SparkIcon size={16} /> Add new playlist
+            </button>
           </header>
 
           {playlists.length === 0 && <p className="section__hint">No public playlists found.</p>}

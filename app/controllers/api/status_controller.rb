@@ -2,6 +2,8 @@ module Api
   # Lets the frontend distinguish "nothing played yet" from "not linked yet",
   # and tells it who is on the feed.
   class StatusController < BaseController
+    include AdminIdentified
+
     def show
       listeners = SpotifyAccount.listed.to_a
       # One grouped count for everyone rather than one query per listener.
@@ -10,6 +12,10 @@ module Api
       render json: {
         configured: Spotify.configured?,
         connected: SpotifyAccount.any_connected?,
+        # Whether to offer the owner-only actions in the UI at all. Asked
+        # without challenging, so a visitor is never shown a Basic auth dialog
+        # just for loading the feed.
+        admin: admin?,
         listeners: listeners.map { |listener| serialize(listener, counts) }
       }
     end
