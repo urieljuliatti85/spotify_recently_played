@@ -37,6 +37,10 @@ export function fetchArtistTracks(artistId, { signal } = {}) {
   return request(`/api/artists/${encodeURIComponent(artistId)}/tracks`, { signal })
 }
 
+export function fetchAlbumTracks(albumId, { signal } = {}) {
+  return request(`/api/albums/${encodeURIComponent(albumId)}/tracks`, { signal })
+}
+
 export function fetchPlaylists({ signal } = {}) {
   return request("/api/playlists", { signal })
 }

@@ -62,6 +62,7 @@ module Api
           name: track.name,
           artists: track.artist_names,
           album: track.album_name,
+          album_spotify_id: track.spotify_album_id,
           album_image_url: track.album_image_url,
           spotify_url: track.spotify_url,
           duration_ms: track.duration_ms,

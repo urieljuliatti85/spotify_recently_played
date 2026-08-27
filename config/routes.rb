@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   namespace :api do
     resources :plays, only: :index
     get "artists/:id/tracks", to: "artists#tracks", as: :artist_tracks
+    get "albums/:id/tracks", to: "albums#tracks", as: :album_tracks
     resources :playlists, only: :index do
       get :tracks, on: :member
     end

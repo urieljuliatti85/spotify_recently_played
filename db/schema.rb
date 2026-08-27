@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_153000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_182000) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "image_url"
@@ -96,9 +96,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_153000) do
     t.integer "duration_ms"
     t.boolean "explicit", default: false, null: false
     t.string "name", null: false
+    t.string "spotify_album_id"
     t.string "spotify_id", null: false
     t.string "spotify_url"
     t.datetime "updated_at", null: false
+    t.index ["spotify_album_id"], name: "index_tracks_on_spotify_album_id"
     t.index ["spotify_id"], name: "index_tracks_on_spotify_id", unique: true
   end
 

@@ -16,6 +16,7 @@ class Track < ApplicationRecord
       name: payload["name"],
       artist_names: Array(payload["artists"]).map { |a| a["name"] }.join(", "),
       album_name: payload.dig("album", "name"),
+      spotify_album_id: payload.dig("album", "id"),
       album_image_url: pick_image(payload.dig("album", "images")),
       spotify_url: payload.dig("external_urls", "spotify"),
       duration_ms: payload["duration_ms"],

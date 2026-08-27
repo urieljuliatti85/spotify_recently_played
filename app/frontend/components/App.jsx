@@ -12,6 +12,7 @@ import {
   withinRange,
 } from "../lib/derive"
 import ArtistView from "./ArtistView"
+import AlbumsView from "./AlbumsView"
 import DiscogsView from "./DiscogsView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
@@ -30,7 +31,7 @@ const ARTIST_GRID_SIZE = 60
 const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
-const STANDALONE_VIEWS = new Set(["playlists", "listeners", "discogs"])
+const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs"])
 
 function viewFromUrl() {
   const requested = new URLSearchParams(window.location.search).get("view")
@@ -129,6 +130,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
   )
 
   const albums = useMemo(() => albumsFrom(queue, SHELF_SIZE), [queue])
+  const recentAlbums = useMemo(() => albumsFrom(ranged, 100), [ranged])
   const artists = useMemo(
     () => artistsFrom(queue, view === "artists" ? ARTIST_GRID_SIZE : SHELF_SIZE),
     [queue, view]
@@ -329,6 +331,10 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
 
           {isReady && !profile && view === "playlists" && (
             <PlaylistView onSelect={handleSelect} connectPath={connectPath} />
+          )}
+
+          {isReady && !profile && view === "albums" && (
+            <AlbumsView albums={recentAlbums} onSelect={handleSelect} />
           )}
 
           {isReady && !profile && view === "discogs" && (

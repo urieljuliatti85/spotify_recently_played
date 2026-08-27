@@ -93,16 +93,19 @@ export function albumsFrom(plays, limit = 20) {
 
     if (existing) {
       existing.count += 1
+      existing.plays.push(play)
       continue
     }
 
     albums.set(key, {
       key,
+      albumId: play.track.album_spotify_id,
       name: album,
       artists: play.track.artists,
       imageUrl: image,
       latestPlay: play,
       count: 1,
+      plays: [play],
     })
   }
 
