@@ -221,22 +221,35 @@ export default function DiscogsView({ query, onSelect, selectedPlayId }) {
 
 function ReleaseCard({ item, onOpen }) {
   return (
-    <button type="button" className="discogs-card" onClick={onOpen}>
-      <span className="discogs-card__art">
-        {item.cover_url || item.thumb_url ? (
-          <img src={item.cover_url || item.thumb_url} alt="" loading="lazy" width="200" height="200" />
-        ) : (
-          <span className="cover--empty" />
-        )}
-        <MatchBadge spotify={item.spotify} />
-      </span>
+    <article className="discogs-card">
+      <button type="button" className="discogs-card__open" onClick={onOpen}>
+        <span className="discogs-card__art">
+          {item.cover_url || item.thumb_url ? (
+            <img src={item.cover_url || item.thumb_url} alt="" loading="lazy" width="200" height="200" />
+          ) : (
+            <span className="cover--empty" />
+          )}
+          <MatchBadge spotify={item.spotify} />
+        </span>
 
-      <span className="discogs-card__title">{item.title}</span>
-      <span className="discogs-card__artist">{item.artist}</span>
-      <span className="discogs-card__sub">
-        {[item.year, item.format_summary].filter(Boolean).join(" · ")}
-      </span>
-    </button>
+        <span className="discogs-card__title">{item.title}</span>
+        <span className="discogs-card__artist">{item.artist}</span>
+        <span className="discogs-card__sub">
+          {[item.year, item.format_summary].filter(Boolean).join(" · ")}
+        </span>
+      </button>
+
+      {item.discogs_url && (
+        <a
+          className="btn btn--outline discogs-card__buy"
+          href={item.discogs_url}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Buy this album
+        </a>
+      )}
+    </article>
   )
 }
 

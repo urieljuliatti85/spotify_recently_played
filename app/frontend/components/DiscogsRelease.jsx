@@ -98,7 +98,7 @@ export default function DiscogsRelease({ discogsId, onBack, onSelect, selectedPl
               target="_blank"
               rel="noreferrer noopener"
             >
-              Comprar este álbum
+              Buy this album
             </a>
           )}
 

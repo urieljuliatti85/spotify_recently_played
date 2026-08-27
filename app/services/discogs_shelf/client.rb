@@ -25,6 +25,12 @@ module DiscogsShelf
       get("/api/#{list}", params)
     end
 
+    def album_releases(title, artist)
+      LISTS.flat_map do |list|
+        items(list, q: "#{artist} #{title}", per_page: 100)["items"]
+      end
+    end
+
     def release(discogs_id)
       get("/api/releases/#{discogs_id.to_i}")
     end

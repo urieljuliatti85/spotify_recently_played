@@ -5,6 +5,8 @@ Rails.application.routes.draw do
     resources :plays, only: :index
     get "artists/:id/tracks", to: "artists#tracks", as: :artist_tracks
     get "albums/:id/tracks", to: "albums#tracks", as: :album_tracks
+    get "albums/:id/discogs", to: "albums#discogs", as: :album_discogs
+    get "albums/releases", to: "albums#releases", as: :album_releases
     resources :playlists, only: :index do
       get :tracks, on: :member
     end

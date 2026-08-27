@@ -41,6 +41,15 @@ export function fetchAlbumTracks(albumId, { signal } = {}) {
   return request(`/api/albums/${encodeURIComponent(albumId)}/tracks`, { signal })
 }
 
+export function fetchAlbumDiscogs(albumId, { signal } = {}) {
+  return request(`/api/albums/${encodeURIComponent(albumId)}/discogs`, { signal })
+}
+
+export function fetchAlbumReleases({ title, artist, signal } = {}) {
+  const params = new URLSearchParams({ title, artist })
+  return request(`/api/albums/releases?${params}`, { signal })
+}
+
 export function fetchPlaylists({ signal } = {}) {
   return request("/api/playlists", { signal })
 }
