@@ -26,8 +26,17 @@ module DiscogsShelf
     end
 
     def album_releases(title, artist)
-      LISTS.flat_map do |list|
-        items(list, q: "#{artist} #{title}", per_page: 100)["items"]
+      releases = LISTS.flat_map do |list|
+        [ title, artist ].flat_map do |query|
+          Array(items(list, q: query, per_page: 100)["items"])
+        end
+      end.uniq { |release| release["discogs_id"] }
+
+      releases.map do |release|
+        release.merge("marketplace" => marketplace(release["discogs_id"]))
+      rescue Error => e
+        Rails.logger.warn("[DiscogsShelf] marketplace lookup failed for #{release['discogs_id']}: #{e.message}")
+        release
       end
     end
 

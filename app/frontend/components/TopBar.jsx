@@ -3,7 +3,7 @@ import { SearchIcon } from "./icons"
 export const VIEWS = [
   { id: "overview", label: "Overview" },
   { id: "tracks", label: "Tracks" },
-  { id: "albums", label: "Albuns" },
+  { id: "albums", label: "Albums" },
   { id: "artists", label: "Artists" },
   { id: "listeners", label: "Listeners" },
   { id: "playlists", label: "Playlists" },

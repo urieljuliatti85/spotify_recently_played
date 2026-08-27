@@ -1,5 +1,7 @@
 module Api
   class AlbumsController < BaseController
+    EDITION_SUFFIX = /\s*[-\u2013\u2014]\s*(?:\d{4}\s+)?(?:re-?master|remastered|reissue|deluxe|expanded|anniversary|mono|stereo|bonus|version|edition)\b.*\z/
+
     def releases
       title = params[:title].to_s.strip
       artist = params[:artist].to_s.strip
@@ -39,13 +41,49 @@ module Api
 
     private
 
+    def shelf
+      @shelf ||= DiscogsShelf::Client.new
+    end
+
     def same_release?(release, title, artist)
-      normalize(release["title"]) == normalize(title) &&
-        normalize(release["artist"] || Array(release["artists"]).first) == normalize(artist)
+      same_title?(release["title"], title) &&
+        same_artist?(release["artist"] || Array(release["artists"]).first, artist)
+    end
+
+    # Neither side spells the album the way the other one does: Spotify hangs
+    # editions off the title ("Hexed (Deluxe Version)", "Feel the Darkness
+    # (2018 Reissue)") and Discogs hangs subtitles off it ("Unleashed In The
+    # East (Live In Japan)"). Comparing the bare titles alone misses the record
+    # sitting right there on the shelf, so compare the stripped-down cores too.
+    def same_title?(release_title, title)
+      normalize(release_title) == normalize(title) ||
+        core_title(release_title) == core_title(title)
+    end
+
+    def same_artist?(release_artist, requested_artist)
+      release_artist = normalize(release_artist)
+      requested_artists = requested_artist.to_s.split(",").map { |name| normalize(name) }.reject(&:blank?)
+
+      requested_artists.any? { |artist| artist == release_artist || artist.include?(release_artist) } ||
+        release_artist.present? && requested_artists.any? { |artist| release_artist.include?(artist) }
     end
 
     def normalize(value)
       value.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, "").downcase.strip
+    end
+
+    # Parenthesised groups go entirely; a trailing dash only counts as an
+    # edition marker when it names one, because plenty of records legitimately
+    # carry a dash ("Three - Architects Of Troubled Sleep") and dropping that
+    # half would collapse unrelated titles onto each other.
+    def core_title(value)
+      core = normalize(value)
+        .gsub(/\([^)]*\)|\[[^\]]*\]/, " ")
+        .sub(EDITION_SUFFIX, "")
+        .squeeze(" ")
+        .strip
+
+      core.presence || normalize(value)
     end
 
     def serialize(track)
