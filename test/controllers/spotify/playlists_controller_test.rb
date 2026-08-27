@@ -23,6 +23,10 @@ module Spotify
         @added << [ playlist_id, uris ]
       end
 
+      def me
+        { "country" => "BR" }
+      end
+
       def search(query, type:, limit:, market:)
         @search_call = { query: query, type: type, limit: limit, market: market }
         { "tracks" => { "items" => [
