@@ -53,6 +53,22 @@ module Spotify
       client_id.present? && client_secret.present?
     end
 
+    # The country the catalogue should be judged against. Spotify only reports
+    # whether a track is playable when it is told a market, and it only reveals
+    # the owner's own country under `user-read-private`, which this app does not
+    # ask for — so SPOTIFY_MARKET is the way to set one without widening the
+    # consent screen for every listener. Without a market, playability comes
+    # back unknown and is taken at face value.
+    def market
+      return ENV["SPOTIFY_MARKET"].presence.to_s.upcase.presence if ENV["SPOTIFY_MARKET"].present?
+
+      Rails.cache.fetch("spotify:market", expires_in: 12.hours) do
+        Client.new.me&.dig("country").presence
+      end
+    rescue Error
+      nil
+    end
+
     private
 
     def setting(key)

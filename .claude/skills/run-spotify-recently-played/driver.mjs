@@ -37,7 +37,7 @@
 //   api <path>         GET a JSON endpoint off the running server
 //   smoke              up + seed + shot the offline tabs + unseed + down
 //
-//   Views: overview | tracks | artists | listeners | playlists
+//   Views: overview | tracks | artists | listeners | playlists | discogs
 //   (playlists calls Spotify live, so it is not in `smoke` — see SKILL.md)
 
 import { execFileSync, spawn } from "node:child_process"
@@ -58,11 +58,11 @@ const PREVIEW = join(ROOT, "public", "preview.html")
 // intercept the requests.
 const VITE_OUT = join(ROOT, "public", "vite-dev")
 const ASSET_DIR = join(ROOT, "public", "driver")
-const VIEWS = ["overview", "tracks", "artists", "listeners", "playlists"]
+const VIEWS = ["overview", "tracks", "artists", "listeners", "playlists", "discogs"]
 // Everything except playlists renders from the local database. The playlists
 // tab calls Spotify live, so it needs real credentials and a real linked
 // account — it is not part of the offline smoke.
-const OFFLINE_VIEWS = VIEWS.filter((v) => v !== "playlists")
+const OFFLINE_VIEWS = VIEWS.filter((v) => v !== "playlists" && v !== "discogs")
 
 const sh = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, encoding: "utf8", stdio: "pipe", ...opts })
@@ -280,13 +280,17 @@ puts "unseeded: #{plays} play(s); real data untouched " \\
 const runner = (ruby) => sh("bin/rails", ["runner", ruby], { stdio: "inherit" })
 
 // --- screenshots -----------------------------------------------------------
+// `view` may carry extra query params after a "?" — `discogs?release=1661091`
+// screenshots one record rather than the grid. Only the tab name is validated.
 function shot(view = "listeners", out) {
-  if (!VIEWS.includes(view)) die(`unknown view ${view} — one of ${VIEWS.join(", ")}`)
+  const [tab, extra = ""] = view.split("?")
+  if (!VIEWS.includes(tab)) die(`unknown view ${tab} — one of ${VIEWS.join(", ")}`)
   if (!runningPid()) die("server is not up — run `up` first")
 
   mkdirSync(OUT, { recursive: true })
-  const file = out ? resolve(out) : join(OUT, `${view}.png`)
-  const url = `${BASE}/preview.html?view=${view}`
+  const name = view.replace(/[^a-z0-9]+/gi, "-")
+  const file = out ? resolve(out) : join(OUT, `${name}.png`)
+  const url = `${BASE}/preview.html?view=${tab}${extra ? `&${extra}` : ""}`
   const bin = chrome()
 
   // Assert the app mounted before trusting the pixels: a blank frame and a
@@ -297,13 +301,14 @@ function shot(view = "listeners", out) {
     die(`app did not mount at ${url} — DOM saved to ${join(OUT, `${view}.dom.html`)}`)
   }
   const failed = dom.includes("Couldn&#039;t load") || dom.includes("Couldn't load")
-  if (failed && view !== "playlists") {
+  // Both of these tabs read something outside this app — Spotify for
+  // playlists, the discogs_shelf server for Discogs — so a failure there is a
+  // state worth photographing rather than a broken build.
+  if (failed && tab !== "playlists" && tab !== "discogs") {
     die(`app mounted but an API call failed at ${url} — check ${LOGFILE}`)
   }
   if (failed) {
-    // Expected without Spotify credentials; the screenshot still shows the
-    // error state, which is the real behaviour on a clean machine.
-    log("note: playlists could not reach Spotify — screenshotting its error state")
+    log(`note: ${tab} could not reach its upstream — screenshotting its error state`)
   }
 
   sh(bin, [...CHROME_FLAGS, "--window-size=1500,1000", `--screenshot=${file}`, url], {

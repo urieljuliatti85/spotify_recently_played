@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_210200) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_153000) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "image_url"
@@ -19,6 +19,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_210200) do
     t.string "spotify_url"
     t.datetime "updated_at", null: false
     t.index ["spotify_id"], name: "index_artists_on_spotify_id", unique: true
+  end
+
+  create_table "discogs_matches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "discogs_id", null: false
+    t.datetime "matched_at"
+    t.json "payload"
+    t.integer "playable_count", default: 0, null: false
+    t.string "spotify_album_id"
+    t.integer "track_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["discogs_id"], name: "index_discogs_matches_on_discogs_id", unique: true
   end
 
   create_table "invites", force: :cascade do |t|

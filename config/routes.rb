@@ -8,6 +8,12 @@ Rails.application.routes.draw do
       get :tracks, on: :member
     end
     resource :status, only: :show, controller: "status"
+
+    # The Discogs shelf: browsing comes from the sibling discogs_shelf app,
+    # playability from Spotify.
+    get "discogs/status",       to: "discogs#status", as: :discogs_status
+    get "discogs/releases",     to: "discogs#index",  as: :discogs_releases
+    get "discogs/releases/:id", to: "discogs#show",   as: :discogs_release
   end
 
   # Account linking: the owner's own, and a friend's via an invite.

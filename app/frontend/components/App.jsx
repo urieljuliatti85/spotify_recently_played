@@ -12,6 +12,7 @@ import {
   withinRange,
 } from "../lib/derive"
 import ArtistView from "./ArtistView"
+import DiscogsView from "./DiscogsView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
 import ListenersView from "./ListenersView"
@@ -27,6 +28,9 @@ const SIDEBAR_TRACKS = 8
 const SHELF_SIZE = 20
 const ARTIST_GRID_SIZE = 60
 const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
+// Tabs that draw from their own source rather than from the plays feed, so
+// they render whether or not anything has been played yet.
+const STANDALONE_VIEWS = new Set(["playlists", "listeners", "discogs"])
 
 function viewFromUrl() {
   const requested = new URLSearchParams(window.location.search).get("view")
@@ -301,7 +305,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             </div>
           )}
 
-          {isReady && plays.length === 0 && !showSetup && view !== "playlists" && view !== "listeners" && (
+          {isReady && plays.length === 0 && !showSetup && !STANDALONE_VIEWS.has(view) && (
             <div className="notice">
               <h2>Nothing here yet</h2>
               <p>
@@ -327,6 +331,10 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             <PlaylistView onSelect={handleSelect} connectPath={connectPath} />
           )}
 
+          {isReady && !profile && view === "discogs" && (
+            <DiscogsView query={query} onSelect={handleSelect} selectedPlayId={selected?.id} />
+          )}
+
           {isReady && !profile && view === "listeners" && (
             <ListenersView
               listeners={listenerCards}
@@ -338,7 +346,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             />
           )}
 
-          {isReady && plays.length > 0 && !profile && view !== "playlists" && view !== "listeners" && (
+          {isReady && plays.length > 0 && !profile && !STANDALONE_VIEWS.has(view) && (
             <>
               {view === "overview" && (
                 <>

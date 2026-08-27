@@ -21,6 +21,19 @@ module TestOverrides
     singleton.define_method(name, original) if original
   end
 
+  # Like `stubbing`, but the replacement is called with whatever the real method
+  # was given — for asserting how often, or with what, it was used.
+  def stubbing_with(object, name, replacement)
+    singleton = object.singleton_class
+    original = singleton.instance_method(name) if singleton.instance_methods(false).include?(name)
+
+    singleton.define_method(name) { |*args, **kwargs| replacement.call(*args, **kwargs) }
+    yield
+  ensure
+    singleton.remove_method(name)
+    singleton.define_method(name, original) if original
+  end
+
   # Swaps environment variables for the duration of the block.
   def with_env(values)
     previous = values.keys.index_with { |key| ENV[key] }

@@ -100,6 +100,8 @@ SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/spotify/callback
 ADMIN_PASSWORD=any_password
+DISCOGS_SHELF_URL=http://127.0.0.1:3001   # optional, for the Discogs tab
+SPOTIFY_MARKET=BR                         # optional, see Discogs below
 ```
 
 `.env` is already in `.gitignore`. Credentials can also be stored in
@@ -130,7 +132,7 @@ subsequent syncs happen automatically.
 
 ## The site
 
-The navigation has five tabs, and the selected tab is reflected in the URL
+The navigation has six tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
 - **Overview:** the recent feed, plus album and artist shelves.
@@ -144,6 +146,8 @@ The navigation has five tabs, and the selected tab is reflected in the URL
   that disappeared because its owner played nothing matching would read as them
   having left.
 - **Playlists:** your public playlists and each playlist's tracks.
+- **Discogs:** the records you own, and which of their tracks Spotify can
+  actually play. See below.
 
 There is also a search (which filters only what is currently on screen) and a
 time-period filter, which is the global lens—the artist page reads from the
@@ -165,6 +169,9 @@ something else.
 | `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
+| `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
+| `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
+| `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
 | `GET /spotify/connect` | owner | Starts OAuth for the owner |
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
 | `GET /spotify/callback` | state | Receives the code and saves tokens |
@@ -194,6 +201,53 @@ bin/rails spotify:sync
 curl -u owner:$ADMIN_PASSWORD -X POST http://127.0.0.1:3000/spotify/sync
 ```
 
+## Discogs
+
+The Discogs tab shows the records you own and marks, track by track, what
+Spotify will actually play.
+
+The collection itself is **not** read from Discogs by this app. It comes from
+[`discogs_shelf`](../discogs_shelf), the sibling app that already mirrors a
+Discogs profile into its own database and serves it as JSON — sync, rate
+limiting and the release cache are solved there, and a second copy here would
+mean a second Discogs token and a second mirror of the same shelf. Point this
+app at it:
+
+```
+DISCOGS_SHELF_URL=http://127.0.0.1:3001
+```
+
+Then run the shelf on that port (`bin/rails server -p 3001` in its repo; port
+3000 is taken here) and sync it at least once. Without the variable the tab
+explains what is missing instead of erroring.
+
+```bash
+bin/rails discogs:check   # is the shelf answering, and with what
+bin/rails discogs:match   # match the whole collection up front
+```
+
+### How the matching works
+
+Discogs and Spotify share no identifier, so the bridge is the text. For each
+record: one album search, then one album fetch for its tracklist, then a capped
+per-track search for whatever the album did not cover — which is what rescues a
+record Spotify only carries as part of a compilation. Titles are compared by
+word, ignoring bracketed asides, edition words ("Remastered", "- Live") and the
+translation Discogs writes after a `=` on Brazilian pressings, so
+`Exciter (Excitador)` meets `Exciter - Live`.
+
+It is guesswork, and it is priced accordingly: the result is stored in
+`discogs_matches` for 30 days and reused for every visitor. **Opening a record
+is what spends the requests** — the grid only badges records that have already
+been matched, and no badge means "not looked at yet", not "not on Spotify".
+`bin/rails discogs:match` is the way to badge the whole grid in one go.
+
+`SPOTIFY_MARKET` (an ISO country code) decides which catalogue is being judged.
+Spotify only reports whether a track is playable when it is told a market, and
+it only reveals the account's own country under `user-read-private`, which this
+app deliberately does not ask listeners for. Without it, playability comes back
+unknown and is taken at face value.
+
 ## The player
 
 Each track opens in the fixed footer player, using the
@@ -219,24 +273,31 @@ extra click on the play button.
 app/
 ├── controllers/
 │   ├── api/                  # base (rate limit), plays, status, artists,
-│   │                         #   playlists (public JSON)
+│   │                         #   playlists, discogs (public JSON)
 │   ├── concerns/
 │   │   └── admin_authenticated.rb
 │   └── spotify/              # sessions (OAuth), syncs
 ├── frontend/                 # React
 │   ├── components/           # App, Sidebar, TopBar, Hero, Shelf, ArtistView,
-│   │                         #   PlaylistView, PlayFeed, PlayRow, PlayerBar,
-│   │                         #   SetupNotice, icons
+│   │                         #   PlaylistView, DiscogsView, DiscogsRelease,
+│   │                         #   PlayFeed, PlayRow, PlayerBar, SetupNotice, icons
 │   ├── hooks/                # usePlays, useSpotifyEmbed
 │   ├── images/               # logo and wordmark
 │   ├── lib/                  # api.js, derive.js, format.js
 │   └── styles/
 ├── jobs/
 │   └── sync_recently_played_job.rb
-├── models/                   # Track, Play, Artist, TrackArtist, SpotifyAccount
-└── services/spotify/         # client, authorization, recently_played_sync,
-                              #   artist_backfill
+├── models/                   # Track, Play, Artist, TrackArtist, SpotifyAccount,
+│                             #   DiscogsMatch
+└── services/
+    ├── discogs_shelf/        # read-only client for the sibling shelf app
+    └── spotify/              # client, authorization, recently_played_sync,
+                              #   artist_backfill, release_matcher
 ```
+
+`DiscogsMatch` is a cache, not a mirror: one row per Discogs release that
+somebody has opened, holding which Spotify album it turned out to be and which
+of its tracks are playable.
 
 `Track` stores the song; `Play` stores each time it was played. The same track
 played five times becomes one `Track` and five `Play` records. `Artist` exists

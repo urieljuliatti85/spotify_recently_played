@@ -65,8 +65,10 @@ node .claude/skills/run-spotify-recently-played/driver.mjs down
 | `api <path>` | GET a JSON endpoint off the running server, pretty-printed. |
 | `smoke` | All of the above, in order. Teardown runs in a `finally`, so a failed screenshot still unseeds and stops the server. |
 
-Views: `overview`, `tracks`, `artists`, `listeners`, `playlists`. They map to the
-`?view=` query param the app already reads in `App.jsx#viewFromUrl`.
+Views: `overview`, `tracks`, `artists`, `listeners`, `playlists`, `discogs`. They
+map to the `?view=` query param the app already reads in `App.jsx#viewFromUrl`.
+A view may carry extra query params after a `?` — `shot "discogs?release=1661091"`
+screenshots one record instead of the grid (quote it, or zsh eats the `?`).
 
 Env: `DRIVER_PORT` (default 3010), `DRIVER_OUT` (default `tmp/driver`), `CHROME`.
 
@@ -109,7 +111,7 @@ Spotify for real. Not the agent path.
 ## Test
 
 ```bash
-bin/rails test      # 81 tests, runs in parallel across cores
+bin/rails test      # 97 tests, runs in parallel across cores
 bin/rubocop
 bin/brakeman -q --no-pager
 ```
@@ -163,6 +165,11 @@ affect it.
   account with `playlist-read-private`). It is excluded from `smoke`;
   `shot playlists` still works and will screenshot the error state, logging a
   note, rather than failing.
+- **The Discogs tab needs the sibling `discogs_shelf` app running** at
+  `DISCOGS_SHELF_URL` (`bin/rails server -p 3001` in `../discogs_shelf`), and
+  opening a record spends real Spotify requests the first time. Like playlists,
+  it is excluded from `smoke` and screenshots its own setup notice rather than
+  failing. `bin/rails discogs:check` says whether the shelf is answering.
 - **The demo owner never steals ownership.** `seed` only sets `owner: true` when
   no owner exists, so running it against a real database leaves the real owner
   alone.

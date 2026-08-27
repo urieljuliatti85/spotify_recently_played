@@ -6,6 +6,7 @@ export const VIEWS = [
   { id: "artists", label: "Artists" },
   { id: "listeners", label: "Listeners" },
   { id: "playlists", label: "Playlists" },
+  { id: "discogs", label: "Discogs" },
 ]
 
 export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt }) {

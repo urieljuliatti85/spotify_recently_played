@@ -63,6 +63,25 @@ module Spotify
       get("/v1/playlists/#{URI.encode_www_form_component(id)}/items", limit: limit.clamp(1, 100))
     end
 
+    # Catalogue search. `market` matters more here than it looks: without it
+    # Spotify answers with everything it has anywhere, so a release that cannot
+    # be streamed in the listener's country still comes back as a hit.
+    def search(query, type:, limit: 10, market: nil)
+      params = { q: query, type: type, limit: limit.clamp(1, 50) }
+      params[:market] = market if market.present?
+
+      get("/v1/search", params)
+    end
+
+    # Carries the first 50 tracks inline, which covers a double LP. With a
+    # market each track also gets `is_playable`.
+    def album(id, market: nil)
+      params = {}
+      params[:market] = market if market.present?
+
+      get("/v1/albums/#{URI.encode_www_form_component(id)}", params)
+    end
+
     private
 
     attr_reader :account
