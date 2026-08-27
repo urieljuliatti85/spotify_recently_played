@@ -20,6 +20,7 @@ module Api
       {
         id: listener.id,
         name: listener.display_name,
+        spotify_url: listener.spotify_user_id.present? ? "https://open.spotify.com/user/#{listener.spotify_user_id}" : nil,
         avatar_url: listener.avatar_url,
         owner: listener.owner,
         last_synced_at: listener.last_synced_at&.iso8601,

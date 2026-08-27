@@ -1,4 +1,5 @@
 import { PlayIcon, ShuffleIcon } from "./icons"
+import { ListenerAvatar } from "./Listener"
 import emblemUrl from "../images/logo.svg"
 
 // Who the page is about right now: one listener when the feed is filtered,
@@ -16,6 +17,7 @@ function describe(listeners, selected) {
 }
 
 export default function Hero({ listeners = [], selectedListener, visibleCount, onPlayLatest, onShuffle }) {
+  const owner = listeners.find((listener) => listener.owner) ?? listeners[0]
 
   return (
     <section className="hero">
@@ -32,6 +34,21 @@ export default function Hero({ listeners = [], selectedListener, visibleCount, o
             ? `${visibleCount.toLocaleString("en-US")} in view — click any one to listen.`
             : "Nothing in view yet — widen the range or clear the search."}
         </p>
+
+        {owner && (
+          <a
+            className="hero__profile"
+            href={owner.spotify_url}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <ListenerAvatar listener={owner} size={42} />
+            <span className="hero__profile-meta">
+              <span className="hero__profile-label">Spotify profile</span>
+              <strong>{owner.name}</strong>
+            </span>
+          </a>
+        )}
 
         <div className="hero__actions">
           <button

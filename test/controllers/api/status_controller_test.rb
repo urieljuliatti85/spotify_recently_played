@@ -26,6 +26,7 @@ module Api
       assert_equal [ "Owner", "Ana" ], listeners.map { |l| l["name"] }
       assert_equal [ 2, 1 ], listeners.map { |l| l["plays_count"] }
       assert_equal [ true, false ], listeners.map { |l| l["owner"] }
+      assert_equal "https://open.spotify.com/user/o", listeners.first["spotify_url"]
     end
 
     test "a hidden listener is not advertised" do
