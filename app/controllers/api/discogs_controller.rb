@@ -46,9 +46,11 @@ module Api
       release = shelf.release(params[:id])
       match, error = resolve(release)
       spotify = match&.payload || {}
+      marketplace = marketplace_for(params[:id])
 
       render json: {
         release: release.slice(*RELEASE_FIELDS),
+        marketplace: marketplace,
         spotify: {
           album: spotify["album"],
           market: spotify["market"],
@@ -120,6 +122,13 @@ module Api
           track: track
         }
       end
+    end
+
+    def marketplace_for(discogs_id)
+      shelf.marketplace(discogs_id)
+    rescue DiscogsShelf::Error => e
+      Rails.logger.warn("[Api::Discogs] marketplace lookup failed for #{discogs_id}: #{e.message}")
+      nil
     end
 
     def shelf_status

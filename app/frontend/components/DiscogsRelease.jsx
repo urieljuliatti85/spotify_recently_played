@@ -64,7 +64,8 @@ export default function DiscogsRelease({ discogsId, onBack, onSelect, selectedPl
     )
   }
 
-  const { release, spotify } = data
+  const { release, spotify, marketplace } = data
+  const marketplaceUrl = marketplace?.url || marketplace?.marketplace_url
   const playable = queue.length
 
   return (
@@ -89,6 +90,17 @@ export default function DiscogsRelease({ discogsId, onBack, onSelect, selectedPl
               .filter(Boolean)
               .join(" · ")}
           </p>
+
+          {marketplaceUrl && (
+            <a
+              className="btn btn--filled discogs-detail__marketplace"
+              href={marketplaceUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Comprar este álbum
+            </a>
+          )}
 
           {(release.genres?.length > 0 || release.styles?.length > 0) && (
             <ul className="discogs-tags">

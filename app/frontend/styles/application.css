@@ -938,6 +938,11 @@ button {
 
 /* Discogs -----------------------------------------------------------------*/
 
+.discogs-detail__marketplace {
+  margin-top: 4px;
+  text-decoration: none;
+}
+
 .discogs-filters {
   display: flex;
   flex-wrap: wrap;

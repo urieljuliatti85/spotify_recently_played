@@ -29,6 +29,10 @@ module DiscogsShelf
       get("/api/releases/#{discogs_id.to_i}")
     end
 
+    def marketplace(discogs_id)
+      get("/api/releases/#{discogs_id.to_i}/marketplace")
+    end
+
     def profile
       get("/api/profile")
     end

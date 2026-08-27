@@ -17,6 +17,10 @@ module Api
         raise raises if raises
         release
       end
+      fake.define_singleton_method(:marketplace) do |_id|
+        raise raises if raises
+        { "url" => "https://www.discogs.com/sell/release/42" }
+      end
       fake.define_singleton_method(:profile) do
         raise raises if raises
         profile
@@ -92,6 +96,7 @@ module Api
       assert_equal [ false, false, true ], body["tracks"].map { |track| track["playable"] }
       assert_equal "t2", body["tracks"].last.dig("track", "spotify_id")
       assert_equal "alb", body.dig("spotify", "album", "spotify_id")
+      assert_equal "https://www.discogs.com/sell/release/42", body.dig("marketplace", "url")
     end
 
     test "the match is computed once and then read from the cache" do
