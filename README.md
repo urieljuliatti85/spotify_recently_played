@@ -362,8 +362,9 @@ encryption, cursor pagination, OAuth flow rejections, sync route protection,
 and artist and playlist endpoints. The test environment uses fixed encryption
 keys, so neither local tests nor CI need `master.key`.
 
-The hook in `.githooks/pre-commit` runs RuboCop and the tests before every
-commit. To enable it in a new clone:
+The hook in `.githooks/pre-commit` runs RuboCop, a frontend build (`bin/vite
+build`, so a broken JSX/JS file fails locally instead of only in CI), and the
+tests before every commit. To enable it in a new clone:
 
 ```bash
 git config core.hooksPath .githooks

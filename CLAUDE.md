@@ -26,7 +26,9 @@ bin/bundler-audit
 
 `bin/ci` (see `config/ci.rb`) runs setup, RuboCop, bundler-audit and Brakeman —
 it does **not** run `bin/rails test`. The `.githooks/pre-commit` hook (already
-enabled via `core.hooksPath`) runs RuboCop *and* the tests on every commit.
+enabled via `core.hooksPath`) runs RuboCop, a frontend build (`bin/vite build`,
+to catch a broken JSX/JS file before it ships), and the test suite on every
+commit.
 
 Rake tasks for operating the feed: `spotify:sync`, `spotify:invite[Label]`,
 `spotify:invites`, `spotify:revoke_invite[id]`, `spotify:listeners`,
