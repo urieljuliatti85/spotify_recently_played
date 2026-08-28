@@ -49,6 +49,11 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Per-request timing and SQL breakdown, badge in the corner of the page
+  # [https://github.com/MiniProfiler/rack-mini-profiler] — measure before
+  # reaching for an includes/preload, not instead of it.
+  gem "rack-mini-profiler"
 end
 
 # Vite-powered React frontend
