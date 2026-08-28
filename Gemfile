@@ -51,6 +51,11 @@ end
 # Vite-powered React frontend
 gem "vite_rails", "~> 3.0"
 
+# Serves swagger/v1/swagger.yaml (hand-written, not RSpec-generated — this repo
+# uses Minitest) as an interactive Swagger UI at /api-docs.
+gem "rswag-api"
+gem "rswag-ui"
+
 group :development, :test do
   # Load SPOTIFY_* credentials from .env
   gem "dotenv-rails"

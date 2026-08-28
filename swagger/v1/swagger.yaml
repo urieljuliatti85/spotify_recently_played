@@ -1,0 +1,460 @@
+---
+openapi: 3.0.1
+info:
+  title: Recently played API
+  version: v1
+  description: >
+    Public, unauthenticated JSON endpoints behind the feed. All of it counts
+    against the 60-requests-per-minute cap in Api::BaseController — see
+    docs/API.md and the README's Routes section for the narrative version of
+    this reference. Hand-written rather than generated from specs: this repo
+    tests with Minitest, and rswag-specs (the generator) requires RSpec.
+servers:
+  - url: "{scheme}://{host}"
+    variables:
+      scheme:
+        enum:
+          - http
+          - https
+        default: http
+      host:
+        default: 127.0.0.1:3000
+tags:
+  - name: Plays
+  - name: Status
+  - name: Artists
+  - name: Albums
+  - name: Playlists
+  - name: Discogs
+paths:
+  /api/plays:
+    get:
+      tags: [Plays]
+      summary: Cursor-paginated feed, newest first
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+          description: Page size.
+        - name: before
+          in: query
+          schema: { type: string, format: date-time }
+          description: Returns plays strictly before this instant. Omit for the first page.
+        - name: listener
+          in: query
+          schema: { type: integer }
+          description: A SpotifyAccount id; restricts the feed to one listener.
+      responses:
+        "200":
+          description: A page of plays
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plays:
+                    type: array
+                    items: { $ref: "#/components/schemas/Play" }
+                  next_cursor:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: Pass back as `before` to fetch the next page; null on the last page.
+
+  /api/status:
+    get:
+      tags: [Status]
+      summary: Who is on the feed, and whether owner-only actions should be offered
+      responses:
+        "200":
+          description: Feed status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Status" }
+
+  /api/artists/{id}/tracks:
+    get:
+      tags: [Artists]
+      summary: An artist's top tracks (1-hour cache)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Spotify artist id.
+      responses:
+        "200":
+          description: Top tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracks:
+                    type: array
+                    items: { $ref: "#/components/schemas/Track" }
+        "404":
+          description: Artist not found on Spotify
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Spotify request failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: No Spotify account linked
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/albums/{id}/tracks:
+    get:
+      tags: [Albums]
+      summary: An album's tracks (1-hour cache)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Spotify album id.
+      responses:
+        "200":
+          description: Album tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracks:
+                    type: array
+                    items: { $ref: "#/components/schemas/Track" }
+        "404":
+          description: Album not found on Spotify
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Spotify request failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: No Spotify account linked
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/albums/{id}/discogs:
+    get:
+      tags: [Albums]
+      summary: Already-resolved Discogs match for a Spotify album
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Spotify album id.
+      responses:
+        "200":
+          description: The match, if any has ever been resolved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url: { type: string, nullable: true }
+
+  /api/albums/releases:
+    get:
+      tags: [Albums]
+      summary: Discogs releases that look like a given Spotify album (2-minute cache)
+      description: Never touches Spotify — only searches the Discogs shelf.
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema: { type: string }
+        - name: artist
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Candidate releases (empty if title or artist is blank)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  releases:
+                    type: array
+                    items: { type: object }
+        "502":
+          description: The Discogs shelf failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/playlists:
+    get:
+      tags: [Playlists]
+      summary: The owner's public playlists (5-minute cache)
+      responses:
+        "200":
+          description: Playlists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playlists:
+                    type: array
+                    items: { $ref: "#/components/schemas/Playlist" }
+        "403":
+          description: The owner's token is missing playlist-read-private and needs reconnecting
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Spotify request failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: No Spotify account linked
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/playlists/{id}/tracks:
+    get:
+      tags: [Playlists]
+      summary: Tracks in a playlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Spotify playlist id.
+      responses:
+        "200":
+          description: Tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracks:
+                    type: array
+                    items: { $ref: "#/components/schemas/Track" }
+        "404":
+          description: Playlist not found on Spotify
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Spotify request failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: No Spotify account linked
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/discogs/status:
+    get:
+      tags: [Discogs]
+      summary: Whether the sibling discogs_shelf app is configured and answering
+      responses:
+        "200":
+          description: Shelf status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configured: { type: boolean }
+                  url: { type: string }
+                  spotify_connected: { type: boolean }
+                  reachable: { type: boolean }
+                  username: { type: string, nullable: true }
+                  collection_count: { type: integer, nullable: true }
+                  wantlist_count: { type: integer, nullable: true }
+                  last_sync: { type: string, nullable: true }
+                  error: { type: string, nullable: true, description: Present only when reachable is false }
+
+  /api/discogs/releases:
+    get:
+      tags: [Discogs]
+      summary: The shelf's collection or wantlist, with cached Spotify match badges (2-minute cache)
+      description: >
+        Never calls Spotify — only reports matches an earlier `show` visit
+        already computed.
+      parameters:
+        - name: list
+          in: query
+          schema: { type: string, enum: [collection, wantlist], default: collection }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: genre
+          in: query
+          schema: { type: string }
+        - name: style
+          in: query
+          schema: { type: string }
+        - name: media
+          in: query
+          schema: { type: string }
+        - name: decade
+          in: query
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: per_page
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: A page of releases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list: { type: string }
+                  items: { type: array, items: { type: object } }
+                  pagination: { type: object }
+                  facets: { type: object }
+                  sort: { type: string }
+        "503":
+          description: The shelf is not configured or unreachable
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: The shelf returned an error
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/discogs/releases/{id}:
+    get:
+      tags: [Discogs]
+      summary: One release, its Discogs metadata, marketplace stats, and its Spotify match
+      description: >
+        The one Discogs endpoint allowed to spend a Spotify request: it
+        resolves (and caches in discogs_matches) a match if none exists yet.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Discogs release id.
+      responses:
+        "200":
+          description: Release detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  release: { type: object }
+                  marketplace: { type: object, nullable: true }
+                  spotify:
+                    type: object
+                    properties:
+                      album: { type: string, nullable: true }
+                      market: { type: string, nullable: true }
+                      track_count: { type: integer }
+                      playable_count: { type: integer }
+                      matched_at: { type: string, nullable: true }
+                      error: { type: string, nullable: true }
+                  tracks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        position: { type: string }
+                        title: { type: string }
+                        duration: { type: string, nullable: true }
+                        artists: { type: string, nullable: true }
+                        type: { type: string, nullable: true }
+                        playable: { type: boolean }
+                        source: { type: string, nullable: true }
+                        track: { type: object, nullable: true }
+        "404":
+          description: Release not found on the shelf
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: The shelf is not configured or unreachable
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: The shelf returned an error
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+    Artist:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        url: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+    Track:
+      type: object
+      properties:
+        spotify_id: { type: string }
+        name: { type: string }
+        artists: { type: string, description: Display string, e.g. "Artist A, Artist B" }
+        album: { type: string, nullable: true }
+        album_spotify_id: { type: string, nullable: true, description: Only present on the /api/plays feed shape }
+        album_image_url: { type: string, nullable: true }
+        spotify_url: { type: string, nullable: true }
+        duration_ms: { type: integer }
+        explicit: { type: boolean }
+        artist_list:
+          type: array
+          items: { $ref: "#/components/schemas/Artist" }
+          description: Only present on the /api/plays feed shape
+    Listener:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        owner: { type: boolean }
+    Play:
+      type: object
+      properties:
+        id: { type: integer }
+        played_at: { type: string, format: date-time }
+        context_type: { type: string, nullable: true }
+        context_url: { type: string, nullable: true }
+        listener: { $ref: "#/components/schemas/Listener" }
+        track: { $ref: "#/components/schemas/Track" }
+    Status:
+      type: object
+      properties:
+        configured: { type: boolean }
+        connected: { type: boolean }
+        admin: { type: boolean }
+        listeners:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Listener"
+              - type: object
+                properties:
+                  spotify_url: { type: string, nullable: true }
+                  last_synced_at: { type: string, nullable: true }
+                  plays_count: { type: integer }
+    Playlist:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        spotify_url: { type: string }
+        tracks_count: { type: integer }
