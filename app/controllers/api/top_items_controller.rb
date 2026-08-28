@@ -23,16 +23,12 @@ module Api
         artists: Array(payload.dig("artists", "items")).filter_map { |artist| serialize_artist(artist) },
         tracks: Array(payload.dig("tracks", "items")).filter_map { |track| Spotify::TrackSerializer.call(track) }
       }
-    rescue Spotify::NotConnectedError => e
-      render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::Error => e
-      if e.status == 403
-        return render json: {
-          error: "Spotify top items permission is missing. Reconnect Spotify to grant user-top-read."
-        }, status: :forbidden
-      end
+      raise unless e.status == 403
 
-      render json: { error: e.message }, status: :bad_gateway
+      render json: {
+        error: "Spotify top items permission is missing. Reconnect Spotify to grant user-top-read."
+      }, status: :forbidden
     end
 
     private

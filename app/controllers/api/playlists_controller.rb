@@ -22,16 +22,12 @@ module Api
           }
         end
       }
-    rescue Spotify::NotConnectedError => e
-      render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::Error => e
-      if e.status == 403
-        return render json: {
-          error: "Spotify playlist permission is missing. Reconnect Spotify to grant playlist-read-private."
-        }, status: :forbidden
-      end
+      raise unless e.status == 403
 
-      render json: { error: e.message }, status: :bad_gateway
+      render json: {
+        error: "Spotify playlist permission is missing. Reconnect Spotify to grant playlist-read-private."
+      }, status: :forbidden
     end
 
     def tracks
@@ -53,12 +49,8 @@ module Api
           Spotify::TrackSerializer.call(entry["item"] || entry["track"])
         end
       }
-    rescue Spotify::NotConnectedError => e
-      render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::NotFoundError
       render json: { error: "Playlist not found on Spotify" }, status: :not_found
-    rescue Spotify::Error => e
-      render json: { error: e.message }, status: :bad_gateway
     end
   end
 end

@@ -37,12 +37,8 @@ module Api
         Spotify::TrackSerializer.call(track, album: payload, include_album_id: true)
       end
       render json: { tracks: tracks }
-    rescue Spotify::NotConnectedError => e
-      render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::NotFoundError
       render json: { error: "Album not found on Spotify" }, status: :not_found
-    rescue Spotify::Error => e
-      render json: { error: e.message }, status: :bad_gateway
     end
 
     private

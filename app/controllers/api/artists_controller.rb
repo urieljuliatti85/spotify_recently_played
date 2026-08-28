@@ -23,12 +23,8 @@ module Api
       render json: {
         tracks: tracks.filter_map { |track| Spotify::TrackSerializer.call(track, artist_list: true) }
       }
-    rescue Spotify::NotConnectedError => e
-      render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::NotFoundError
       render json: { error: "Artist not found on Spotify" }, status: :not_found
-    rescue Spotify::Error => e
-      render json: { error: e.message }, status: :bad_gateway
     end
 
     private
