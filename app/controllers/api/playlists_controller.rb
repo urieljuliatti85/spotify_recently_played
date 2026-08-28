@@ -50,7 +50,7 @@ module Api
           spotify_url: payload.dig("external_urls", "spotify")
         },
         tracks: Array(track_page["items"]).filter_map do |entry|
-          serialize_track(entry["item"] || entry["track"])
+          Spotify::TrackSerializer.call(entry["item"] || entry["track"])
         end
       }
     rescue Spotify::NotConnectedError => e
@@ -59,23 +59,6 @@ module Api
       render json: { error: "Playlist not found on Spotify" }, status: :not_found
     rescue Spotify::Error => e
       render json: { error: e.message }, status: :bad_gateway
-    end
-
-    private
-
-    def serialize_track(track)
-      return if track.blank? || track["id"].blank? || track["name"].blank?
-
-      {
-        spotify_id: track["id"],
-        name: track["name"],
-        artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
-        album: track.dig("album", "name"),
-        album_image_url: Track.pick_image(track.dig("album", "images")),
-        spotify_url: track.dig("external_urls", "spotify"),
-        duration_ms: track["duration_ms"],
-        explicit: track["explicit"] || false
-      }
     end
   end
 end

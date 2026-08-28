@@ -21,7 +21,7 @@ module Api
 
       render json: {
         artists: Array(payload.dig("artists", "items")).filter_map { |artist| serialize_artist(artist) },
-        tracks: Array(payload.dig("tracks", "items")).filter_map { |track| serialize_track(track) }
+        tracks: Array(payload.dig("tracks", "items")).filter_map { |track| Spotify::TrackSerializer.call(track) }
       }
     rescue Spotify::NotConnectedError => e
       render json: { error: e.message }, status: :service_unavailable
@@ -45,21 +45,6 @@ module Api
         name: artist["name"],
         image_url: Track.pick_image(artist["images"]),
         spotify_url: artist.dig("external_urls", "spotify")
-      }
-    end
-
-    def serialize_track(track)
-      return if track["id"].blank? || track["name"].blank?
-
-      {
-        spotify_id: track["id"],
-        name: track["name"],
-        artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
-        album: track.dig("album", "name"),
-        album_image_url: Track.pick_image(track.dig("album", "images")),
-        spotify_url: track.dig("external_urls", "spotify"),
-        duration_ms: track["duration_ms"],
-        explicit: track["explicit"] || false
       }
     end
   end

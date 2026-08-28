@@ -33,7 +33,9 @@ module Api
       # The "simplified" track objects nested under tracks.items don't repeat
       # the album's own name/id/images — it is the album — so that has to
       # come from the payload's own top level instead of from each track.
-      tracks = Array(payload.dig("tracks", "items")).filter_map { |track| serialize(track, payload) }
+      tracks = Array(payload.dig("tracks", "items")).filter_map do |track|
+        Spotify::TrackSerializer.call(track, album: payload, include_album_id: true)
+      end
       render json: { tracks: tracks }
     rescue Spotify::NotConnectedError => e
       render json: { error: e.message }, status: :service_unavailable
@@ -88,22 +90,6 @@ module Api
         .strip
 
       core.presence || normalize(value)
-    end
-
-    def serialize(track, album)
-      return if track["id"].blank? || track["name"].blank?
-
-      {
-        spotify_id: track["id"],
-        name: track["name"],
-        artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
-        album: album["name"],
-        album_spotify_id: album["id"],
-        album_image_url: Track.pick_image(album["images"]),
-        spotify_url: track.dig("external_urls", "spotify"),
-        duration_ms: track["duration_ms"],
-        explicit: track["explicit"] || false
-      }
     end
   end
 end

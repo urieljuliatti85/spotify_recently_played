@@ -20,7 +20,9 @@ module Api
         Array(track["artists"]).any? { |credit| credit["id"] == params[:id] }
       end
 
-      render json: { tracks: tracks.filter_map { |track| serialize(track) } }
+      render json: {
+        tracks: tracks.filter_map { |track| Spotify::TrackSerializer.call(track, artist_list: true) }
+      }
     rescue Spotify::NotConnectedError => e
       render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::NotFoundError
@@ -43,30 +45,6 @@ module Api
       raise Spotify::NotFoundError, "Spotify has no such resource" if fetched.blank?
 
       fetched["name"]
-    end
-
-    def serialize(track)
-      return if track["id"].blank? || track["name"].blank?
-
-      {
-        spotify_id: track["id"],
-        name: track["name"],
-        artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
-        album: track.dig("album", "name"),
-        album_image_url: Track.pick_image(track.dig("album", "images")),
-        spotify_url: track.dig("external_urls", "spotify"),
-        duration_ms: track["duration_ms"],
-        explicit: track["explicit"] || false,
-        artist_list: Array(track["artists"]).filter_map do |artist|
-          next if artist["id"].blank? || artist["name"].blank?
-
-          {
-            id: artist["id"],
-            name: artist["name"],
-            url: artist.dig("external_urls", "spotify")
-          }
-        end
-      }
     end
   end
 end
