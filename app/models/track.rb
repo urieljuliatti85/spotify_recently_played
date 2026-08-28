@@ -17,7 +17,7 @@ class Track < ApplicationRecord
       artist_names: Array(payload["artists"]).map { |a| a["name"] }.join(", "),
       album_name: payload.dig("album", "name"),
       spotify_album_id: payload.dig("album", "id"),
-      album_image_url: pick_image(payload.dig("album", "images")),
+      album_image_url: Spotify::ImagePicker.call(payload.dig("album", "images")),
       spotify_url: payload.dig("external_urls", "spotify"),
       duration_ms: payload["duration_ms"],
       explicit: payload["explicit"] || false
@@ -25,15 +25,6 @@ class Track < ApplicationRecord
     track.save!
     track.sync_artists!(payload["artists"])
     track
-  end
-
-  # Spotify returns images widest-first; the middle one (~300px) is the best
-  # fit for the cover art in the list without wasting bandwidth.
-  def self.pick_image(images)
-    images = Array(images)
-    return nil if images.empty?
-
-    (images.find { |i| i["width"].to_i.between?(200, 400) } || images.last)["url"]
   end
 
   # Links the track to one Artist row per credited artist, in Spotify's order.

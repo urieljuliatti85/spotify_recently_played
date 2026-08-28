@@ -117,7 +117,7 @@ module Spotify
           token_expires_at: tokens["expires_in"].to_i.seconds.from_now,
           scope: tokens["scope"],
           display_name: profile["display_name"].presence || profile["id"],
-          avatar_url: Track.pick_image(profile["images"]),
+          avatar_url: Spotify::ImagePicker.call(profile["images"]),
           # The first account to link owns the site; an invite never grants that.
           owner: account.owner? || (invite.nil? && SpotifyAccount.owner.nil?)
         )

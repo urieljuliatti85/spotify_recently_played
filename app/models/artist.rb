@@ -13,7 +13,7 @@ class Artist < ApplicationRecord
 
     artist.name = payload["name"].presence || artist.name
     artist.spotify_url = payload.dig("external_urls", "spotify").presence || artist.spotify_url
-    image = Track.pick_image(payload["images"])
+    image = Spotify::ImagePicker.call(payload["images"])
     artist.image_url = image if image.present?
 
     artist.save! if artist.changed?

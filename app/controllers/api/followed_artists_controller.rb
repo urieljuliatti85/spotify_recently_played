@@ -30,7 +30,7 @@ module Api
       {
         id: artist["id"],
         name: artist["name"],
-        image_url: Track.pick_image(artist["images"]),
+        image_url: Spotify::ImagePicker.call(artist["images"]),
         spotify_url: artist.dig("external_urls", "spotify"),
         followers: artist.dig("followers", "total")
       }

@@ -16,7 +16,7 @@ module Api
             id: playlist["id"],
             name: playlist["name"],
             description: playlist["description"],
-            image_url: Track.pick_image(playlist["images"]),
+            image_url: Spotify::ImagePicker.call(playlist["images"]),
             spotify_url: playlist.dig("external_urls", "spotify"),
             tracks_count: playlist.dig("items", "total") || playlist.dig("tracks", "total") || 0
           }
@@ -46,7 +46,7 @@ module Api
           id: payload["id"],
           name: payload["name"],
           description: payload["description"],
-          image_url: Track.pick_image(payload["images"]),
+          image_url: Spotify::ImagePicker.call(payload["images"]),
           spotify_url: payload.dig("external_urls", "spotify")
         },
         tracks: Array(track_page["items"]).filter_map do |entry|

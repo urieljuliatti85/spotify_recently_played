@@ -15,7 +15,7 @@ module Spotify
         name: track["name"],
         artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
         album: album["name"],
-        album_image_url: Track.pick_image(album["images"]),
+        album_image_url: Spotify::ImagePicker.call(album["images"]),
         spotify_url: track.dig("external_urls", "spotify"),
         duration_ms: track["duration_ms"],
         explicit: track["explicit"] || false

@@ -42,7 +42,7 @@ module Spotify
         payloads = client.artists(artists.map(&:spotify_id)).index_by { |p| p["id"] }
 
         artists.count do |artist|
-          image = Track.pick_image(payloads.dig(artist.spotify_id, "images"))
+          image = Spotify::ImagePicker.call(payloads.dig(artist.spotify_id, "images"))
           image.present? && artist.update!(image_url: image)
         end
       end
