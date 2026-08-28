@@ -385,6 +385,17 @@ Both workflows also run weekly on a schedule, because an advisory can be
 published against a dependency nobody has touched. Dependabot watches the
 bundler, npm and github-actions ecosystems.
 
+`.github/workflows/dependency-review.yml` runs on every pull request and
+blocks one that introduces a known-vulnerable or license-incompatible
+dependency, summarized as a PR comment — this is a gate on what a PR is about
+to add, distinct from bundler-audit/npm audit above, which only scan what is
+already in the lockfile.
+
+A CI failure on `main` (a push, or the weekly scheduled scan finding a new
+advisory) opens a GitHub issue labeled `ci-failure` — or comments on the one
+already open, rather than filing a new one every time. A PR failure does not,
+since whoever opened it already sees it.
+
 There is also a review skill in `.claude/skills/code-reviewer/`, used by Claude
 Code.
 

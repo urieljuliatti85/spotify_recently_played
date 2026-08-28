@@ -1,0 +1,26 @@
+# Diffs the dependencies a PR adds or bumps against GitHub's advisory
+# database, separate from bundler-audit/npm audit in ci.yml — those scan
+# what is already in the lockfile on a schedule; this blocks a vulnerable or
+# license-incompatible dependency from landing in the first place.
+name: Dependency Review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: always
