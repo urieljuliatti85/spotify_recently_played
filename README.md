@@ -134,13 +134,16 @@ subsequent syncs happen automatically.
 
 ## The site
 
-The navigation has six tabs, and the selected tab is reflected in the URL
+The navigation has seven tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
 - **Overview:** the recent feed, plus album and artist shelves.
 - **Tracks:** the complete history, grouped by day.
-- **Artists:** the artist grid; clicking one opens its page, with highlights from
-  your history and the top tracks returned by Spotify's API.
+- **Albums:** your recently played albums; opening one shows its full
+  tracklist (`/albums/:id/tracks`) and, if a matching one exists, Discogs
+  releases to buy it on.
+- **Artists:** the artist grid; clicking one opens its page (`/artists/:id/tracks`),
+  with highlights from your history and the top tracks returned by Spotify's API.
 - **Listeners:** one card per person on the feed—what they just played, who they
   have on repeat, and their most played—with a name filter for when the roster
   grows. Names match without accents, so `joao` finds `João`. Note that this
