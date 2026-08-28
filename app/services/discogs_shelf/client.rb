@@ -78,7 +78,14 @@ module DiscogsShelf
 
     def handle(response, uri)
       status = response.code.to_i
-      return JSON.parse(response.body.presence || "{}") if status == 200
+
+      if status == 200
+        begin
+          return JSON.parse(response.body.presence || "{}")
+        rescue JSON::ParserError
+          raise Error.new("Discogs Shelf returned an invalid response for #{uri.path}", status: status)
+        end
+      end
 
       # The shelf answers JSON on its own errors ({ error:, message: }); its
       # message is the useful half, so pass it through instead of a bare code.

@@ -36,8 +36,28 @@ class SyncRecentlyPlayedJobTest < ActiveJob::TestCase
 
   # A missed poll just means the next one picks the plays up — this must
   # discard quietly, not retry and pile up against a listener with no token.
-  test "discards without raising when nothing is linked yet" do
-    assert_nothing_raised { SyncRecentlyPlayedJob.perform_now }
+  # `assert_nothing_raised` alone does not catch a regression here: neither
+  # discard_on nor retry_on raises back to the caller of `perform_now`, so
+  # only checking that nothing gets re-enqueued actually distinguishes the
+  # two. It would not have caught NotConnectedError being retried instead of
+  # discarded — ActiveJob resolves discard_on/retry_on in reverse declaration
+  # order, so a broad `retry_on Spotify::Error` declared after a narrower
+  # discard_on shadows it entirely for every subclass, silently.
+  test "discards without retrying when nothing is linked yet" do
+    assert_enqueued_jobs 0 do
+      SyncRecentlyPlayedJob.perform_now
+    end
+  end
+
+  test "discards without retrying when the account was unlinked before this ran" do
+    account = SpotifyAccount.create!(owner: true, refresh_token: "r", access_token: "a",
+                                     token_expires_at: 1.hour.from_now)
+
+    stubbing_with(Spotify::RecentlyPlayedSync, :call, ->(*) { raise Spotify::NotConnectedError, "gone" }) do
+      assert_enqueued_jobs 0 do
+        SyncRecentlyPlayedJob.perform_now(account)
+      end
+    end
   end
 
   test "retries rather than giving up when Spotify rate-limits the sync" do

@@ -157,13 +157,15 @@ module Spotify
                                           read_timeout: READ_TIMEOUT) do |http|
         http.request(request)
       end
+    rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+      raise UnreachableError, "Spotify did not answer (#{e.class})"
     end
 
     def handle(response)
       status = response.code.to_i
 
       case status
-      when 200, 201 then JSON.parse(response.body.presence || "{}")
+      when 200, 201 then parse(response)
       when 204 then nil
       when 401
         raise AuthError.new("Spotify rejected the access token", status:, body: response.body)
@@ -176,6 +178,16 @@ module Spotify
       else
         raise Error.new("Spotify API returned #{status}", status:, body: response.body)
       end
+    end
+
+    # A 200 is not a guarantee of a well-formed body — a proxy or CDN in
+    # front of Spotify can still hand back HTML or a truncated response. That
+    # has to surface as a Spotify::Error like everything else here, not a
+    # bare JSON::ParserError that no caller's `rescue Spotify::Error` catches.
+    def parse(response)
+      JSON.parse(response.body.presence || "{}")
+    rescue JSON::ParserError
+      raise Error.new("Spotify returned an invalid response", status: response.code.to_i, body: response.body)
     end
   end
 end

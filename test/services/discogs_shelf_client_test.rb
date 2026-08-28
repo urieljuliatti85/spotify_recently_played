@@ -2,6 +2,29 @@ require "test_helper"
 
 module DiscogsShelf
   class ClientTest < ActiveSupport::TestCase
+    FakeResponse = Struct.new(:code, :body)
+
+    def client_with(response)
+      Client.new("http://discogs-shelf.test").tap do |client|
+        client.define_singleton_method(:perform) { |*| response }
+      end
+    end
+
+    test "a 200 with an invalid JSON body raises Error instead of a bare JSON::ParserError" do
+      client = client_with(FakeResponse.new("200", "<html>not json</html>"))
+
+      error = assert_raises(Error) { client.profile }
+      assert_match(/invalid response/, error.message)
+    end
+
+    test "the network being unreachable raises UnreachableError, not a bare socket error" do
+      client = Client.new("http://discogs-shelf.test")
+
+      stubbing_with(Net::HTTP, :start, ->(*) { raise SocketError, "getaddrinfo failed" }) do
+        assert_raises(UnreachableError) { client.profile }
+      end
+    end
+
     test "adds marketplace data to every album release" do
       client = Client.new("http://discogs-shelf.test")
       items = [

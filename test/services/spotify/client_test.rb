@@ -60,5 +60,21 @@ module Spotify
 
       assert_nil client.me
     end
+
+    test "a 200 with an invalid JSON body raises Error instead of a bare JSON::ParserError" do
+      client = client_with(FakeResponse.new("200", "<html>not json</html>"))
+
+      error = assert_raises(Error) { client.me }
+      assert_match(/invalid response/, error.message)
+    end
+
+    test "the network being unreachable raises UnreachableError, not a bare socket error" do
+      account = SpotifyAccount.new(access_token: "a", token_expires_at: 1.hour.from_now)
+      client = Client.new(account)
+
+      stubbing_with(Net::HTTP, :start, ->(*) { raise SocketError, "getaddrinfo failed" }) do
+        assert_raises(UnreachableError) { client.me }
+      end
+    end
   end
 end

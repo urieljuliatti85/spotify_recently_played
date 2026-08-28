@@ -29,6 +29,11 @@ module Spotify
   # No account has been linked yet.
   class NotConnectedError < Error; end
 
+  # Spotify never answered at all — DNS, connection refused, or the request
+  # timed out. Distinct from a non-2xx response, which at least means
+  # something on the other end is alive to have said no.
+  class UnreachableError < Error; end
+
   # What the owner grants: their history, the playlists the site lists, the
   # one the playlists tab can build for them (`-public` is the narrower of the
   # two write scopes and the only one this app needs, because the playlist it
