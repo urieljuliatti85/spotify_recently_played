@@ -1,20 +1,48 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { fetchPlaylistTracks, fetchPlaylists } from "../lib/api"
 import { duration } from "../lib/format"
 import { ChevronLeftIcon, PlayIcon, SparkIcon } from "./icons"
 import UnheardComposer from "./UnheardComposer"
 
+// The open playlist's Spotify id lives in the path, so a link to one is a URL
+// someone can share (and reload) rather than state that only exists in
+// memory — the same reasoning as the artist and album pages.
+const PLAYLIST_PATH = /^\/playlists\/([^/]+)\/tracks\/?$/
+
+function playlistIdFromUrl() {
+  const match = PLAYLIST_PATH.exec(window.location.pathname)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function writePlaylistToUrl(playlistId) {
+  const url = new URL(window.location.href)
+  if (playlistId) {
+    url.pathname = `/playlists/${encodeURIComponent(playlistId)}/tracks`
+    url.searchParams.delete("view")
+  } else {
+    url.pathname = "/"
+    url.searchParams.set("view", "playlists")
+  }
+  window.history.pushState({ view: "playlists", playlist: playlistId ?? null }, "", url)
+}
+
 export default function PlaylistView({ onSelect, connectPath }) {
   const [playlists, setPlaylists] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [tracks, setTracks] = useState([])
-  const [state, setState] = useState("loading")
-  const [error, setError] = useState(null)
+  const [listState, setListState] = useState("loading")
+  const [listError, setListError] = useState(null)
   const [composing, setComposing] = useState(false)
   // Bumped after a playlist is created, to re-run the fetch below. The server
   // drops its own five-minute cache on create, so this is all that stands
   // between the new playlist and the grid.
   const [reload, setReload] = useState(0)
+
+  // Independent from the list above: a playlist reached directly by URL opens
+  // its tracks before (or without) the plain list ever finishing its own
+  // fetch, so the two cannot share one state machine without racing.
+  const [selected, setSelected] = useState(null)
+  const [tracks, setTracks] = useState([])
+  const [detailState, setDetailState] = useState("idle")
+  const [detailError, setDetailError] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -22,32 +50,74 @@ export default function PlaylistView({ onSelect, connectPath }) {
     fetchPlaylists({ signal: controller.signal })
       .then(({ playlists: result }) => {
         setPlaylists(result ?? [])
-        setState("ready")
+        setListState("ready")
       })
       .catch((cause) => {
         if (controller.signal.aborted) return
-        setError(cause)
-        setState("error")
+        setListError(cause)
+        setListState("error")
       })
 
     return () => controller.abort()
   }, [reload])
 
-  function openPlaylist(playlist) {
+  const openPlaylist = useCallback((playlist) => {
     setSelected(playlist)
     setTracks([])
-    setState("loading-tracks")
+    setDetailState("loading")
+    writePlaylistToUrl(playlist.id)
 
     fetchPlaylistTracks(playlist.id)
       .then(({ tracks: result }) => {
         setTracks(result ?? [])
-        setState("tracks-ready")
+        setDetailState("ready")
       })
       .catch((cause) => {
-        setError(cause)
-        setState("error")
+        setDetailError(cause)
+        setDetailState("error")
       })
-  }
+  }, [])
+
+  // Reached directly — a shared link, a reload, or the back button. The
+  // tracks response itself carries the playlist's own name and cover, so this
+  // works even before (or without) the plain playlist list finishing its own
+  // fetch.
+  const openPlaylistById = useCallback((playlistId) => {
+    setSelected({ id: playlistId, name: null, image_url: null })
+    setTracks([])
+    setDetailState("loading")
+
+    fetchPlaylistTracks(playlistId)
+      .then(({ playlist, tracks: result }) => {
+        setTracks(result ?? [])
+        setDetailState("ready")
+        if (playlist) setSelected(playlist)
+      })
+      .catch((cause) => {
+        setDetailError(cause)
+        setDetailState("error")
+      })
+  }, [])
+
+  const closePlaylist = useCallback(() => {
+    setSelected(null)
+    setTracks([])
+    setDetailState("idle")
+    writePlaylistToUrl(null)
+  }, [])
+
+  // Opening a link directly, and the browser's back/forward button.
+  useEffect(() => {
+    function openFromUrl() {
+      const playlistId = playlistIdFromUrl()
+      if (playlistId) openPlaylistById(playlistId)
+      else setSelected(null)
+    }
+
+    openFromUrl()
+    window.addEventListener("popstate", openFromUrl)
+    return () => window.removeEventListener("popstate", openFromUrl)
+  }, [openPlaylistById])
 
   const playlistPlays = tracks.map((track, index) => ({
       id: `playlist:${selected?.id}:${index}:${track.spotify_id}`,
@@ -70,12 +140,12 @@ export default function PlaylistView({ onSelect, connectPath }) {
     )
   }
 
-  if (state === "loading") return <p className="section__hint">Loading public playlists…</p>
-  if (state === "error" && !selected) {
+  if (listState === "loading" && !selected) return <p className="section__hint">Loading public playlists…</p>
+  if (listState === "error" && !selected) {
     return (
       <div className="notice notice--warning">
         <h2>Couldn&apos;t load public playlists</h2>
-        <p>{error?.message}</p>
+        <p>{listError?.message}</p>
         {connectPath && (
           <a className="btn btn--outline" href={connectPath}>
             Reconnect Spotify
@@ -133,21 +203,19 @@ export default function PlaylistView({ onSelect, connectPath }) {
             <button
               type="button"
               className="btn btn--ghost playlist-tracks__back"
-              onClick={() => {
-                setSelected(null)
-                setTracks([])
-                setState("ready")
-              }}
+              onClick={closePlaylist}
             >
               <ChevronLeftIcon size={16} />
               All playlists
             </button>
-            <h2 className="section__title">{selected.name}</h2>
+            <h2 className="section__title">{selected.name || "Loading…"}</h2>
           </div>
-          {state === "loading-tracks" && <p className="section__hint">Loading tracks…</p>}
-          {state === "error" && <p className="section__hint">Couldn&apos;t load this playlist.</p>}
+          {detailState === "loading" && <p className="section__hint">Loading tracks…</p>}
+          {detailState === "error" && (
+            <p className="section__hint">{detailError?.message || "Couldn't load this playlist."}</p>
+          )}
 
-          {state === "tracks-ready" && (
+          {detailState === "ready" && (
             <ol className="ranking">
               {playlistPlays.map((playlistPlay, index) => (
                 <li key={playlistPlay.id} className="ranking__row">

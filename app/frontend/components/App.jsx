@@ -40,10 +40,13 @@ const ARTIST_PATH = /^\/artists\/([^/]+)\/tracks\/?$/
 // AlbumsView owns the id itself (mirroring DiscogsView's own ?release=
 // handling) — this only has to route the tab to mount it.
 const ALBUM_PATH = /^\/albums\/[^/]+\/tracks\/?$/
+// PlaylistView owns the id itself too — see its PLAYLIST_PATH/playlistIdFromUrl.
+const PLAYLIST_PATH = /^\/playlists\/[^/]+\/tracks\/?$/
 
 function viewFromUrl() {
   if (ARTIST_PATH.test(window.location.pathname)) return "artists"
   if (ALBUM_PATH.test(window.location.pathname)) return "albums"
+  if (PLAYLIST_PATH.test(window.location.pathname)) return "playlists"
 
   const requested = new URLSearchParams(window.location.search).get("view")
   return VIEW_IDS.has(requested) ? requested : "overview"

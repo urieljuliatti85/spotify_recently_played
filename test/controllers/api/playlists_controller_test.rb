@@ -33,22 +33,31 @@ module Api
       assert_equal 4, playlists.first["tracks_count"]
     end
 
-    test "returns playable playlist tracks" do
+    test "returns a playlist's own name and cover alongside its playable tracks" do
       fake_client = Object.new
-      fake_client.define_singleton_method(:playlist_tracks) do |_id|
+      # Despite what the reference docs call it, Spotify actually nests this
+      # under "items", not "tracks" — verified against the real API.
+      fake_client.define_singleton_method(:playlist) do |_id, market: nil|
         {
-          "items" => [
-            {
-              "item" => {
-                "id" => "track-1",
-                "name" => "Playlist song",
-                "artists" => [ { "name" => "Artist" } ],
-                "album" => { "name" => "Album", "images" => [] },
-                "duration_ms" => 200_000,
-                "external_urls" => { "spotify" => "https://track" }
+          "id" => "public-1",
+          "name" => "Public set",
+          "description" => "A set of songs",
+          "images" => [ { "url" => "playlist.jpg", "width" => 300 } ],
+          "external_urls" => { "spotify" => "https://playlist" },
+          "items" => {
+            "items" => [
+              {
+                "item" => {
+                  "id" => "track-1",
+                  "name" => "Playlist song",
+                  "artists" => [ { "name" => "Artist" } ],
+                  "album" => { "name" => "Album", "images" => [] },
+                  "duration_ms" => 200_000,
+                  "external_urls" => { "spotify" => "https://track" }
+                }
               }
-            }
-          ]
+            ]
+          }
         }
       end
 
@@ -57,8 +66,11 @@ module Api
       end
 
       assert_response :success
-      assert_equal "Playlist song", response.parsed_body["tracks"].first["name"]
-      assert_equal "Artist", response.parsed_body["tracks"].first["artists"]
+      body = response.parsed_body
+      assert_equal "Public set", body["playlist"]["name"]
+      assert_equal "playlist.jpg", body["playlist"]["image_url"]
+      assert_equal "Playlist song", body["tracks"].first["name"]
+      assert_equal "Artist", body["tracks"].first["artists"]
     end
 
     test "reports when Spotify is not connected" do

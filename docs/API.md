@@ -149,7 +149,19 @@ and needs reconnecting.
 
 ## `GET /api/playlists/:id/tracks`
 
-**Response**: `{ "tracks": [ /* same track shape as api/plays, without album_spotify_id */ ] }`
+The playlist's own name/description/cover (`GET /v1/playlists/{id}`, not the
+`.../items` sub-resource) alongside its tracks — one call renders a deep link
+(`/playlists/:id/tracks`) without needing the playlist already in a fetched
+list.
+
+**Response**
+
+```jsonc
+{
+  "playlist": { "id": "...", "name": "...", "description": "...", "image_url": "...", "spotify_url": "..." },
+  "tracks": [ /* same track shape as api/plays, without album_spotify_id */ ]
+}
+```
 
 ## `GET /api/top_items`
 

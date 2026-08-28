@@ -155,8 +155,9 @@ The navigation has eight tabs, and the selected tab is reflected in the URL
   filter is the tab's own: the top bar's search looks inside tracks, and a card
   that disappeared because its owner played nothing matching would read as them
   having left.
-- **Playlists:** your public playlists and each playlist's tracks. As the owner
-  you also get **Add new playlist**, which gathers tracks by the artists already
+- **Playlists:** your public playlists and each playlist's tracks, deep-linked
+  at `/playlists/:id/tracks`. As the owner you also get **Add new playlist**,
+  which gathers tracks by the artists already
   on the feed that nobody here has played, lets you uncheck what you do not
   want, and creates a public playlist out of the rest. It is owner-only because
   it writes to your Spotify account—visitors are not shown the button. The
@@ -189,6 +190,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /` | public | React app |
 | `GET /artists/:id/tracks` | public | Same React app, deep-linked to one artist's page |
 | `GET /albums/:id/tracks` | public | Same React app, deep-linked to one album's tracks |
+| `GET /playlists/:id/tracks` | public | Same React app, deep-linked to one playlist's tracks |
 | `GET /api/plays?limit=&before=&listener=` | public | Cursor-paginated feed, optionally one listener |
 | `GET /api/status` | public | Who is on the feed, and their play counts |
 | `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
@@ -196,7 +198,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /api/albums/:id/discogs` | public | Already-resolved Discogs match for a Spotify album |
 | `GET /api/albums/releases?title=&artist=` | public | Discogs releases matching a Spotify album (2-minute cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
-| `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
+| `GET /api/playlists/:id/tracks` | public | The playlist's own name/cover plus its tracks |
 | `GET /api/top_items` | public | The owner's algorithmic top artists/tracks (6-hour cache) |
 | `GET /api/followed_artists` | public | Who the owner follows on Spotify (1-hour cache) |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |

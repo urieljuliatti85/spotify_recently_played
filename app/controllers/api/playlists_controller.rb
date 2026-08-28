@@ -35,10 +35,21 @@ module Api
     end
 
     def tracks
-      payload = Spotify::Client.new.playlist_tracks(params[:id])
+      payload = Spotify::Client.new.playlist(params[:id], market: Spotify.market)
+      # Despite what the reference docs call it, Spotify answers with this
+      # nested under "items", not "tracks" — same ambiguity #index already
+      # guards against for tracks_count.
+      track_page = payload["items"] || payload["tracks"] || {}
 
       render json: {
-        tracks: Array(payload["items"]).filter_map do |entry|
+        playlist: {
+          id: payload["id"],
+          name: payload["name"],
+          description: payload["description"],
+          image_url: Track.pick_image(payload["images"]),
+          spotify_url: payload.dig("external_urls", "spotify")
+        },
+        tracks: Array(track_page["items"]).filter_map do |entry|
           serialize_track(entry["item"] || entry["track"])
         end
       }

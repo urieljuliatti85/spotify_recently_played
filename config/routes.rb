@@ -21,6 +21,10 @@ Rails.application.routes.draw do
   # owns the id — see its ALBUM_PATH/albumIdFromUrl).
   get "albums/:id/tracks", to: "pages#index", as: :album_page
 
+  # Same idea again, for a public playlist's own tracks page (PlaylistView
+  # owns the id — see its PLAYLIST_PATH/playlistIdFromUrl).
+  get "playlists/:id/tracks", to: "pages#index", as: :playlist_page
+
   namespace :api do
     resources :plays, only: :index
     get "artists/:id/tracks", to: "artists#tracks", as: :artist_tracks

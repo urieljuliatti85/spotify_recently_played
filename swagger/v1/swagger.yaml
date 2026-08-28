@@ -223,7 +223,11 @@ paths:
   /api/playlists/{id}/tracks:
     get:
       tags: [Playlists]
-      summary: Tracks in a playlist
+      summary: The playlist's own name/cover plus its tracks
+      description: >
+        GET /v1/playlists/{id}, not the .../items sub-resource — one call
+        renders a deep link (/playlists/:id/tracks) without needing the
+        playlist already in a fetched list.
       parameters:
         - name: id
           in: path
@@ -232,12 +236,20 @@ paths:
           description: Spotify playlist id.
       responses:
         "200":
-          description: Tracks
+          description: Playlist and tracks
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  playlist:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+                      description: { type: string, nullable: true }
+                      image_url: { type: string, nullable: true }
+                      spotify_url: { type: string, nullable: true }
                   tracks:
                     type: array
                     items: { $ref: "#/components/schemas/Track" }

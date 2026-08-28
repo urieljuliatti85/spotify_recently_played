@@ -71,8 +71,16 @@ module Spotify
       get("/v1/me/playlists", limit: limit.clamp(1, 50))
     end
 
-    def playlist_tracks(id, limit: 100)
-      get("/v1/playlists/#{URI.encode_www_form_component(id)}/items", limit: limit.clamp(1, 100))
+    # The playlist's own name/description/cover, plus its tracks inline (the
+    # first page — Spotify caps this at 100 per call, same trade-off as
+    # Client#album). One call instead of two (name here, tracks from
+    # .../items) is what lets a deep link render its header without needing
+    # the playlist to already be in a list fetched some other way.
+    def playlist(id, market: nil)
+      params = {}
+      params[:market] = market if market.present?
+
+      get("/v1/playlists/#{URI.encode_www_form_component(id)}", params)
     end
 
     # Catalogue search. `market` matters more here than it looks: without it
