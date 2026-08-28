@@ -17,7 +17,10 @@ module Spotify
       invite = Invite.issue!(label: params[:label])
 
       # The only time the raw token exists outside the friend's browser.
-      render plain: "#{join_url(invite.token)}\nExpires #{invite.expires_at.iso8601}. Single use."
+      render json: {
+        invite_url: join_url(invite.token),
+        expires_at: invite.expires_at.iso8601
+      }, status: :created
     end
 
     def destroy

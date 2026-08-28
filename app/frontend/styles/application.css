@@ -411,6 +411,157 @@ button {
 
 /* Listeners tab -------------------------------------------------------------*/
 
+.invite {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+}
+
+.invite__form {
+  display: grid;
+  gap: 8px;
+}
+
+.invite__label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.invite__controls {
+  display: flex;
+  gap: 8px;
+}
+
+.invite__input-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.invite__input {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.invite__suggestions {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 25%);
+  list-style: none;
+}
+
+.invite__suggestions button {
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.invite__suggestions button:hover,
+.invite__suggestions button:focus-visible {
+  background: var(--bg-hover);
+  outline: 0;
+}
+
+.invite__result,
+.invite__error {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.invite__result a {
+  overflow-wrap: anywhere;
+}
+
+.invite__error {
+  color: var(--accent);
+}
+
+.recent-listeners {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+}
+
+.recent-listeners__title {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.recent-listeners__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-listeners__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recent-listeners__item:hover,
+.recent-listeners__item:focus-visible {
+  background: var(--bg-hover);
+  outline: 0;
+}
+
+.recent-listeners__meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-listeners__meta strong,
+.recent-listeners__meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-listeners__meta strong {
+  font-size: 13px;
+}
+
+.recent-listeners__meta span {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
 .lcards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

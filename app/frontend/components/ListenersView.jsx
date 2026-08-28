@@ -1,8 +1,99 @@
 import { useMemo, useState } from "react"
 import { matchingListeners, plural } from "../lib/derive"
 import { duration, relativeTime } from "../lib/format"
+import { createInvite } from "../lib/api"
 import { ListenerAvatar } from "./Listener"
 import { PlayIcon, SearchIcon } from "./icons"
+
+function InviteForm({ listeners }) {
+  const [label, setLabel] = useState("")
+  const [invite, setInvite] = useState(null)
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const suggestions = useMemo(() => {
+    const query = label.trim().toLocaleLowerCase()
+    if (!query) return listeners.slice(0, 5)
+
+    return listeners
+      .filter((listener) => listener.name.toLocaleLowerCase().includes(query))
+      .slice(0, 5)
+  }, [label, listeners])
+
+  async function submit(event) {
+    event.preventDefault()
+    const value = label.trim()
+    if (!value || saving) return
+
+    setSaving(true)
+    setError(null)
+    setInvite(null)
+    try {
+      setInvite(await createInvite(value))
+      setLabel("")
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="invite">
+      <form className="invite__form" onSubmit={submit}>
+        <label className="invite__label" htmlFor="invite-label">
+          Invite someone
+        </label>
+        <div className="invite__controls">
+          <div className="invite__input-wrap">
+            <input
+              id="invite-label"
+              className="invite__input"
+              type="text"
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setTimeout(() => setFocused(false), 100)}
+              placeholder="Friend's name"
+              autoComplete="off"
+              required
+              aria-autocomplete="list"
+              aria-controls="listener-invite-suggestions"
+            />
+            {focused && suggestions.length > 0 && (
+              <ul id="listener-invite-suggestions" className="invite__suggestions" role="listbox">
+                {suggestions.map((listener) => (
+                  <li key={listener.id} role="option">
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setLabel(listener.name)
+                        setFocused(false)
+                      }}
+                    >
+                      {listener.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button className="btn btn--primary" type="submit" disabled={saving || !label.trim()}>
+            {saving ? "Creating…" : "Create invite"}
+          </button>
+        </div>
+      </form>
+      {invite && (
+        <p className="invite__result">
+          Share this single-use link:{" "}
+          <a href={invite.invite_url}>{invite.invite_url}</a>
+        </p>
+      )}
+      {error && <p className="invite__error">{error}</p>}
+    </div>
+  )
+}
 
 // One person's card: who they are, what they just played, and what they have
 // been playing most in whatever range is selected.
@@ -143,15 +234,24 @@ export default function ListenersView({
   // matching would read as them having left. This filters people by name.
   const [filter, setFilter] = useState("")
   const shown = useMemo(() => matchingListeners(listeners, filter), [listeners, filter])
+  const recentFriends = useMemo(
+    () =>
+      listeners
+        .filter((listener) => !listener.owner && listener.latestPlay)
+        .sort((a, b) => new Date(b.latestPlay.played_at) - new Date(a.latestPlay.played_at))
+        .slice(0, 5),
+    [listeners]
+  )
 
   if (listeners.length === 0) {
     return (
       <div className="notice">
         <h2>No one is on the feed yet</h2>
         <p>
-          Link your own account, then run <code>bin/rails &quot;spotify:invite[Name]&quot;</code> to
-          get a single-use link a friend can use to add theirs.
+          Link your own account, then invite a friend to get a single-use link they can use to add
+          theirs.
         </p>
+        <InviteForm listeners={listeners} />
         {connectPath && (
           <a className="notice__cta" href={connectPath}>
             Connect Spotify
@@ -189,6 +289,34 @@ export default function ListenersView({
           </label>
         )}
       </header>
+
+      <InviteForm listeners={listeners} />
+
+      {recentFriends.length > 0 && (
+        <aside className="recent-listeners">
+          <h2 className="recent-listeners__title">Últimos ouvintes</h2>
+          <ul className="recent-listeners__list">
+            {recentFriends.map((listener) => (
+              <li key={listener.id}>
+                <button
+                  type="button"
+                  className="recent-listeners__item"
+                  onClick={() => onOpenFeed(listener.id)}
+                >
+                  <ListenerAvatar listener={listener} size={32} />
+                  <span className="recent-listeners__meta">
+                    <strong>{listener.name}</strong>
+                    <span className="recent-listeners__track">
+                      {listener.latestPlay.track.name} · {listener.latestPlay.track.artists}
+                    </span>
+                    <span className="recent-listeners__time">{relativeTime(listener.latestPlay.played_at)}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
 
       {shown.length === 0 ? (
         <p className="section__hint">

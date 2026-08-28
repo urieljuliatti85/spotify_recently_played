@@ -103,3 +103,11 @@ export function createUnheardPlaylist({ name, trackIds, signal } = {}) {
     signal,
   })
 }
+
+export function createInvite(label, { signal } = {}) {
+  return request("/spotify/invites", {
+    method: "POST",
+    body: { label },
+    signal,
+  })
+}
