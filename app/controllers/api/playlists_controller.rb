@@ -6,7 +6,7 @@ module Api
       end
 
       # Hoisted out of the loop: this used to be one SELECT per playlist.
-      owner_id = SpotifyAccount.owner&.spotify_user_id
+      owner_id = SpotifyAccount.find_owner&.spotify_user_id
 
       render json: {
         playlists: Array(payload["items"]).filter_map do |playlist|

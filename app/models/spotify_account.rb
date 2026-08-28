@@ -19,9 +19,12 @@ class SpotifyAccount < ApplicationRecord
   # has a stable order that does not shuffle as friends come and go.
   scope :listed, -> { where(visible: true).order(owner: :desc, display_name: :asc, id: :asc) }
 
-  # The site belongs to one person; `owner` is the row that linked first and the
-  # one the owner-only routes act on.
-  def self.owner
+  # The site belongs to one person; this is the row that linked first and the
+  # one the owner-only routes act on. Named apart from the `owner` boolean
+  # column/attribute it reads — `account.owner?` is the flag, this returns
+  # the record, and sharing the name would make `SpotifyAccount.owner.owner?`
+  # a confusing thing to have to read.
+  def self.find_owner
     find_by(owner: true) || order(:id).first
   end
 

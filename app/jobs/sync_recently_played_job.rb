@@ -12,7 +12,7 @@ class SyncRecentlyPlayedJob < ApplicationJob
   retry_on Spotify::Error, wait: 30.seconds, attempts: 3
 
   def perform(account = nil)
-    account ||= SpotifyAccount.owner
+    account ||= SpotifyAccount.find_owner
     raise Spotify::NotConnectedError, "No Spotify account linked yet" if account.nil?
 
     result = Spotify::RecentlyPlayedSync.call(account)

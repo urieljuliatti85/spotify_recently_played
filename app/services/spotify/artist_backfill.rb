@@ -13,7 +13,7 @@ module Spotify
 
     def self.call(...) = new(...).call
 
-    def initialize(account = SpotifyAccount.owner, client: nil)
+    def initialize(account = SpotifyAccount.find_owner, client: nil)
       raise NotConnectedError, "No Spotify account linked yet" if account.nil?
 
       @client = client || Client.new(account)

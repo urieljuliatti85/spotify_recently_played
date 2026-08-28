@@ -39,7 +39,7 @@ module Spotify
     end
 
     def create
-      owner = SpotifyAccount.owner
+      owner = SpotifyAccount.find_owner
       return render json: { error: "No Spotify account linked. Visit /spotify/connect." },
                     status: :precondition_required if owner.nil?
 

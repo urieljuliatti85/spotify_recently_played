@@ -83,7 +83,7 @@ module Spotify
     # Owner-only. Unlinking takes the listener's history with it, which is the
     # point: it is how someone comes off the page entirely.
     def destroy
-      account = params[:id].present? ? SpotifyAccount.find_by(id: params[:id]) : SpotifyAccount.owner
+      account = params[:id].present? ? SpotifyAccount.find_by(id: params[:id]) : SpotifyAccount.find_owner
       account&.destroy
 
       redirect_to root_path, notice: account ? "#{account.display_name} unlinked." : "Nothing to unlink."
@@ -124,7 +124,7 @@ module Spotify
           display_name: profile["display_name"].presence || profile["id"],
           avatar_url: Spotify::ImagePicker.call(profile["images"]),
           # The first account to link owns the site; an invite never grants that.
-          owner: account.owner? || (invite.nil? && SpotifyAccount.owner.nil?)
+          owner: account.owner? || (invite.nil? && SpotifyAccount.find_owner.nil?)
         )
 
         invite&.claim!(account)

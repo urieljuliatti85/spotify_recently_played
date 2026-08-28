@@ -18,7 +18,7 @@ module Spotify
       new(BareToken.new(access_token))
     end
 
-    def initialize(account = SpotifyAccount.owner)
+    def initialize(account = SpotifyAccount.find_owner)
       raise NotConnectedError, "No Spotify account linked yet" if account.nil?
 
       @account = account
