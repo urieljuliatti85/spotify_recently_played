@@ -28,6 +28,14 @@ Rails.application.configure do
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
 
+  # Fails the test itself on an N+1 or on eager loading that nothing used,
+  # so a regression is caught here rather than noticed later in a log.
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.bullet_logger = true
+    Bullet.raise = true
+  end
+
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
 
