@@ -7,6 +7,7 @@ module Api
 
       searched_type = nil
       fake_client = Object.new
+      fake_client.define_singleton_method(:me) { { "country" => "BR" } }
       fake_client.define_singleton_method(:search) do |_query, type:, market: nil|
         searched_type = type
 
@@ -60,6 +61,7 @@ module Api
       fetched_ids = nil
       searched_query = nil
       fake_client = Object.new
+      fake_client.define_singleton_method(:me) { { "country" => "BR" } }
       fake_client.define_singleton_method(:artists) do |ids|
         fetched_ids = ids
         [ { "id" => "artist-9", "name" => "Unknown Artist" } ]
@@ -81,6 +83,7 @@ module Api
 
     test "reports 404 when the artist is unknown locally and on Spotify" do
       fake_client = Object.new
+      fake_client.define_singleton_method(:me) { { "country" => "BR" } }
       fake_client.define_singleton_method(:artists) { |_ids| [] }
 
       stubbing(Spotify::Client, :new, fake_client) do

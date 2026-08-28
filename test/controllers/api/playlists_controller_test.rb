@@ -35,6 +35,7 @@ module Api
 
     test "returns a playlist's own name and cover alongside its playable tracks" do
       fake_client = Object.new
+      fake_client.define_singleton_method(:me) { { "country" => "BR" } }
       # Despite what the reference docs call it, Spotify actually nests this
       # under "items", not "tracks" — verified against the real API.
       fake_client.define_singleton_method(:playlist) do |_id, market: nil|

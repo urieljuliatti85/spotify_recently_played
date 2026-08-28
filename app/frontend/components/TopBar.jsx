@@ -1,4 +1,5 @@
 import { SearchIcon } from "./icons"
+import SyncButton from "./SyncButton"
 
 export const VIEWS = [
   { id: "overview", label: "Overview" },
@@ -11,7 +12,7 @@ export const VIEWS = [
   { id: "discogs", label: "Discogs" },
 ]
 
-export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt }) {
+export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt, ownerPath }) {
   const syncedAt = lastSyncedAt && new Date(lastSyncedAt)
 
   return (
@@ -47,6 +48,8 @@ export default function TopBar({ view, onViewChange, query, onQueryChange, lastS
             Synced {syncedAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
           </p>
         )}
+
+        <SyncButton ownerPath={ownerPath} view={view} />
       </div>
     </div>
   )

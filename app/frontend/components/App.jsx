@@ -69,7 +69,7 @@ function readAutoplayPreference() {
   }
 }
 
-export default function App({ connectPath, flash, clientId, listenRedirectUri }) {
+export default function App({ connectPath, ownerPath, flash, clientId, listenRedirectUri }) {
   // A visitor signing in to get a volume slider is a different thing from the
   // accounts this site mirrors: the token lives in their browser only, and no
   // listener row is ever created for them.
@@ -339,6 +339,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
           query={query}
           onQueryChange={setQuery}
           lastSyncedAt={lastSyncedAt}
+          ownerPath={ownerPath}
         />
 
         <main className="main">

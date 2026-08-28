@@ -971,6 +971,48 @@ button {
   white-space: nowrap;
 }
 
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sync-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.sync-btn:hover:not(:disabled) {
+  border-color: var(--accent-deep);
+  color: var(--accent);
+}
+
+.sync-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sync__hint {
+  color: var(--text-faint);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sync__hint--error {
+  color: var(--accent);
+}
+
 /* Main ---------------------------------------------------------------------*/
 
 .main {

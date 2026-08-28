@@ -237,6 +237,11 @@ bin/rails spotify:sync
 curl -u owner:$ADMIN_PASSWORD -X POST http://127.0.0.1:3000/spotify/sync
 ```
 
+The top-right **Sync** button does the same thing from the browser. It shows
+to every visitor, not just the owner—clicking it just answers 401 if the
+browser has never handed over `ADMIN_PASSWORD`, with a link to `/spotify/owner`
+(the only route that exists to prompt for it) to fix that.
+
 `/api-docs` is a Swagger UI you can fire real requests from, gated by the same
 `ADMIN_PASSWORD` as the routes above. It reads `swagger/v1/swagger.yaml`, which
 is hand-written rather than generated from specs—`rswag-specs` does that, but

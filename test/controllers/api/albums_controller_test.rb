@@ -4,6 +4,7 @@ module Api
   class AlbumsControllerTest < ActionDispatch::IntegrationTest
     test "returns tracks from Spotify for an album" do
       fake_client = Object.new
+      fake_client.define_singleton_method(:me) { { "country" => "BR" } }
       # /v1/albums/{id}'s own shape: tracks nested under tracks.items, as
       # "simplified" track objects that do not repeat the album's own
       # name/id/images (they don't need to — the payload already carries it).

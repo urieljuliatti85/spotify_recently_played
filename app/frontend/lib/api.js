@@ -112,6 +112,12 @@ export function createUnheardPlaylist({ name, trackIds, signal } = {}) {
   })
 }
 
+// Pulls recent plays for every linked listener right now instead of waiting
+// for the schedule (SyncAllAccountsJob still runs every minute regardless).
+export function syncNow({ signal } = {}) {
+  return request("/spotify/sync", { method: "POST", signal })
+}
+
 export function createInvite(label, { signal } = {}) {
   return request("/spotify/invites", {
     method: "POST",
