@@ -173,17 +173,24 @@ something else.
 
 ## Routes
 
+Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/API.md);
+`/api-docs` is the same reference as an interactive, owner-only Swagger UI (see below).
+
 | Route | Access | Description |
 | --- | --- | --- |
 | `GET /` | public | React app |
 | `GET /api/plays?limit=&before=&listener=` | public | Cursor-paginated feed, optionally one listener |
 | `GET /api/status` | public | Who is on the feed, and their play counts |
-| `GET /api/artists/:id/tracks` |     public | Artist top tracks (1-hour cache) |
+| `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
+| `GET /api/albums/:id/tracks` | public | Album tracks (1-hour cache) |
+| `GET /api/albums/:id/discogs` | public | Already-resolved Discogs match for a Spotify album |
+| `GET /api/albums/releases?title=&artist=` | public | Discogs releases matching a Spotify album (2-minute cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
+| `GET /api-docs` | owner | Interactive Swagger UI over every `/api/*` endpoint above |
 | `GET /spotify/owner?view=` | owner | Asks the browser for `ADMIN_PASSWORD`, then returns to the feed |
 | `GET /spotify/connect` | owner | Starts OAuth for the owner |
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
@@ -215,6 +222,11 @@ bin/rails spotify:sync
 # ou
 curl -u owner:$ADMIN_PASSWORD -X POST http://127.0.0.1:3000/spotify/sync
 ```
+
+`/api-docs` is a Swagger UI you can fire real requests from, gated by the same
+`ADMIN_PASSWORD` as the routes above. It reads `swagger/v1/swagger.yaml`, which
+is hand-written rather than generated from specs—`rswag-specs` does that, but
+requires RSpec, and this project tests with Minitest.
 
 ## Discogs
 
