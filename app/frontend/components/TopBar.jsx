@@ -5,6 +5,7 @@ export const VIEWS = [
   { id: "tracks", label: "Tracks" },
   { id: "albums", label: "Albums" },
   { id: "artists", label: "Artists" },
+  { id: "followed", label: "Followed Artists" },
   { id: "listeners", label: "Listeners" },
   { id: "playlists", label: "Playlists" },
   { id: "discogs", label: "Discogs" },

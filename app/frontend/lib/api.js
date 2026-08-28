@@ -46,6 +46,10 @@ export function fetchTopItems({ signal } = {}) {
   return request("/api/top_items", { signal })
 }
 
+export function fetchFollowedArtists({ signal } = {}) {
+  return request("/api/followed_artists", { signal })
+}
+
 export function fetchArtistTracks(artistId, { signal } = {}) {
   return request(`/api/artists/${encodeURIComponent(artistId)}/tracks`, { signal })
 }

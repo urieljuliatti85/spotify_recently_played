@@ -57,6 +57,16 @@ module Spotify
       get("/v1/me/top/#{type}", time_range: time_range, limit: limit.clamp(1, 50))
     end
 
+    # Cursor-paginated, not offset — `after` is the last artist id from the
+    # previous page's `cursors.after`. Requires user-follow-read, which only
+    # the owner grants (see Spotify::SCOPES).
+    def followed_artists(limit: 50, after: nil)
+      params = { type: "artist", limit: limit.clamp(1, 50) }
+      params[:after] = after if after.present?
+
+      get("/v1/me/following", params)
+    end
+
     def playlists(limit: 50)
       get("/v1/me/playlists", limit: limit.clamp(1, 50))
     end

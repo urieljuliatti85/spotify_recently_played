@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       get :tracks, on: :member
     end
     get "top_items", to: "top_items#index"
+    get "followed_artists", to: "followed_artists#index"
     resource :status, only: :show, controller: "status"
 
     # The Discogs shelf: browsing comes from the sibling discogs_shelf app,

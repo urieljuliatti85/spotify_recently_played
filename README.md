@@ -82,13 +82,13 @@ registered in your Spotify app's dashboard.
 3. Under **APIs used**, select **Web API**.
 4. Copy the **Client ID** and **Client Secret**.
 
-The app requests four scopes: `user-read-recently-played` (history),
+The app requests five scopes: `user-read-recently-played` (history),
 `playlist-read-private` (the playlists tab), `playlist-modify-public`
-(building a playlist from that tab) and `user-top-read` (the Overview's
-"DekSlayer's Top Items" box). Friends grant only the first. If you connected
-the account before one of these was asked for, redo
-`/spotify/connect`—without the scope, the feature returns 403 and explains this
-on screen.
+(building a playlist from that tab), `user-top-read` (the Overview's
+"DekSlayer's Top Items" box) and `user-follow-read` (the Followed Artists
+tab). Friends grant only the first. If you connected the account before one
+of these was asked for, redo `/spotify/connect`—without the scope, the
+feature returns 403 and explains this on screen.
 
 ### 2. Configure the project
 
@@ -135,7 +135,7 @@ subsequent syncs happen automatically.
 
 ## The site
 
-The navigation has seven tabs, and the selected tab is reflected in the URL
+The navigation has eight tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
 - **Overview:** the recent feed, "DekSlayer's Top Items" (Spotify's own
@@ -147,6 +147,8 @@ The navigation has seven tabs, and the selected tab is reflected in the URL
   releases to buy it on.
 - **Artists:** the artist grid; clicking one opens its page (`/artists/:id/tracks`),
   with highlights from your history and the top tracks returned by Spotify's API.
+- **Followed Artists:** who the owner follows on Spotify (`user-follow-read`) —
+  not derived from anything synced locally; clicking one opens the same artist page.
 - **Listeners:** one card per person on the feed—what they just played, who they
   have on repeat, and their most played—with a name filter for when the roster
   grows. Names match without accents, so `joao` finds `João`. Note that this
@@ -196,6 +198,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
 | `GET /api/top_items` | public | The owner's algorithmic top artists/tracks (6-hour cache) |
+| `GET /api/followed_artists` | public | Who the owner follows on Spotify (1-hour cache) |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
