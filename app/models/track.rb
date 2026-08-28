@@ -22,8 +22,13 @@ class Track < ApplicationRecord
       duration_ms: payload["duration_ms"],
       explicit: payload["explicit"] || false
     )
-    track.save!
-    track.sync_artists!(payload["artists"])
+    # Rebuilding the credits touches several rows (Artist upserts, TrackArtist
+    # links, a destroy_all of stale ones) — a failure partway through must not
+    # leave the track's own attributes updated while its credits are stale.
+    transaction do
+      track.save!
+      track.sync_artists!(payload["artists"])
+    end
     track
   end
 
