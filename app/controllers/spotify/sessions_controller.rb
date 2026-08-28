@@ -71,6 +71,11 @@ module Spotify
       SyncRecentlyPlayedJob.perform_later(account)
 
       redirect_to root_path, notice: "Connected as #{account.display_name}."
+    rescue Invite::AlreadyClaimedError
+      # The claimable check above passed, but another callback for the same
+      # invite won the race to actually claim it — same outcome as finding it
+      # already gone, just caught a moment later.
+      render plain: "That invite was used or expired while you were away. Ask for a new one.", status: :gone
     rescue Spotify::Error => e
       render plain: "Could not connect: #{e.message}", status: :bad_gateway
     end

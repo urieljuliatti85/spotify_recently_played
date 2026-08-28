@@ -31,6 +31,22 @@ class InviteTest < ActiveSupport::TestCase
     assert_nil Invite.claimable_by(token), "a spent invite must not be claimable again"
   end
 
+  # The controller checks `claimable_by` before starting the OAuth round trip,
+  # but that leaves a real gap: two callbacks can both pass that check before
+  # either calls `claim!`. This is what proves the second one loses instead of
+  # silently overwriting the first — same instance, claimed twice in a row,
+  # standing in for two requests racing each other.
+  test "the loser of a race to claim the same invite is told, not left to overwrite the winner" do
+    winner = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana")
+    loser = SpotifyAccount.create!(display_name: "Bea", spotify_user_id: "bea")
+    invite = Invite.issue!
+
+    invite.claim!(winner)
+
+    assert_raises(Invite::AlreadyClaimedError) { invite.claim!(loser) }
+    assert_equal winner, invite.reload.spotify_account
+  end
+
   test "an expired invite is not claimable" do
     invite = Invite.issue!(lifetime: -1.second)
 

@@ -14,6 +14,8 @@ class Invite < ApplicationRecord
   # shown once and never stored, so a leaked database gives up nothing usable.
   attr_reader :token
 
+  AlreadyClaimedError = Class.new(StandardError)
+
   def self.issue!(label: nil, lifetime: LIFETIME)
     token = SecureRandom.urlsafe_base64(32)
     invite = create!(token_digest: digest(token), label: label.presence, expires_at: lifetime.from_now)
@@ -33,8 +35,17 @@ class Invite < ApplicationRecord
     OpenSSL::Digest::SHA256.hexdigest(token)
   end
 
+  # The controller already checks `claimable_by` before starting the OAuth
+  # round trip, but that check-then-act gap is real: two callbacks racing for
+  # the same invite could both pass it and then both call `claim!`. The
+  # `where(claimed_at: nil)` here — not a plain `update!` — is what makes only
+  # one of them actually win; the other gets back 0 updated rows.
   def claim!(account)
-    update!(claimed_at: Time.current, spotify_account: account)
+    updated = self.class.where(id: id, claimed_at: nil)
+                        .update_all(claimed_at: Time.current, spotify_account_id: account.id)
+    raise AlreadyClaimedError, "This invite has already been claimed" if updated.zero?
+
+    reload
   end
 
   def claimed? = claimed_at.present?
