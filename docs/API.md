@@ -183,25 +183,6 @@ plays this app has synced. Cached 6 hours.
 `403` here means the owner's token is missing the `user-top-read` scope and
 needs reconnecting.
 
-## `GET /api/followed_artists`
-
-Who the owner follows on Spotify (`GET /v1/me/following?type=artist`) — not
-derived from anything synced locally. Cached 1 hour. Only the first page (up
-to 50) is fetched; Spotify paginates this one by cursor rather than offset.
-
-**Response**
-
-```jsonc
-{
-  "artists": [
-    { "id": "...", "name": "...", "image_url": "...", "spotify_url": "...", "followers": 1234 }
-  ]
-}
-```
-
-`403` here means the owner's token is missing the `user-follow-read` scope
-and needs reconnecting.
-
 ## `GET /api/discogs/status`
 
 Whether the sibling `discogs_shelf` app is configured and answering.

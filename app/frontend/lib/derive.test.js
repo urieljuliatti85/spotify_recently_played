@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  albumGroupsFromTracks,
   albumsFrom,
   artistProfile,
   artistsFrom,
@@ -162,6 +163,54 @@ describe("albumsFrom", () => {
     ]
 
     expect(albumsFrom(plays, 2)).toHaveLength(2)
+  })
+})
+
+describe("albumGroupsFromTracks", () => {
+  function track(overrides = {}) {
+    return {
+      spotify_id: `track-${nextId++}`,
+      name: "Track",
+      artists: "Artist",
+      album: "Album",
+      album_spotify_id: "album-1",
+      album_image_url: null,
+      ...overrides,
+    }
+  }
+
+  test("groups catalogue tracks by album id, counting how many are on it", () => {
+    const first = track({ album: "Amnesiac", album_spotify_id: "amnesiac", artists: "Radiohead" })
+    const second = track({ album: "Amnesiac", album_spotify_id: "amnesiac", artists: "Radiohead" })
+    const other = track({ album: "Mezzanine", album_spotify_id: "mezzanine", artists: "Massive Attack" })
+
+    const albums = albumGroupsFromTracks([ first, second, other ])
+
+    expect(albums).toHaveLength(2)
+    const amnesiac = albums.find((album) => album.name === "Amnesiac")
+    expect(amnesiac.trackCount).toBe(2)
+    expect(amnesiac.track).toBe(first)
+  })
+
+  test("falls back to name+artist when two albums share no id", () => {
+    const noId = track({ album: "Bootleg", album_spotify_id: null, artists: "Artist" })
+    const sameNoId = track({ album: "Bootleg", album_spotify_id: null, artists: "Artist" })
+
+    expect(albumGroupsFromTracks([ noId, sameNoId ])).toHaveLength(1)
+  })
+
+  test("skips a track with no album", () => {
+    expect(albumGroupsFromTracks([ track({ album: null }) ])).toEqual([])
+  })
+
+  test("respects the limit", () => {
+    const tracks = [
+      track({ album: "One", album_spotify_id: "one" }),
+      track({ album: "Two", album_spotify_id: "two" }),
+      track({ album: "Three", album_spotify_id: "three" }),
+    ]
+
+    expect(albumGroupsFromTracks(tracks, 2)).toHaveLength(2)
   })
 })
 

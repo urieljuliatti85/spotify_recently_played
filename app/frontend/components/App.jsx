@@ -14,7 +14,6 @@ import {
 import ArtistView from "./ArtistView"
 import AlbumsView from "./AlbumsView"
 import DiscogsView from "./DiscogsView"
-import FollowedArtistsView from "./FollowedArtistsView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
 import ListenersView from "./ListenersView"
@@ -33,7 +32,7 @@ const ARTIST_GRID_SIZE = 60
 const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
-const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs", "followed"])
+const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs"])
 
 // Mirrors the album page's /albums/:id/tracks shape.
 const ARTIST_PATH = /^\/artists\/([^/]+)\/tracks\/?$/
@@ -388,10 +387,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
 
           {isReady && !profile && view === "discogs" && (
             <DiscogsView query={query} onSelect={handleSelect} selectedPlayId={selected?.id} />
-          )}
-
-          {isReady && !profile && view === "followed" && (
-            <FollowedArtistsView onOpenArtist={showArtist} connectPath={connectPath} />
           )}
 
           {isReady && !profile && view === "listeners" && (

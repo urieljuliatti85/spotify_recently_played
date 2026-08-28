@@ -26,7 +26,6 @@ tags:
   - name: Albums
   - name: Playlists
   - name: Top Items
-  - name: Followed Artists
   - name: Discogs
 paths:
   /api/plays:
@@ -295,45 +294,6 @@ paths:
                     items: { $ref: "#/components/schemas/Track" }
         "403":
           description: The owner's token is missing user-top-read and needs reconnecting
-          content:
-            application/json: { schema: { $ref: "#/components/schemas/Error" } }
-        "502":
-          description: Spotify request failed
-          content:
-            application/json: { schema: { $ref: "#/components/schemas/Error" } }
-        "503":
-          description: No Spotify account linked
-          content:
-            application/json: { schema: { $ref: "#/components/schemas/Error" } }
-
-  /api/followed_artists:
-    get:
-      tags: [Followed Artists]
-      summary: Who the owner follows on Spotify (1-hour cache)
-      description: >
-        GET /v1/me/following?type=artist — not derived from anything synced
-        locally. Only the first page (up to 50) is fetched; Spotify paginates
-        this one by cursor rather than offset.
-      responses:
-        "200":
-          description: Followed artists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  artists:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id: { type: string }
-                        name: { type: string }
-                        image_url: { type: string, nullable: true }
-                        spotify_url: { type: string, nullable: true }
-                        followers: { type: integer, nullable: true }
-        "403":
-          description: The owner's token is missing user-follow-read and needs reconnecting
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "502":

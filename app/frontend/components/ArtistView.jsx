@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { fetchArtistTracks } from "../lib/api"
-import { plural } from "../lib/derive"
+import { albumGroupsFromTracks, plural } from "../lib/derive"
 import { dayLabel, duration } from "../lib/format"
 import PlayFeed from "./PlayFeed"
 import { AlbumCard, Shelf } from "./Shelf"
@@ -43,13 +43,27 @@ export default function ArtistView({ profile, selectedPlayId, onSelect, onBack, 
   )
   const otherTracks = catalogTracks.filter((track) => !playedTrackIds.has(track.spotify_id))
 
-  function playCatalogTrack(track) {
-    onSelect({
-      id: `spotify:${track.spotify_id}`,
-      played_at: new Date().toISOString(),
-      track,
-    })
+  function playOf(track) {
+    return { id: `spotify:${track.spotify_id}`, played_at: new Date().toISOString(), track }
   }
+
+  function playCatalogTrack(track) {
+    onSelect(playOf(track))
+  }
+
+  // An artist nobody here has actually played yet has no local plays to
+  // derive albums from — `albums` stays empty even though real albums exist.
+  // Fall back to grouping the catalogue tracks already fetched for
+  // "More from {name}" into albums of their own, rather than leaving the
+  // page with nothing to show.
+  const catalogAlbums = useMemo(
+    () =>
+      albums.length === 0
+        ? albumGroupsFromTracks(catalogTracks).map((group) => ({ ...group, latestPlay: playOf(group.track) }))
+        : [],
+    [albums.length, catalogTracks]
+  )
+  const albumsToShow = albums.length > 0 ? albums : catalogAlbums
 
   return (
     <div className="artist">
@@ -217,12 +231,17 @@ export default function ArtistView({ profile, selectedPlayId, onSelect, onBack, 
         </section>
       )}
 
-      {albums.length > 0 && (
-        <Shelf title="Albums">
-          {albums.map((album) => (
-            <AlbumCard key={album.key} album={album} onSelect={onSelect} />
-          ))}
-        </Shelf>
+      {albumsToShow.length > 0 && (
+        <>
+          {albums.length === 0 && (
+            <p className="section__hint">From Spotify&apos;s catalogue — nothing played here yet.</p>
+          )}
+          <Shelf title="Albums">
+            {albumsToShow.map((album) => (
+              <AlbumCard key={album.key} album={album} onSelect={onSelect} />
+            ))}
+          </Shelf>
+        </>
       )}
 
       {plays.length > 0 && (

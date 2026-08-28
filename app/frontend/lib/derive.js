@@ -112,6 +112,31 @@ export function albumsFrom(plays, limit = 20) {
   return [...albums.values()].slice(0, limit)
 }
 
+// Groups full track objects straight from Spotify's catalogue (not local
+// plays) into their albums. Used when an artist has no play history to derive
+// albumsFrom from at all — an artist nobody has played through this app yet
+// still has real albums worth showing.
+export function albumGroupsFromTracks(tracks, limit = 20) {
+  const albums = new Map()
+
+  for (const track of tracks) {
+    const { album, album_image_url: imageUrl, album_spotify_id: albumId, artists } = track
+    if (!album) continue
+
+    const key = albumId ?? `${album}::${artists}`
+    const existing = albums.get(key)
+
+    if (existing) {
+      existing.trackCount += 1
+      continue
+    }
+
+    albums.set(key, { key, albumId, name: album, artists, imageUrl, track, trackCount: 1 })
+  }
+
+  return [...albums.values()].slice(0, limit)
+}
+
 /**
  * Artists ranked by how often they show up in the given plays. The photo is
  * the artist's own where the backfill has fetched one, and the cover of an
