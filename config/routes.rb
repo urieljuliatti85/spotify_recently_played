@@ -31,6 +31,8 @@ Rails.application.routes.draw do
     get "albums/:id/tracks", to: "albums#tracks", as: :album_tracks
     get "albums/:id/discogs", to: "albums#discogs", as: :album_discogs
     get "albums/releases", to: "albums#releases", as: :album_releases
+    # :tracks rather than :show — the response pairs the playlist with its
+    # track list, which isn't what a bare "show a playlist" resource returns.
     resources :playlists, only: :index do
       get :tracks, on: :member
     end
