@@ -22,13 +22,14 @@ bin/rails test test/models/track_test.rb:42     # one test, by line
 bin/rubocop                                     # rubocop-rails-omakase; CI fails on any diff after -A
 bin/brakeman -q --no-pager
 bin/bundler-audit
+npm test                                        # Vitest — app/frontend/lib/*.test.js (derive.js, format.js)
 ```
 
 `bin/ci` (see `config/ci.rb`) runs setup, RuboCop, bundler-audit and Brakeman —
-it does **not** run `bin/rails test`. The `.githooks/pre-commit` hook (already
-enabled via `core.hooksPath`) runs RuboCop, a frontend build (`bin/vite build`,
-to catch a broken JSX/JS file before it ships), and the test suite on every
-commit.
+it does **not** run `bin/rails test` or `npm test`. The `.githooks/pre-commit`
+hook (already enabled via `core.hooksPath`) runs RuboCop, a frontend build
+(`bin/vite build`, to catch a broken JSX/JS file before it ships), the Vitest
+suite, and the Rails test suite on every commit.
 
 Rake tasks for operating the feed: `spotify:sync`, `spotify:invite[Label]`,
 `spotify:invites`, `spotify:revoke_invite[id]`, `spotify:listeners`,
@@ -118,8 +119,9 @@ from the plays already in memory. `usePlays` owns pagination (cursor = `played_a
 60s poll that prepends only genuinely newer rows. The time range is a global lens; the
 search box narrows only what is on screen.
 
-`lib/derive.js` and `lib/format.js` are dependency-free ESM and can be exercised directly
-with `node --input-type=module -e '...'` — the fastest loop for changes there.
+`lib/derive.js` and `lib/format.js` are dependency-free ESM, covered by
+`*.test.js` files next to them (Vitest, `npm test`), and can also be poked at
+directly with `node --input-type=module -e '...'` for a one-off check.
 
 ### Auth and CSP
 

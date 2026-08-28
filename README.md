@@ -355,16 +355,20 @@ separately because the play payload does not include the artist's image—
 ```bash
 bin/rails test     # tests
 bin/rubocop        # style
+npm test           # frontend tests (Vitest)
 ```
 
 The tests cover Spotify payload normalization, sync idempotency, token
 encryption, cursor pagination, OAuth flow rejections, sync route protection,
 and artist and playlist endpoints. The test environment uses fixed encryption
-keys, so neither local tests nor CI need `master.key`.
+keys, so neither local tests nor CI need `master.key`. `npm test` covers
+`app/frontend/lib/derive.js` and `lib/format.js`—the dependency-free logic the
+feed, shelves and filters are derived from—via `*.test.js` files next to them.
 
 The hook in `.githooks/pre-commit` runs RuboCop, a frontend build (`bin/vite
-build`, so a broken JSX/JS file fails locally instead of only in CI), and the
-tests before every commit. To enable it in a new clone:
+build`, so a broken JSX/JS file fails locally instead of only in CI), the
+frontend tests, and the Rails tests before every commit. To enable it in a new
+clone:
 
 ```bash
 git config core.hooksPath .githooks
