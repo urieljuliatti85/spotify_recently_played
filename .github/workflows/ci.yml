@@ -9,6 +9,13 @@ on:
   schedule:
     - cron: "27 5 * * 1"
 
+# A push replaces whatever CI was already running for the same branch/PR
+# rather than queuing behind it — a few commits in quick succession would
+# otherwise run the full job matrix once per push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest

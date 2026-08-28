@@ -12,6 +12,13 @@ on:
   schedule:
     - cron: "41 5 * * 1"
 
+# A push replaces whatever scan was already running for the same branch/PR
+# rather than queuing behind it — a few commits in quick succession would
+# otherwise run the full analysis matrix once per push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
