@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_182000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_192658) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "image_url"
@@ -31,6 +31,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_182000) do
     t.integer "track_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["discogs_id"], name: "index_discogs_matches_on_discogs_id", unique: true
+    t.index ["spotify_album_id"], name: "index_discogs_matches_on_spotify_album_id"
   end
 
   create_table "invites", force: :cascade do |t|
@@ -74,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_182000) do
     t.datetime "updated_at", null: false
     t.boolean "visible", default: true, null: false
     t.index ["owner"], name: "index_spotify_accounts_on_owner"
+    t.index ["spotify_user_id"], name: "index_spotify_accounts_on_spotify_user_id", unique: true
   end
 
   create_table "track_artists", force: :cascade do |t|
