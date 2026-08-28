@@ -33,9 +33,25 @@ const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
 // they render whether or not anything has been played yet.
 const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs"])
 
+// Mirrors the album page's /albums/:id/tracks shape.
+const ARTIST_PATH = /^\/artists\/([^/]+)\/tracks\/?$/
+// AlbumsView owns the id itself (mirroring DiscogsView's own ?release=
+// handling) — this only has to route the tab to mount it.
+const ALBUM_PATH = /^\/albums\/[^/]+\/tracks\/?$/
+
 function viewFromUrl() {
+  if (ARTIST_PATH.test(window.location.pathname)) return "artists"
+  if (ALBUM_PATH.test(window.location.pathname)) return "albums"
+
   const requested = new URLSearchParams(window.location.search).get("view")
   return VIEW_IDS.has(requested) ? requested : "overview"
+}
+
+// The artist's id lives in the path (/artists/:id/tracks) rather than a query
+// param, so a link to one specific artist is a URL someone can actually share.
+function artistFromUrl() {
+  const match = ARTIST_PATH.exec(window.location.pathname)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 // Autoplay is on by default: playback only ever starts from a click, so
@@ -63,7 +79,10 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
   const [range, setRange] = useState("all")
   const [view, setView] = useState(viewFromUrl)
   const [query, setQuery] = useState("")
-  const [openArtist, setOpenArtist] = useState(null)
+  const [openArtist, setOpenArtist] = useState(() => {
+    const key = artistFromUrl()
+    return key ? { key, name: null } : null
+  })
   // Which list next/prev walks. null means the visible feed; a credit key
   // means the player stays inside that artist until something else is played.
   const [playScope, setPlayScope] = useState(null)
@@ -95,7 +114,8 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
   useEffect(() => {
     function handlePopState() {
       setView(viewFromUrl())
-      setOpenArtist(null)
+      const key = artistFromUrl()
+      setOpenArtist(key ? { key, name: null } : null)
     }
 
     window.addEventListener("popstate", handlePopState)
@@ -170,9 +190,20 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
     setOpenArtist({ key, name })
     setView("artists")
     const url = new URL(window.location.href)
+    url.pathname = `/artists/${encodeURIComponent(key)}/tracks`
+    url.searchParams.delete("view")
+    window.history.pushState({ view: "artists", artist: key }, "", url)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [])
+
+  // Leaving the artist page without changing tabs — back to the grid, which
+  // lives at /?view=artists again rather than under the artist's path.
+  const closeArtist = useCallback(() => {
+    setOpenArtist(null)
+    const url = new URL(window.location.href)
+    url.pathname = "/"
     url.searchParams.set("view", "artists")
     window.history.pushState({ view: "artists" }, "", url)
-    window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
 
   function changeView(next) {
@@ -183,6 +214,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
     if (next === "listeners") setListenerId(null)
 
     const url = new URL(window.location.href)
+    url.pathname = "/"
     if (next === "overview") {
       url.searchParams.delete("view")
     } else {
@@ -221,6 +253,17 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
     setSelected(null)
     setPlayScope(null)
     setPlayQueue(null)
+
+    if (artistFromUrl()) {
+      const url = new URL(window.location.href)
+      url.pathname = "/"
+      if (view === "overview") {
+        url.searchParams.delete("view")
+      } else {
+        url.searchParams.set("view", view)
+      }
+      window.history.pushState({ view }, "", url)
+    }
   }
 
   function toggleAutoplay() {
@@ -324,7 +367,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
               profile={profile}
               selectedPlayId={selected?.id}
               onSelect={handleSelectInArtist}
-              onBack={() => setOpenArtist(null)}
+              onBack={closeArtist}
               onShuffle={() => shuffleFrom(profile.plays, profile.key)}
             />
           )}

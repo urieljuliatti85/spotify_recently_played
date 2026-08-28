@@ -49,12 +49,6 @@ module Spotify
       fetch_each("/v1/artists", ids)
     end
 
-    def artist_top_tracks(id, market: nil)
-      params = {}
-      params[:market] = market if market.present?
-      get("/v1/artists/#{URI.encode_www_form_component(id)}/top-tracks", params)
-    end
-
     def playlists(limit: 50)
       get("/v1/me/playlists", limit: limit.clamp(1, 50))
     end

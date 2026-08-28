@@ -27,10 +27,14 @@ module Api
 
     def tracks
       payload = Rails.cache.fetch("spotify:album_tracks:#{params[:id]}", expires_in: 1.hour) do
-        Spotify::Client.new.album(params[:id], market: Spotify.setting(:market))
+        Spotify::Client.new.album(params[:id], market: Spotify.market)
       end
 
-      render json: { tracks: Array(payload["tracks"]).filter_map { |track| serialize(track) } }
+      # The "simplified" track objects nested under tracks.items don't repeat
+      # the album's own name/id/images — it is the album — so that has to
+      # come from the payload's own top level instead of from each track.
+      tracks = Array(payload.dig("tracks", "items")).filter_map { |track| serialize(track, payload) }
+      render json: { tracks: tracks }
     rescue Spotify::NotConnectedError => e
       render json: { error: e.message }, status: :service_unavailable
     rescue Spotify::NotFoundError
@@ -86,16 +90,16 @@ module Api
       core.presence || normalize(value)
     end
 
-    def serialize(track)
+    def serialize(track, album)
       return if track["id"].blank? || track["name"].blank?
 
       {
         spotify_id: track["id"],
         name: track["name"],
         artists: Array(track["artists"]).map { |artist| artist["name"] }.join(", "),
-        album: track.dig("album", "name"),
-        album_spotify_id: track.dig("album", "id"),
-        album_image_url: Track.pick_image(track.dig("album", "images")),
+        album: album["name"],
+        album_spotify_id: album["id"],
+        album_image_url: Track.pick_image(album["images"]),
         spotify_url: track.dig("external_urls", "spotify"),
         duration_ms: track["duration_ms"],
         explicit: track["explicit"] || false

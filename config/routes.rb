@@ -10,6 +10,17 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
+  # Serves the same React app: an artist page carries its id in the path
+  # (rather than a ?artist= query param) so it is a URL someone can share, and
+  # a direct hit or reload needs Rails to answer it with something other than
+  # a 404. App.jsx reads the id back out of window.location.pathname. Shaped
+  # like the album page below (.../:id/tracks) for consistency.
+  get "artists/:id/tracks", to: "pages#index", as: :artist_page
+
+  # Same idea, for an album's own tracks page (AlbumsView, not this route,
+  # owns the id — see its ALBUM_PATH/albumIdFromUrl).
+  get "albums/:id/tracks", to: "pages#index", as: :album_page
+
   namespace :api do
     resources :plays, only: :index
     get "artists/:id/tracks", to: "artists#tracks", as: :artist_tracks

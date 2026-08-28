@@ -179,6 +179,8 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | Route | Access | Description |
 | --- | --- | --- |
 | `GET /` | public | React app |
+| `GET /artists/:id/tracks` | public | Same React app, deep-linked to one artist's page |
+| `GET /albums/:id/tracks` | public | Same React app, deep-linked to one album's tracks |
 | `GET /api/plays?limit=&before=&listener=` | public | Cursor-paginated feed, optionally one listener |
 | `GET /api/status` | public | Who is on the feed, and their play counts |
 | `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |

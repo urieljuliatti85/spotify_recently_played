@@ -1,7 +1,29 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { fetchAlbumDiscogs, fetchAlbumReleases, fetchAlbumTracks } from "../lib/api"
 import { duration } from "../lib/format"
 import { ChevronLeftIcon, PlayIcon } from "./icons"
+
+// The open album's Spotify id lives in the path, so a link to one is a URL
+// someone can share (and reload) rather than state that only exists in
+// memory — the same reasoning as the artist page's /artists/:id.
+const ALBUM_PATH = /^\/albums\/([^/]+)\/tracks\/?$/
+
+function albumIdFromUrl() {
+  const match = ALBUM_PATH.exec(window.location.pathname)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function writeAlbumToUrl(albumId) {
+  const url = new URL(window.location.href)
+  if (albumId) {
+    url.pathname = `/albums/${encodeURIComponent(albumId)}/tracks`
+    url.searchParams.delete("view")
+  } else {
+    url.pathname = "/"
+    url.searchParams.set("view", "albums")
+  }
+  window.history.pushState({ view: "albums", album: albumId ?? null }, "", url)
+}
 
 export default function AlbumsView({ albums, onSelect }) {
   const [selected, setSelected] = useState(null)
@@ -29,7 +51,7 @@ export default function AlbumsView({ albums, onSelect }) {
     return () => controller.abort()
   }, [albums])
 
-  function openAlbum(album) {
+  const openAlbum = useCallback((album) => {
     setSelected(album)
     setError(null)
     setReleases([])
@@ -44,6 +66,8 @@ export default function AlbumsView({ albums, onSelect }) {
         setReleasesError(cause)
         setReleasesState("error")
       })
+
+    if (album.albumId) writeAlbumToUrl(album.albumId)
 
     if (!album.albumId) {
       const uniqueTracks = new Map(album.plays.map((play) => [play.track.spotify_id, play.track]))
@@ -62,7 +86,66 @@ export default function AlbumsView({ albums, onSelect }) {
         setError(cause)
         setState("error")
       })
-  }
+  }, [])
+
+  // Reached directly — a shared link, a reload, or the back button. The
+  // tracks response itself carries the album's name, artists and cover, so
+  // this works even for an album that is not in `albums` (outside the
+  // recently-played window the grid draws from).
+  const openAlbumById = useCallback((albumId) => {
+    setSelected({ albumId, name: null, artists: null, imageUrl: null })
+    setError(null)
+    setTracks([])
+    setReleases([])
+    setReleasesError(null)
+    setReleasesState("idle")
+    setState("loading")
+
+    fetchAlbumTracks(albumId)
+      .then(({ tracks: result }) => {
+        setTracks(result ?? [])
+        setState("ready")
+
+        const first = result?.[0]
+        const name = first?.album ?? albumId
+        const artists = first?.artists ?? ""
+        setSelected({ albumId, name, artists, imageUrl: first?.album_image_url ?? null })
+
+        setReleasesState("loading")
+        return fetchAlbumReleases({ title: name, artist: artists })
+      })
+      .then((payload) => {
+        if (!payload) return
+        setReleases(payload.releases ?? [])
+        setReleasesState("ready")
+      })
+      .catch((cause) => {
+        setError(cause)
+        setState("error")
+        setReleasesError(cause)
+        setReleasesState("error")
+      })
+  }, [])
+
+  const closeAlbum = useCallback(() => {
+    setSelected(null)
+    // Only opening an album with a real Spotify id ever pushed a URL for it
+    // (see openAlbum); undo that push, but don't invent one for the rest.
+    if (albumIdFromUrl()) writeAlbumToUrl(null)
+  }, [])
+
+  // Opening a link directly, and the browser's back/forward button.
+  useEffect(() => {
+    function openFromUrl() {
+      const albumId = albumIdFromUrl()
+      if (albumId) openAlbumById(albumId)
+      else setSelected(null)
+    }
+
+    openFromUrl()
+    window.addEventListener("popstate", openFromUrl)
+    return () => window.removeEventListener("popstate", openFromUrl)
+  }, [openAlbumById])
 
   if (selected) {
     const plays = tracks.map((track, index) => ({
@@ -73,7 +156,7 @@ export default function AlbumsView({ albums, onSelect }) {
 
     return (
       <section className="section albums">
-        <button type="button" className="btn btn--ghost" onClick={() => setSelected(null)}>
+        <button type="button" className="btn btn--ghost" onClick={closeAlbum}>
           <ChevronLeftIcon size={16} /> Albums
         </button>
         <header className="section__head albums__detail-head">
@@ -86,7 +169,7 @@ export default function AlbumsView({ albums, onSelect }) {
           </span>
           <div>
             <p className="albums__eyebrow">Album</p>
-            <h1 className="section__title">{selected.name}</h1>
+            <h1 className="section__title">{selected.name || "Loading…"}</h1>
             <p className="section__hint">{selected.artists}</p>
           </div>
         </header>
