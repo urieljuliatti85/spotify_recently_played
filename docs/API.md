@@ -151,6 +151,26 @@ and needs reconnecting.
 
 **Response**: `{ "tracks": [ /* same track shape as api/plays, without album_spotify_id */ ] }`
 
+## `GET /api/top_items`
+
+The owner's algorithmic top artists and tracks over the last ~6 months
+(`GET /v1/me/top/{type}`, `medium_term`) — distinct from anything derived from
+plays this app has synced. Cached 6 hours.
+
+**Response**
+
+```jsonc
+{
+  "artists": [
+    { "id": "...", "name": "...", "image_url": "...", "spotify_url": "..." }
+  ],
+  "tracks": [ /* same track shape as api/plays, without album_spotify_id */ ]
+}
+```
+
+`403` here means the owner's token is missing the `user-top-read` scope and
+needs reconnecting.
+
 ## `GET /api/discogs/status`
 
 Whether the sibling `discogs_shelf` app is configured and answering.

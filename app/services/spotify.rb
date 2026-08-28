@@ -29,11 +29,12 @@ module Spotify
   # No account has been linked yet.
   class NotConnectedError < Error; end
 
-  # What the owner grants: their history, the playlists the site lists, and
-  # writing the one the playlists tab can build for them. `-public` is the
-  # narrower of the two write scopes and the only one this app needs, because
-  # the playlist it creates has to be public to show up on the tab at all.
-  SCOPES = %w[user-read-recently-played playlist-read-private playlist-modify-public].freeze
+  # What the owner grants: their history, the playlists the site lists, the
+  # one the playlists tab can build for them (`-public` is the narrower of the
+  # two write scopes and the only one this app needs, because the playlist it
+  # creates has to be public to show up on the tab at all), and their
+  # algorithmic top artists/tracks for the Overview's "Top Items" box.
+  SCOPES = %w[user-read-recently-played playlist-read-private playlist-modify-public user-top-read].freeze
   # What a friend grants. The playlists tab only ever shows the owner's, so
   # asking a friend for their private ones would be taking more than the site
   # can use.

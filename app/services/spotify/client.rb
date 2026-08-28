@@ -49,6 +49,14 @@ module Spotify
       fetch_each("/v1/artists", ids)
     end
 
+    # The listener's own algorithmic top artists/tracks — a personalization
+    # endpoint, unlike the rest of this client, which reads either catalogue
+    # data or plain history. Requires user-top-read, which only the owner
+    # grants (see Spotify::SCOPES).
+    def top_items(type:, time_range: "medium_term", limit: 10)
+      get("/v1/me/top/#{type}", time_range: time_range, limit: limit.clamp(1, 50))
+    end
+
     def playlists(limit: 50)
       get("/v1/me/playlists", limit: limit.clamp(1, 50))
     end

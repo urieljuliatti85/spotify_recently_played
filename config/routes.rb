@@ -30,6 +30,7 @@ Rails.application.routes.draw do
     resources :playlists, only: :index do
       get :tracks, on: :member
     end
+    get "top_items", to: "top_items#index"
     resource :status, only: :show, controller: "status"
 
     # The Discogs shelf: browsing comes from the sibling discogs_shelf app,

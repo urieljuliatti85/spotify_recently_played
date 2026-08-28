@@ -25,6 +25,7 @@ tags:
   - name: Artists
   - name: Albums
   - name: Playlists
+  - name: Top Items
   - name: Discogs
 paths:
   /api/plays:
@@ -241,6 +242,46 @@ paths:
                     items: { $ref: "#/components/schemas/Track" }
         "404":
           description: Playlist not found on Spotify
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Spotify request failed
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: No Spotify account linked
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /api/top_items:
+    get:
+      tags: [Top Items]
+      summary: The owner's algorithmic top artists/tracks over ~6 months (6-hour cache)
+      description: >
+        GET /v1/me/top/{type}, medium_term — distinct from anything derived
+        from plays this app has synced.
+      responses:
+        "200":
+          description: Top artists and tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artists:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        image_url: { type: string, nullable: true }
+                        spotify_url: { type: string, nullable: true }
+                  tracks:
+                    type: array
+                    items: { $ref: "#/components/schemas/Track" }
+        "403":
+          description: The owner's token is missing user-top-read and needs reconnecting
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "502":

@@ -82,10 +82,11 @@ registered in your Spotify app's dashboard.
 3. Under **APIs used**, select **Web API**.
 4. Copy the **Client ID** and **Client Secret**.
 
-The app requests three scopes: `user-read-recently-played` (history),
-`playlist-read-private` (the playlists tab) and `playlist-modify-public`
-(building a playlist from that tab). Friends grant only the first. If you
-connected the account before one of these was asked for, redo
+The app requests four scopes: `user-read-recently-played` (history),
+`playlist-read-private` (the playlists tab), `playlist-modify-public`
+(building a playlist from that tab) and `user-top-read` (the Overview's
+"DekSlayer's Top Items" box). Friends grant only the first. If you connected
+the account before one of these was asked for, redo
 `/spotify/connect`—without the scope, the feature returns 403 and explains this
 on screen.
 
@@ -137,7 +138,9 @@ subsequent syncs happen automatically.
 The navigation has seven tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
-- **Overview:** the recent feed, plus album and artist shelves.
+- **Overview:** the recent feed, "DekSlayer's Top Items" (Spotify's own
+  algorithmic top artists and tracks, `user-top-read`—distinct from the
+  locally-derived shelves below it), plus album and artist shelves.
 - **Tracks:** the complete history, grouped by day.
 - **Albums:** your recently played albums; opening one shows its full
   tracklist (`/albums/:id/tracks`) and, if a matching one exists, Discogs
@@ -192,6 +195,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /api/albums/releases?title=&artist=` | public | Discogs releases matching a Spotify album (2-minute cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
+| `GET /api/top_items` | public | The owner's algorithmic top artists/tracks (6-hour cache) |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |

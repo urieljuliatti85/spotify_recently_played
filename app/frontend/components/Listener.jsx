@@ -68,7 +68,9 @@ export default function ListenerPicker({ listeners, selectedId, onChange }) {
             <button
               type="button"
               className={`listener ${selectedId === null ? "listener--active" : ""}`}
-              onClick={() => onChange(null)}
+              onClick={() => {
+                window.location.href = "/?view=listeners"
+              }}
               aria-pressed={selectedId === null}
             >
               <span className="listener__avatar listener__avatar--all" aria-hidden="true">
