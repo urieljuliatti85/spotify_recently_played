@@ -360,8 +360,11 @@ npm test           # frontend tests (Vitest)
 
 The tests cover Spotify payload normalization, sync idempotency, token
 encryption, cursor pagination, OAuth flow rejections, sync route protection,
-and artist and playlist endpoints. The test environment uses fixed encryption
-keys, so neither local tests nor CI need `master.key`. `npm test` covers
+artist and playlist endpoints, the Spotify HTTP client's own error mapping
+(expired tokens, rate limits, incomplete responses), background job fan-out
+and retry/discard behavior, and the race conditions around claiming an invite
+or resolving the same Discogs match twice at once. The test environment uses
+fixed encryption keys, so neither local tests nor CI need `master.key`. `npm test` covers
 `app/frontend/lib/derive.js` and `lib/format.js`—the dependency-free logic the
 feed, shelves and filters are derived from—via `*.test.js` files next to them.
 

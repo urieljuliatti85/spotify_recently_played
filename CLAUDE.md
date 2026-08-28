@@ -16,7 +16,7 @@ bin/setup --skip-server   # bundle + npm + .env + db:prepare. WITHOUT the flag i
                           # into bin/dev and never returns — always pass it from an agent.
 bin/dev                   # rails :3000 + vite :3036 + solid_queue (Procfile.dev)
 
-bin/rails test                                  # ~97 tests, parallel across cores
+bin/rails test                                  # ~155 tests, parallel across cores
 bin/rails test test/models/track_test.rb        # one file
 bin/rails test test/models/track_test.rb:42     # one test, by line
 bin/rubocop                                     # rubocop-rails-omakase; CI fails on any diff after -A
@@ -147,6 +147,10 @@ both files together.
 - Tests are Minitest with no mocking library. `test/test_helper.rb` provides `stubbing`,
   `stubbing_with` and `with_env`; integration tests get `admin_headers`. The suite sets
   fixed Active Record encryption keys, so neither local runs nor CI need `master.key`.
+- `bullet` runs in both `development` and `test` (`config/environments/*.rb`) and is set to
+  raise in `test` — an N+1 or an unused `includes` fails the test itself, not just a log line.
+  `rack-mini-profiler` runs in `development` only, badge in the corner of the page; measure
+  with it before reaching for a query change.
 - Config resolution is `ENV["SPOTIFY_*"]` first, then `credentials.yml.enc` under
   `spotify:` (`Spotify.setting`). `.env` is loaded by dotenv-rails in dev/test only.
 - Port 3000 is pinned in `Procfile.dev` because the Spotify redirect URI must match
