@@ -178,7 +178,7 @@ something else.
 | `GET /` | public | React app |
 | `GET /api/plays?limit=&before=&listener=` | public | Cursor-paginated feed, optionally one listener |
 | `GET /api/status` | public | Who is on the feed, and their play counts |
-| `GET /api/artists/:id/tracks` | public | Artist top tracks (1-hour cache) |
+| `GET /api/artists/:id/tracks` |     public | Artist top tracks (1-hour cache) |
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | Tracks in a playlist |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
