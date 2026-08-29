@@ -46,5 +46,10 @@ node_modules
 /.env
 !/.env.example
 
+# Carries ADMIN_PASSWORD in plain text (Prometheus config has no secret-file
+# mechanism), same reasoning as /.env above.
+/observability/prometheus.yml
+!/observability/prometheus.yml.example
+
 # macOS
 .DS_Store

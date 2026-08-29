@@ -252,9 +252,11 @@ actually needs given its rate-limited Spotify quota: `spotify_requests_total`
 / `spotify_request_duration_seconds` (recorded in `Spotify::Client#perform`,
 labelled by endpoint with ids collapsed to `:id` so `fetch_each` doesn't mint
 a series per track/artist) and `spotify_sync_runs_total` /
-`spotify_sync_plays_imported_total` (recorded in `SyncRecentlyPlayedJob`,
-labelled by listener and, for runs, outcome). Add further app-specific
-metrics (Solid Queue backlog, YouTube/lrclib lookup rates) the same way:
+`spotify_sync_plays_imported_total` (recorded in
+`Spotify::RecentlyPlayedSync#call`—the one place both the scheduled job and
+the owner's "Sync now" button go through—labelled by listener and, for runs,
+outcome). Add further app-specific metrics (Solid Queue backlog, YouTube/lrclib
+lookup rates) the same way:
 
 ```ruby
 Yabeda.configure do
@@ -262,6 +264,25 @@ Yabeda.configure do
   gauge :backlog, comment: "Pending Solid Queue jobs", tags: %i[queue_name]
 end
 ```
+
+The owner-only `?view=metrics` tab (`Spotify::MetricsController`,
+`app/frontend/components/MetricsView.jsx`) charts the same numbers without
+leaving the app—no Prometheus required, just `ADMIN_PASSWORD`. For history
+beyond "since this process last booted", and for alerting, point an actual
+Prometheus + Grafana at `/metrics`: `observability/docker-compose.yml` runs
+both, pre-wired with a datasource and a matching dashboard.
+
+```bash
+cp observability/prometheus.yml.example observability/prometheus.yml   # fill in ADMIN_PASSWORD
+cd observability && docker compose up
+```
+
+Prometheus at `http://localhost:9090`, Grafana at `http://localhost:3300`
+(`admin` / `admin` unless `GRAFANA_ADMIN_PASSWORD` is set). It scrapes the app
+on the host via `host.docker.internal`, which is why `config/environments/development.rb`
+adds that hostname to `config.hosts`—without it, Host Authorization answers
+403 before `AdminBasicAuth` even runs. Against a deployed instance instead,
+point `targets:` in `prometheus.yml` at the real host and add `scheme: https`.
 
 Owner routes are protected by HTTP Basic with `ADMIN_PASSWORD` (the username can
 be anything; only the password matters). In development, when the variable is

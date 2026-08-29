@@ -54,6 +54,12 @@ Rails.application.configure do
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true
 
+  # Lets the Prometheus container in observability/docker-compose.yml scrape
+  # /metrics — from inside Docker the app is reached as host.docker.internal
+  # rather than 127.0.0.1/localhost, which Host Authorization otherwise
+  # blocks with a 403 before AdminBasicAuth even runs.
+  config.hosts << "host.docker.internal"
+
   # Suppress logger output for asset requests.
   config.assets.quiet = true
 
