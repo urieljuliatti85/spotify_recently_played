@@ -1,10 +1,10 @@
 Rails.application.routes.draw do
   # Interactive Swagger UI over docs/API.md's endpoints, hand-written into
   # swagger/v1/swagger.yaml (rswag-specs, which generates it from tests,
-  # requires RSpec — this repo uses Minitest). Owner-only, like the other
-  # administrative routes: it lets a caller fire real requests at the app.
-  ui_docs = Rack::Builder.new { use AdminBasicAuth; use SwaggerCsp; run Rswag::Ui::Engine }.to_app
-  api_docs = Rack::Builder.new { use AdminBasicAuth; use SwaggerCsp; run Rswag::Api::Engine }.to_app
+  # requires RSpec — this repo uses Minitest). Public: the "Try it out" panel
+  # can fire real requests at the app, same as hitting the routes directly.
+  ui_docs = Rack::Builder.new { use SwaggerCsp; run Rswag::Ui::Engine }.to_app
+  api_docs = Rack::Builder.new { use SwaggerCsp; run Rswag::Api::Engine }.to_app
   mount ui_docs => "/api-docs"
   mount api_docs => "/api-docs"
 
