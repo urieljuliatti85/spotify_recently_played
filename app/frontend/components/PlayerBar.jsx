@@ -27,7 +27,7 @@ function clock(ms) {
  * thing is a note about where the volume actually lives, because a slider
  * there would move without changing anything.
  */
-function VolumeArea({ state, volume, onChange, onSignIn }) {
+function VolumeArea({ state, volume, onChange }) {
   if (state === "ready") return <VolumeControl volume={volume} onChange={onChange} />
 
   if (state === "starting") {
@@ -36,21 +36,6 @@ function VolumeArea({ state, volume, onChange, onSignIn }) {
         <VolumeIcon size={15} />
         <span className="playerbar__volume-label">Connecting…</span>
       </p>
-    )
-  }
-
-  // Without a client id there is nothing to sign in to, so the note stands in.
-  if (state === "signed-out" && onSignIn) {
-    return (
-      <button
-        type="button"
-        className="icon-toggle"
-        onClick={onSignIn}
-        title="Sign in with Spotify Premium to play full tracks and set the volume here."
-      >
-        <VolumeIcon size={15} />
-        <span className="icon-toggle__label">Sign in for volume</span>
-      </button>
     )
   }
 
@@ -95,7 +80,6 @@ export default function PlayerBar({
   hasNext,
   clientId,
   signedIn,
-  onSignIn,
   onSignedOut,
 }) {
   // The play id, not the track id, is what restarts either engine: the same
@@ -240,7 +224,6 @@ export default function PlayerBar({
           state={sdk.state}
           volume={sdk.volume}
           onChange={changeVolume}
-          onSignIn={onSignIn}
         />
 
         <button

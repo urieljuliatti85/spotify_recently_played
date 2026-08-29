@@ -212,6 +212,35 @@ button {
   font-size: 13px;
 }
 
+.sidebar__account {
+  margin: 4px 24px 24px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.sidebar__account-title {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sidebar__account-hint {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+.sidebar__account-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 9px 14px;
+  font-size: 11px;
+}
+
 .mini {
   display: flex;
   align-items: center;
@@ -2857,9 +2886,19 @@ button {
   }
 
   .sidebar__account {
-    margin: 0 0 0 auto;
+    margin: 0;
     padding: 0;
-    border-top: 0;
+    border: 0;
+    background: none;
+  }
+
+  .sidebar__account-title,
+  .sidebar__account-hint {
+    display: none;
+  }
+
+  .sidebar__account-btn {
+    width: auto;
   }
 
   .feed__day-head {

@@ -329,6 +329,9 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
         recent={queue.slice(0, SIDEBAR_TRACKS)}
         selectedPlayId={selected?.id}
         onSelect={handleSelect}
+        signedIn={signedIn}
+        onSignIn={clientId ? signIn : null}
+        onSignedOut={handleSignedOut}
       />
 
       <div className="content">
@@ -498,7 +501,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
           hasNext={hasNext}
           clientId={clientId}
           signedIn={signedIn}
-          onSignIn={clientId ? signIn : null}
           onSignedOut={handleSignedOut}
         />
       )}
