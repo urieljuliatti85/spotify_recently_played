@@ -1,3 +1,5 @@
+import { ExternalIcon } from "./icons"
+
 // A listener's face, or their initial when Spotify has no photo for them.
 export function ListenerAvatar({ listener, size = 24 }) {
   const initial = (listener?.name ?? "?").trim().charAt(0).toUpperCase() || "?"
@@ -85,7 +87,7 @@ export default function ListenerPicker({ listeners, selectedId, onChange }) {
         )}
 
         {listeners.map((listener) => (
-          <li key={listener.id}>
+          <li key={listener.id} className="listener-row">
             <button
               type="button"
               className={`listener ${selectedId === listener.id ? "listener--active" : ""}`}
@@ -103,6 +105,20 @@ export default function ListenerPicker({ listeners, selectedId, onChange }) {
                 </span>
               </span>
             </button>
+
+            {listener.spotify_url && (
+              <a
+                className="listener__profile-link"
+                href={listener.spotify_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                title={`Open ${listener.name}'s Spotify profile`}
+                aria-label={`Open ${listener.name}'s Spotify profile`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <ExternalIcon size={13} />
+              </a>
+            )}
           </li>
         ))}
       </ul>

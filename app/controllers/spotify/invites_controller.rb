@@ -14,13 +14,15 @@ module Spotify
     end
 
     def create
-      invite = Invite.issue!(label: params[:label])
+      invite = Invite.issue!(spotify_user_id: params[:spotify_user_id])
 
       # The only time the raw token exists outside the friend's browser.
       render json: {
         invite_url: join_url(invite.token),
         expires_at: invite.expires_at.iso8601
       }, status: :created
+    rescue ActiveRecord::RecordInvalid
+      render json: { error: "A Spotify user id is required." }, status: :unprocessable_entity
     end
 
     def destroy
@@ -36,7 +38,7 @@ module Spotify
       else "open until #{invite.expires_at.iso8601}"
       end
 
-      "##{invite.id} #{invite.label || '(no label)'} — #{state}"
+      "##{invite.id} #{invite.spotify_user_id} — #{state}"
     end
 
     def join_url(token)

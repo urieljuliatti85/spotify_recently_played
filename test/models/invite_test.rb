@@ -2,7 +2,7 @@ require "test_helper"
 
 class InviteTest < ActiveSupport::TestCase
   test "the raw token is returned once and never stored" do
-    invite = Invite.issue!(label: "Ana")
+    invite = Invite.issue!(spotify_user_id: "ana")
 
     assert_predicate invite.token, :present?
     assert_not_equal invite.token, invite.token_digest
@@ -10,8 +10,8 @@ class InviteTest < ActiveSupport::TestCase
   end
 
   test "a token matches only its own invite" do
-    invite = Invite.issue!
-    Invite.issue!
+    invite = Invite.issue!(spotify_user_id: "ana")
+    Invite.issue!(spotify_user_id: "bea")
 
     assert_equal invite.id, Invite.claimable_by(invite.token).id
     assert_nil Invite.claimable_by("not-a-real-token")
@@ -21,7 +21,7 @@ class InviteTest < ActiveSupport::TestCase
 
   test "claiming spends the invite" do
     account = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana")
-    invite = Invite.issue!
+    invite = Invite.issue!(spotify_user_id: "ana")
     token = invite.token
 
     invite.claim!(account)
@@ -39,7 +39,7 @@ class InviteTest < ActiveSupport::TestCase
   test "the loser of a race to claim the same invite is told, not left to overwrite the winner" do
     winner = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana")
     loser = SpotifyAccount.create!(display_name: "Bea", spotify_user_id: "bea")
-    invite = Invite.issue!
+    invite = Invite.issue!(spotify_user_id: "ana")
 
     invite.claim!(winner)
 
@@ -47,8 +47,13 @@ class InviteTest < ActiveSupport::TestCase
     assert_equal winner, invite.reload.spotify_account
   end
 
+  test "an invite must name the Spotify account it is for" do
+    assert_raises(ActiveRecord::RecordInvalid) { Invite.issue!(spotify_user_id: "") }
+    assert_raises(ArgumentError) { Invite.issue! }
+  end
+
   test "an expired invite is not claimable" do
-    invite = Invite.issue!(lifetime: -1.second)
+    invite = Invite.issue!(spotify_user_id: "ana", lifetime: -1.second)
 
     assert_predicate invite, :expired?
     assert_nil Invite.claimable_by(invite.token)
@@ -56,7 +61,7 @@ class InviteTest < ActiveSupport::TestCase
 
   test "deleting the account leaves the invite record but drops the link" do
     account = SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana")
-    invite = Invite.issue!
+    invite = Invite.issue!(spotify_user_id: "ana")
     invite.claim!(account)
 
     account.destroy

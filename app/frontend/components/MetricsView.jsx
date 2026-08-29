@@ -104,7 +104,7 @@ function Panel({ title, hint, empty, children }) {
   )
 }
 
-export default function MetricsView({ ownerPath }) {
+export default function MetricsView() {
   const [state, setState] = useState("loading")
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
@@ -119,27 +119,11 @@ export default function MetricsView({ ownerPath }) {
       })
       .catch((cause) => {
         setError(cause)
-        setState(cause.status === 401 ? "unauthorized" : "error")
+        setState("error")
       })
   }, [])
 
   useEffect(() => { load() }, [load])
-
-  if (state === "unauthorized") {
-    return (
-      <section className="section metrics">
-        <header className="section__head">
-          <div>
-            <h1 className="section__title">Metrics</h1>
-            <p className="section__hint">Owner-only — this is operational detail, not something the public feed shows.</p>
-          </div>
-        </header>
-        {ownerPath && (
-          <a className="btn btn--outline" href={`${ownerPath}?view=metrics`}>Sign in to view metrics</a>
-        )}
-      </section>
-    )
-  }
 
   const spotifyRequests = data ? groupSegments(data.spotify_requests, "endpoint", "status") : []
   const syncRuns = data ? groupSegments(data.sync_runs, "listener", "outcome") : []

@@ -15,13 +15,17 @@ namespace :spotify do
     abort "No Spotify account linked yet. Start the server and visit /spotify/connect."
   end
   desc "Issue a single-use invite link so a friend can add their own account"
-  task :invite, [ :label ] => :environment do |_task, args|
-    invite = Invite.issue!(label: args[:label])
+  task :invite, [ :spotify_user_id ] => :environment do |_task, args|
+    abort "Usage: bin/rails \"spotify:invite[<spotify_user_id>]\" — find it at " \
+          "open.spotify.com/user/<id> on the friend's profile page." if args[:spotify_user_id].blank?
+
+    invite = Invite.issue!(spotify_user_id: args[:spotify_user_id])
     origin = URI.parse(Spotify.redirect_uri)
 
-    puts "Invite ##{invite.id}#{invite.label ? " for #{invite.label}" : ""}"
+    puts "Invite ##{invite.id} for #{invite.spotify_user_id}"
     puts "#{origin.scheme}://#{origin.authority}/spotify/join/#{invite.token}"
     puts "Single use, expires #{invite.expires_at.iso8601}."
+    puts "Only that Spotify account can claim it — the callback checks it against #{invite.spotify_user_id}."
     puts
     puts "Heads up: whatever they play lands on the public feed. Say so before sending it."
   end
@@ -29,7 +33,7 @@ namespace :spotify do
   desc "List every invite and what became of it"
   task invites: :environment do
     invites = Invite.order(created_at: :desc)
-    next puts("No invites yet. Run bin/rails 'spotify:invite[Name]'.") if invites.empty?
+    next puts("No invites yet. Run bin/rails 'spotify:invite[<spotify_user_id>]'.") if invites.empty?
 
     invites.each do |invite|
       state = if invite.claimed?
@@ -40,7 +44,7 @@ namespace :spotify do
                 "open until #{invite.expires_at.iso8601}"
       end
 
-      puts "##{invite.id} #{invite.label || "(no label)"} — #{state}"
+      puts "##{invite.id} #{invite.spotify_user_id} — #{state}"
     end
   end
 

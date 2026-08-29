@@ -67,13 +67,26 @@ module Spotify
       end
     end
 
+    test "joining without confirming shows the warning page instead of redirecting" do
+      invite = Invite.issue!(spotify_user_id: "ana")
+
+      with_env(CREDENTIALS) do
+        get spotify_join_path(token: invite.token)
+
+        assert_response :success
+        assert_match "ana", response.body
+        assert_match(/signed in to Spotify as that account/, response.body)
+        assert_nil session[:spotify_oauth_state], "must not start the OAuth round trip before confirming"
+      end
+    end
+
     test "a friend joins with an invite and never sees the admin password" do
       SpotifyAccount.create!(display_name: "Owner", spotify_user_id: "owner", owner: true)
-      invite = Invite.issue!(label: "Ana")
+      invite = Invite.issue!(spotify_user_id: "ana")
 
       with_env(CREDENTIALS) do
         # No admin_headers anywhere in this flow.
-        get spotify_join_path(token: invite.token)
+        get spotify_join_path(token: invite.token, confirmed: true)
         assert_response :redirect
         assert_match(/scope=user-read-recently-played&/, response.location)
         assert_no_match(/playlist-read-private/, response.location,
@@ -94,12 +107,31 @@ module Spotify
       assert_predicate invite, :claimed?
     end
 
+    test "an invite is refused when a different Spotify account authorizes" do
+      invite = Invite.issue!(spotify_user_id: "ana")
+
+      with_env(CREDENTIALS) do
+        get spotify_join_path(token: invite.token, confirmed: true)
+        state = session[:spotify_oauth_state]
+
+        # Whoever this browser happens to be signed in to Spotify as — not
+        # the account the invite was issued to.
+        fake_spotify(id: "someone-else", name: "Someone Else") do
+          get spotify_callback_path, params: { code: "c", state: state }
+        end
+      end
+
+      assert_response :forbidden
+      assert_nil SpotifyAccount.find_by(spotify_user_id: "someone-else")
+      assert_not invite.reload.claimed?
+    end
+
     test "an invite link cannot be spent twice" do
-      invite = Invite.issue!
+      invite = Invite.issue!(spotify_user_id: "ana")
       token = invite.token
       invite.claim!(SpotifyAccount.create!(display_name: "Ana", spotify_user_id: "ana"))
 
-      get spotify_join_path(token: token)
+      get spotify_join_path(token: token, confirmed: true)
 
       assert_response :not_found
       assert_match "invalid, already used, or expired", response.body
@@ -114,10 +146,10 @@ module Spotify
     end
 
     test "an invite claimed mid-flow cannot be claimed again at the callback" do
-      invite = Invite.issue!
+      invite = Invite.issue!(spotify_user_id: "ana")
 
       with_env(CREDENTIALS) do
-        get spotify_join_path(token: invite.token)
+        get spotify_join_path(token: invite.token, confirmed: true)
         state = session[:spotify_oauth_state]
 
         # Somebody else spends it while this browser is away at Spotify.

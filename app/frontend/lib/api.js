@@ -97,42 +97,22 @@ export function fetchDiscogsRelease(discogsId, { signal } = {}) {
   return request(`/api/discogs/releases/${encodeURIComponent(discogsId)}`, { signal })
 }
 
-// Owner-only. Both of these spend the owner's Spotify quota — the first reads
-// one catalogue search per artist, the second writes to their account — so
-// they live outside /api and answer 401 to anyone else.
-export function fetchUnheardTracks({ signal } = {}) {
-  return request("/spotify/playlists/unheard", { signal })
-}
-
-export function searchPlaylistTracks(query, { signal } = {}) {
-  const params = new URLSearchParams({ q: query })
-  return request(`/spotify/playlists/search?${params}`, { signal })
-}
-
-export function createUnheardPlaylist({ name, trackIds, signal } = {}) {
-  return request("/spotify/playlists", {
-    method: "POST",
-    body: { name, track_ids: trackIds },
-    signal,
-  })
-}
-
 // Pulls recent plays for every linked listener right now instead of waiting
 // for the schedule (SyncAllAccountsJob still runs every minute regardless).
 export function syncNow({ signal } = {}) {
   return request("/spotify/sync", { method: "POST", signal })
 }
 
-// Owner-only. The numbers /metrics exposes as Prometheus text, reshaped as
+// Public. The numbers /metrics exposes as Prometheus text, reshaped as
 // JSON by Spotify::MetricsSnapshot for the dashboard to chart.
 export function fetchMetrics({ signal } = {}) {
   return request("/spotify/metrics", { signal })
 }
 
-export function createInvite(label, { signal } = {}) {
+export function createInvite(spotifyUserId, { signal } = {}) {
   return request("/spotify/invites", {
     method: "POST",
-    body: { label },
+    body: { spotify_user_id: spotifyUserId },
     signal,
   })
 }

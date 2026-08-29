@@ -30,10 +30,7 @@ import { AlbumCard, ArtistCard, Shelf } from "./Shelf"
 const AUTOPLAY_KEY = "autoplay"
 const SHELF_SIZE = 20
 const ARTIST_GRID_SIZE = 60
-// "metrics" isn't in TopBar's VIEWS (it's owner-only, offered only once
-// `site.admin` is known), but a direct/reloaded link to it should still
-// route there — MetricsView itself answers the "not signed in" case.
-const VIEW_IDS = new Set([ ...VIEWS.map(({ id }) => id), "metrics" ])
+const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
 const RANGE_IDS = new Set(RANGES.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
@@ -375,7 +372,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
           onQueryChange={setQuery}
           lastSyncedAt={lastSyncedAt}
           ownerPath={ownerPath}
-          isAdmin={Boolean(site?.admin)}
         />
 
         <main className="main">
@@ -426,7 +422,7 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
             <DiscogsView query={query} onSelect={handleSelect} selectedPlayId={selected?.id} />
           )}
 
-          {isReady && !profile && view === "metrics" && <MetricsView ownerPath={ownerPath} />}
+          {isReady && !profile && view === "metrics" && <MetricsView />}
 
           {isReady && !profile && view === "listeners" && (
             <ListenersView

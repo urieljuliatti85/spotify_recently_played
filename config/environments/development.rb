@@ -1,4 +1,9 @@
 require "active_support/core_ext/integer/time"
+# Loaded directly, not autoloaded: this file runs before Zeitwerk can resolve
+# an app/ constant, and `config.middleware.use` needs the actual class right
+# away (a string here builds a middleware stack entry that can never
+# instantiate — Rails does not revisit it to constantize later).
+require_relative "../../app/middleware/redirect_localhost_to_loopback"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -59,6 +64,12 @@ Rails.application.configure do
   # rather than 127.0.0.1/localhost, which Host Authorization otherwise
   # blocks with a 403 before AdminBasicAuth even runs.
   config.hosts << "host.docker.internal"
+
+  # /listen/callback's redirect_uri mirrors whatever host served the page, so
+  # visiting via "localhost" instead of "127.0.0.1" sends Spotify a
+  # redirect_uri it doesn't recognize — see the require_relative above and
+  # RedirectLocalhostToLoopback itself.
+  config.middleware.use RedirectLocalhostToLoopback
 
   # Suppress logger output for asset requests.
   config.assets.quiet = true

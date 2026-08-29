@@ -43,7 +43,17 @@ module Spotify
 
       return unless credentials_present?
 
-      begin_authorization(invite: invite)
+      # A confirmation step first, rather than redirecting to Spotify right
+      # away: Spotify's authorize screen reuses whichever Spotify session is
+      # already active in this browser, and show_dialog=true only forces the
+      # consent screen to reappear — it cannot force a different account. On
+      # a shared or borrowed browser that is how a friend's callback quietly
+      # links someone else's account with no error at any point; this is the
+      # one place to say so before it happens instead of after.
+      return begin_authorization(invite: invite) if params[:confirmed].present?
+
+      @invite = invite
+      render "spotify/sessions/join", layout: false
     end
 
     def create
@@ -76,6 +86,10 @@ module Spotify
       # invite won the race to actually claim it — same outcome as finding it
       # already gone, just caught a moment later.
       render plain: "That invite was used or expired while you were away. Ask for a new one.", status: :gone
+    rescue Invite::WrongAccountError
+      render plain: "This invite is for a different Spotify account. Sign out of Spotify in this " \
+                     "browser (or use a private window) and sign in as the account this invite was issued to.",
+             status: :forbidden
     rescue Spotify::Error => e
       render plain: "Could not connect: #{e.message}", status: :bad_gateway
     end
@@ -113,6 +127,15 @@ module Spotify
     # account, hence the bare-token client.
     def link_account(tokens:, invite:)
       profile = Client.with_token(tokens["access_token"]).me
+
+      # The invite names a specific Spotify account; the browser's active
+      # Spotify session is whatever it is (see the warning on the join page),
+      # so this is what actually stops a friend's link from landing on
+      # someone else's account on a shared or borrowed browser.
+      if invite && invite.spotify_user_id != profile["id"]
+        raise Invite::WrongAccountError, "Invite ##{invite.id} is for #{invite.spotify_user_id}, not #{profile["id"]}"
+      end
+
       account = SpotifyAccount.find_or_initialize_by(spotify_user_id: profile["id"])
 
       SpotifyAccount.transaction do

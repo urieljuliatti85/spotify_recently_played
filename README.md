@@ -40,17 +40,21 @@ The feed can mirror more than one account. Each friend links their own—there i
 no way to add someone else's listening without them authorizing it, and no
 Spotify API for reading a friend's activity.
 
-Issue a single-use invite:
+Issue a single-use invite pinned to their Spotify account — find their id at
+`open.spotify.com/user/<id>` on their profile page:
 
 ```bash
-bin/rails "spotify:invite[Ana]"
+bin/rails "spotify:invite[<their-spotify-user-id>]"
 # → http://your-site/spotify/join/<token>   (single use, expires in 7 days)
 ```
 
 Send them the link. They authorize with Spotify and their plays start appearing
-on the feed, tagged with their name. The link never exposes `ADMIN_PASSWORD`,
-and only its digest is stored, so a database copy cannot be replayed into an
-account link.
+on the feed. The invite only works for the account it names — the callback
+checks the account Spotify hands back against the id the invite was issued
+for, so it cannot be claimed by whichever Spotify account happens to be
+signed in on a shared or borrowed browser. The link never exposes
+`ADMIN_PASSWORD`, and only its digest is stored, so a database copy cannot be
+replayed into an account link.
 
 A friend is asked for `user-read-recently-played` and nothing else—the
 playlists tab only ever shows the owner's, so asking for a friend's private
@@ -76,8 +80,16 @@ registered in your Spotify app's dashboard.
 ### 1. Create a Spotify app
 
 1. Go to <https://developer.spotify.com/dashboard> and click **Create app**.
-2. Under **Redirect URIs**, add exactly:
-   `http://127.0.0.1:3000/spotify/callback`
+2. Under **Redirect URIs**, add **both** of these exactly (missing either one
+   fails with `redirect_uri: Not matching configuration` the first time that
+   flow is used, not at setup, since the two are unrelated OAuth flows that
+   only share the same Spotify app registration):
+   - `http://127.0.0.1:3000/spotify/callback` — linking the accounts the site
+     mirrors (the owner, and friends via invite).
+   - `http://127.0.0.1:3000/listen/callback` — a visitor signing in for the
+     volume slider; nothing about this one reaches the server (see "Two
+     unrelated OAuth flows" in `CLAUDE.md` for why they're kept separate).
+
    Spotify requires the loopback IP (`127.0.0.1`) and does not accept `localhost`.
 3. Under **APIs used**, select **Web API**.
 4. Copy the **Client ID** and **Client Secret**.
@@ -154,17 +166,7 @@ The navigation has eight tabs, and the selected tab is reflected in the URL
   that disappeared because its owner played nothing matching would read as them
   having left.
 - **Playlists:** your public playlists and each playlist's tracks, deep-linked
-  at `/playlists/:id/tracks`. As the owner you also get **Add new playlist**,
-  which gathers tracks by the artists already
-  on the feed that nobody here has played, lets you uncheck what you do not
-  want, and creates a public playlist out of the rest. It is owner-only because
-  it writes to your Spotify account—visitors are not shown the button. The
-  browser holds no `ADMIN_PASSWORD` until something asks for it, and nothing on
-  the public feed does, so the tab carries an **Owner sign-in** link that
-  triggers the prompt and drops you back here with the button showing. Spotify
-  refuses `/v1/artists/{id}/top-tracks` for this app, so the candidates come
-  from a catalogue search per artist instead; it walks the fifteen most played
-  artists and caches each answer for an hour.
+  at `/playlists/:id/tracks`.
 - **Discogs:** the records you own, and which of their tracks Spotify can
   actually play. See below.
 
@@ -211,8 +213,6 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
 | `GET /spotify/callback` | state | Receives the code and saves tokens |
 | `POST /spotify/sync` | owner | Syncs every listener now, without waiting for the job |
-| `GET /spotify/playlists/unheard` | owner | Tracks by the feed's artists that nobody has played |
-| `POST /spotify/playlists` | owner | Creates a public playlist from a chosen selection |
 | `GET/POST /spotify/invites` | owner | List and issue invite links |
 | `DELETE /spotify/invites/:id` | owner | Revoke an unclaimed invite |
 | `DELETE /spotify` | owner | Unlinks the owner |
@@ -265,12 +265,15 @@ Yabeda.configure do
 end
 ```
 
-The owner-only `?view=metrics` tab (`Spotify::MetricsController`,
+The `?view=metrics` tab (`Spotify::MetricsController`,
 `app/frontend/components/MetricsView.jsx`) charts the same numbers without
-leaving the app—no Prometheus required, just `ADMIN_PASSWORD`. For history
-beyond "since this process last booted", and for alerting, point an actual
-Prometheus + Grafana at `/metrics`. Two ways to do that, depending on where
-this is deployed:
+leaving the app—no Prometheus required. Deliberately public, unlike the rest
+of the owner-only surface: request counts, latency and sync outcomes are
+operational detail, not anything private about a listener. `GET /metrics`
+itself (the raw exposition format an actual Prometheus server scrapes) stays
+behind `ADMIN_PASSWORD`, same as always. For history beyond "since this
+process last booted", and for alerting, point an actual Prometheus + Grafana
+at `/metrics`. Two ways to do that, depending on where this is deployed:
 
 - **A host you control** (local, or a VPS via Kamal): `observability/docker-compose.yml`
   runs Prometheus + Grafana side by side, pre-wired with a datasource and a
@@ -485,8 +488,11 @@ Before exposing the site publicly:
 - set `ADMIN_PASSWORD` (without it, owner routes refuse to work);
 - generate `RAILS_MASTER_KEY` from `config/master.key`—it decrypts the Spotify
   tokens;
-- register the production Redirect URI (HTTPS) in the Spotify dashboard and set
-  `SPOTIFY_REDIRECT_URI`;
+- register **both** production Redirect URIs (HTTPS) in the Spotify dashboard—
+  `https://your-domain/spotify/callback` (set as `SPOTIFY_REDIRECT_URI`) and
+  `https://your-domain/listen/callback` (computed automatically from
+  `APP_HOST`, nothing to set)—the same "both, or one flow breaks" reasoning
+  as local setup above;
 - set `APP_HOST` to the canonical domain, which enables DNS rebinding
   protection (`/up` is excluded because the load balancer connects by IP).
 

@@ -239,6 +239,12 @@ button {
   list-style: none;
 }
 
+.listener-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .listener {
   display: flex;
   align-items: center;
@@ -252,6 +258,27 @@ button {
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.listener-row .listener {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.listener__profile-link {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--text-faint);
+}
+
+.listener__profile-link:hover {
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
 .listener:hover {
@@ -2999,188 +3026,6 @@ button {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Building a playlist out of what the feed has never played. Owner-only, so
-   this markup only ever renders for one person — but it is the densest list in
-   the app, and the checkbox has to stay reachable at every width. */
-.composer {
-  display: block;
-}
-
-.composer .section__head {
-  margin-top: 18px;
-}
-
-.composer__name {
-  display: block;
-  max-width: 420px;
-  margin: 4px 0 22px;
-}
-
-.composer__label {
-  display: block;
-  margin-bottom: 7px;
-  color: var(--text-faint);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.composer__name input {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-panel);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-}
-
-.composer__name input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.composer__error {
-  margin: 0 0 18px;
-  padding: 11px 14px;
-  border: 1px solid rgba(255, 23, 35, 0.4);
-  border-radius: var(--radius);
-  background: var(--accent-soft);
-  color: var(--text);
-  font-size: 13px;
-}
-
-.composer__groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  align-items: start;
-  gap: 22px;
-}
-
-.composer__group {
-  min-width: 0;
-  padding: 14px 16px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-panel);
-}
-
-/* The whole heading is the group toggle: with ten tracks per artist, dropping
-   a band should not mean ten clicks. */
-.composer__group-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  padding: 0 0 10px;
-  border: 0;
-  background: none;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-align: left;
-  cursor: pointer;
-}
-
-.composer__group-head:hover {
-  color: var(--accent);
-}
-
-.composer__group-count {
-  color: var(--text-faint);
-  font-size: 11px;
-}
-
-.composer__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.composer__track {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 6px 0;
-  cursor: pointer;
-}
-
-.composer__track:hover .composer__track-title {
-  color: var(--accent);
-}
-
-.composer__track input {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.composer__track-cover {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  overflow: hidden;
-  border-radius: 4px;
-}
-
-.composer__track-cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.composer__track-meta {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.composer__track-title,
-.composer__track-album {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.composer__track-title {
-  font-size: 13.5px;
-}
-
-.composer__track-album {
-  color: var(--text-faint);
-  font-size: 11.5px;
-}
-
-/* Sticks to the bottom so the count and the submit stay in reach however far
-   down the list the owner has scrolled. */
-.composer__foot {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 26px;
-  padding: 16px 0;
-  background: linear-gradient(to top, var(--bg) 62%, transparent);
-}
-
-.composer__foot .section__hint {
-  margin: 0;
 }
 
 /* Present on a public feed but addressed to one person, so it stays quiet

@@ -6,8 +6,7 @@ module Api
     # are ever stored.
     #
     # Spotify's own /v1/artists/{id}/top-tracks answers 403 for this app, so
-    # this asks the catalogue search for the artist's name instead — the same
-    # workaround Spotify::UnheardTracks already uses for the same reason.
+    # this asks the catalogue search for the artist's name instead.
     def tracks
       payload = Rails.cache.fetch("spotify:artist_top_tracks:#{params[:id]}", expires_in: 1.hour) do
         client = Spotify::Client.new

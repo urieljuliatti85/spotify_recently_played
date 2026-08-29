@@ -5,24 +5,15 @@ import { createInvite } from "../lib/api"
 import { ListenerAvatar } from "./Listener"
 import { PlayIcon, SearchIcon } from "./icons"
 
-function InviteForm({ listeners }) {
-  const [label, setLabel] = useState("")
+function InviteForm() {
+  const [spotifyUserId, setSpotifyUserId] = useState("")
   const [invite, setInvite] = useState(null)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [focused, setFocused] = useState(false)
-  const suggestions = useMemo(() => {
-    const query = label.trim().toLocaleLowerCase()
-    if (!query) return listeners.slice(0, 5)
-
-    return listeners
-      .filter((listener) => listener.name.toLocaleLowerCase().includes(query))
-      .slice(0, 5)
-  }, [label, listeners])
 
   async function submit(event) {
     event.preventDefault()
-    const value = label.trim()
+    const value = spotifyUserId.trim()
     if (!value || saving) return
 
     setSaving(true)
@@ -30,7 +21,7 @@ function InviteForm({ listeners }) {
     setInvite(null)
     try {
       setInvite(await createInvite(value))
-      setLabel("")
+      setSpotifyUserId("")
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -41,48 +32,30 @@ function InviteForm({ listeners }) {
   return (
     <div className="invite">
       <form className="invite__form" onSubmit={submit}>
-        <label className="invite__label" htmlFor="invite-label">
+        <label className="invite__label" htmlFor="invite-spotify-user-id">
           Invite someone
         </label>
         <div className="invite__controls">
           <div className="invite__input-wrap">
             <input
-              id="invite-label"
+              id="invite-spotify-user-id"
               className="invite__input"
               type="text"
-              value={label}
-              onChange={(event) => setLabel(event.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setTimeout(() => setFocused(false), 100)}
-              placeholder="Friend's name"
+              value={spotifyUserId}
+              onChange={(event) => setSpotifyUserId(event.target.value)}
+              placeholder="Their Spotify user id"
               autoComplete="off"
               required
-              aria-autocomplete="list"
-              aria-controls="listener-invite-suggestions"
             />
-            {focused && suggestions.length > 0 && (
-              <ul id="listener-invite-suggestions" className="invite__suggestions" role="listbox">
-                {suggestions.map((listener) => (
-                  <li key={listener.id} role="option">
-                    <button
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => {
-                        setLabel(listener.name)
-                        setFocused(false)
-                      }}
-                    >
-                      {listener.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
-          <button className="btn btn--primary" type="submit" disabled={saving || !label.trim()}>
+          <button className="btn btn--primary" type="submit" disabled={saving || !spotifyUserId.trim()}>
             {saving ? "Creating…" : "Create invite"}
           </button>
         </div>
+        <p className="invite__hint">
+          Found at open.spotify.com/user/&lt;id&gt; on their profile. The link only works for
+          that account.
+        </p>
       </form>
       {invite && (
         <p className="invite__result">
@@ -251,7 +224,7 @@ export default function ListenersView({
           Link your own account, then invite a friend to get a single-use link they can use to add
           theirs.
         </p>
-        <InviteForm listeners={listeners} />
+        <InviteForm />
         {connectPath && (
           <a className="notice__cta" href={connectPath}>
             Connect Spotify
@@ -290,7 +263,7 @@ export default function ListenersView({
         )}
       </header>
 
-      <InviteForm listeners={listeners} />
+      <InviteForm />
 
       {recentFriends.length > 0 && (
         <aside className="recent-listeners">

@@ -73,13 +73,9 @@ Rails.application.routes.draw do
     # 401, the frontend never sees `admin`, and the button stays hidden.
     get "owner", to: "sessions#owner", as: :owner
 
-    # Owner-only: JSON behind the ?view=metrics tab (see Spotify::MetricsSnapshot).
+    # Public: JSON behind the ?view=metrics tab (see Spotify::MetricsSnapshot
+    # and Spotify::MetricsController — operational detail, no auth needed).
     get "metrics", to: "metrics#show", as: :metrics
-
-    # Owner-only: build a public playlist out of what the feed has not played.
-    get  "playlists/search", to: "playlists#search", as: :search_playlist_tracks
-    get  "playlists/unheard", to: "playlists#unheard", as: :unheard_playlist_tracks
-    post "playlists",         to: "playlists#create",  as: :playlists
 
     # Owner-only: the links friends use to add themselves.
     get    "invites",     to: "invites#index",   as: :invites

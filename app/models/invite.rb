@@ -7,6 +7,10 @@ class Invite < ApplicationRecord
 
   validates :token_digest, presence: true, uniqueness: true
   validates :expires_at, presence: true
+  # Required, unlike the free-text label this replaced: the whole point is
+  # that the link only works for the Spotify account it names, so there is
+  # nothing meaningful to issue an invite for without it.
+  validates :spotify_user_id, presence: true
 
   scope :claimable, -> { where(claimed_at: nil).where(expires_at: Time.current..) }
 
@@ -15,10 +19,17 @@ class Invite < ApplicationRecord
   attr_reader :token
 
   AlreadyClaimedError = Class.new(StandardError)
+  # Raised at the callback when the Spotify account that just authorized is
+  # not the one this invite names — see Spotify::SessionsController#link_account.
+  WrongAccountError = Class.new(StandardError)
 
-  def self.issue!(label: nil, lifetime: LIFETIME)
+  def self.issue!(spotify_user_id:, lifetime: LIFETIME)
     token = SecureRandom.urlsafe_base64(32)
-    invite = create!(token_digest: digest(token), label: label.presence, expires_at: lifetime.from_now)
+    invite = create!(
+      token_digest: digest(token),
+      spotify_user_id: spotify_user_id.to_s.strip,
+      expires_at: lifetime.from_now
+    )
     invite.instance_variable_set(:@token, token)
     invite
   end

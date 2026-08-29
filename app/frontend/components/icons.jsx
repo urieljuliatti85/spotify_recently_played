@@ -115,9 +115,3 @@ export const YoutubeIcon = (props) => (
     />
   </Glyph>
 )
-
-export const SparkIcon = (props) => (
-  <Glyph {...props}>
-    <path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9zM18.5 15l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" />
-  </Glyph>
-)
