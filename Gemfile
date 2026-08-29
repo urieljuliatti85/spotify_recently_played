@@ -42,6 +42,10 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
+  # SARIF formatter for RuboCop, so CI can post findings to the Security tab
+  # [https://github.com/arthurnn/code-scanning-rubocop]
+  gem "code-scanning-rubocop", require: false
+
   # Flags N+1 queries and unused eager loading [https://github.com/flyerhzm/bullet]
   gem "bullet"
 end
