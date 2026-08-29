@@ -281,7 +281,9 @@ at `/metrics`. Two ways to do that, depending on where this is deployed:
 - **Railway** (or any PaaS with no SSH access to the box): `observability/railway/`
   runs a small Grafana Alloy service instead, which scrapes `/metrics` over
   Railway's private network and forwards it to a free Grafana Cloud stack—see
-  `observability/railway/README.md`.
+  `observability/railway/README.md`, which also documents a zero-infrastructure
+  alternative (Grafana Cloud's Metrics Endpoint Integration scraping the app's
+  public domain directly, no Alloy service to run).
 
 ```bash
 cp observability/prometheus.yml.example observability/prometheus.yml   # fill in ADMIN_PASSWORD

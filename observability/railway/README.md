@@ -59,6 +59,34 @@ Grafana Cloud → **Dashboards → New → Import** → upload
 self-hosted stack provisions automatically) → when prompted, point it at
 your Grafana Cloud Prometheus datasource.
 
+## Alternative: Metrics Endpoint Integration (no Alloy service)
+
+Grafana Cloud can also scrape `/metrics` itself, with no Alloy service to deploy
+at all: **Connections → Add new connection → Metrics Endpoint** (not the
+"Prometheus" connection used for `remote_write` above). It asks for a scrape
+job URL and Basic/Bearer credentials, then polls every 60s.
+
+This trades away the private-network isolation the Alloy setup above gets for
+free — Grafana Cloud isn't inside Railway, so it has to reach the app's
+**public** domain instead of `RAILWAY_PRIVATE_DOMAIN`, sending the
+`ADMIN_PASSWORD` Basic Auth credential over Railway's edge on every scrape.
+That's the exact thing note 2 below says to avoid when it can be avoided — here
+it can't, since there's no private path in from outside Railway. It's still
+safe (the public domain is HTTPS, and `/metrics` is Basic-Auth-gated same as
+always), just a different trade: zero infrastructure to run, in exchange for
+credentials leaving the private network.
+
+1. Grafana Cloud → **Connections → Add new connection → Metrics Endpoint**.
+2. **Scrape Job URL**: `https://<this app's public Railway domain>/metrics`
+3. **Auth type**: Basic — any username, password = `ADMIN_PASSWORD`.
+4. Save. Within a minute or two, the job reports `up` and
+   `spotify_requests_total` is queryable in Explore.
+5. Import the dashboard as in step 3 above.
+
+Prefer this over the Alloy service when you don't want a second Railway
+service to babysit and don't mind the credential trade-off; prefer Alloy when
+keeping `/metrics` traffic off the public edge matters more.
+
 ## Notes
 
 - `ADMIN_PASSWORD` referenced from the Rails service keeps the two in sync
