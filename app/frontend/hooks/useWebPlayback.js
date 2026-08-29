@@ -45,6 +45,7 @@ export function useWebPlayback({
 
   const playerRef = useRef(null)
   const deviceIdRef = useRef(null)
+  const unlockRef = useRef(null)
   const onEndedRef = useRef(onEnded)
   const onSignedOutRef = useRef(onSignedOut)
   // End detection stays disarmed until the track has actually advanced, so the
@@ -131,6 +132,21 @@ export function useWebPlayback({
 
         player.connect()
         playerRef.current = player
+
+        // Playback runs through EME/Web Audio in this tab, and browsers block
+        // that until a user gesture unlocks it — the SDK would otherwise sit
+        // "ready" but silently refuse to make sound on the first play. Per the
+        // docs, the fix is to call this once on the page's first interaction,
+        // whichever gesture that turns out to be (a feed row, the transport's
+        // play button, anything) rather than wiring it into one button.
+        const unlock = () => {
+          document.removeEventListener("pointerdown", unlock)
+          document.removeEventListener("keydown", unlock)
+          player.activateElement?.().catch(() => {})
+        }
+        document.addEventListener("pointerdown", unlock, { once: true })
+        document.addEventListener("keydown", unlock, { once: true })
+        unlockRef.current = unlock
       })
       .catch(() => {
         if (!cancelled) setDevice("unsupported")
@@ -141,6 +157,11 @@ export function useWebPlayback({
       playerRef.current?.disconnect()
       playerRef.current = null
       deviceIdRef.current = null
+      if (unlockRef.current) {
+        document.removeEventListener("pointerdown", unlockRef.current)
+        document.removeEventListener("keydown", unlockRef.current)
+        unlockRef.current = null
+      }
     }
     // `initialVolume` is read once when the device is created; later changes go
     // through setVolume, so re-creating the player for it would be wrong.

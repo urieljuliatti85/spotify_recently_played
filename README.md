@@ -245,14 +245,21 @@ it gets viewed.
 per controller action. It only shows up under an actual `rails server`/Puma
 boot: `yabeda-rails` checks for `Rails::Server` before installing its
 counters, so `bin/rails console`, `bin/rails test` and rake tasks correctly
-see none of it—not a bug, just not a server. Add an app-specific metric (a
-sync failure counter, Solid Queue backlog, YouTube/lrclib lookup rates) the
-same way any gem does:
+see none of it—not a bug, just not a server.
+
+`config/initializers/yabeda.rb` adds the two app-specific groups this app
+actually needs given its rate-limited Spotify quota: `spotify_requests_total`
+/ `spotify_request_duration_seconds` (recorded in `Spotify::Client#perform`,
+labelled by endpoint with ids collapsed to `:id` so `fetch_each` doesn't mint
+a series per track/artist) and `spotify_sync_runs_total` /
+`spotify_sync_plays_imported_total` (recorded in `SyncRecentlyPlayedJob`,
+labelled by listener and, for runs, outcome). Add further app-specific
+metrics (Solid Queue backlog, YouTube/lrclib lookup rates) the same way:
 
 ```ruby
 Yabeda.configure do
-  group :spotify_sync
-  counter :failures_total, comment: "Failed SyncRecentlyPlayedJob runs", tags: %i[reason]
+  group :solid_queue
+  gauge :backlog, comment: "Pending Solid Queue jobs", tags: %i[queue_name]
 end
 ```
 

@@ -152,13 +152,32 @@ module Spotify
     end
 
     def perform(uri, request)
-      Net::HTTP.start(uri.host, uri.port, use_ssl: true,
-                                          open_timeout: OPEN_TIMEOUT,
-                                          read_timeout: READ_TIMEOUT) do |http|
-        http.request(request)
+      endpoint = endpoint_label(uri.path)
+      status = nil
+
+      response = nil
+      Yabeda.spotify.request_duration.measure({ endpoint: }) do
+        response = Net::HTTP.start(uri.host, uri.port, use_ssl: true,
+                                                        open_timeout: OPEN_TIMEOUT,
+                                                        read_timeout: READ_TIMEOUT) do |http|
+          http.request(request)
+        end
       end
+      status = response.code
+      response
     rescue Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+      status = "error"
       raise UnreachableError, "Spotify did not answer (#{e.class})"
+    ensure
+      Yabeda.spotify.requests_total.increment({ endpoint:, status: status.to_s })
+    end
+
+    # Spotify ids are opaque 22-char base62 strings; collapsing them (and any
+    # other numeric/id-shaped segment) to `:id` keeps the label's cardinality
+    # at "one series per route" instead of "one per track ever played" —
+    # `fetch_each` alone can otherwise hit this once per track/artist id.
+    def endpoint_label(path)
+      path.gsub(%r{/[A-Za-z0-9]{15,}(?=/|$)}, "/:id")
     end
 
     def handle(response)
