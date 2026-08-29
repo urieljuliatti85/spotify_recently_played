@@ -1,4 +1,5 @@
-import { Fragment, useCallback, useMemo } from "react"
+import { Fragment, useCallback, useMemo, useState } from "react"
+import { useLyrics } from "../hooks/useLyrics"
 import { useSpotifyEmbed } from "../hooks/useSpotifyEmbed"
 import { useWebPlayback } from "../hooks/useWebPlayback"
 import { creditsOf } from "../lib/derive"
@@ -7,12 +8,14 @@ import {
   CloseIcon,
   ExternalIcon,
   NextIcon,
+  NoteIcon,
   PauseIcon,
   PlayIcon,
   PrevIcon,
   ShuffleIcon,
   VolumeIcon,
 } from "./icons"
+import LyricsPanel from "./LyricsPanel"
 import VolumeControl from "./VolumeControl"
 
 const VOLUME_KEY = "volume"
@@ -116,6 +119,12 @@ export default function PlayerBar({
   const total = playback.duration || track.duration_ms || 0
   const controllable = sdkDriving || embed.state === "ready"
 
+  // Fetched eagerly on every track change, panel open or not: lrclib has no
+  // daily quota to protect (unlike the feed's YouTube matches), so there is
+  // no reason to make a visitor click first to find out whether lyrics exist.
+  const [lyricsOpen, setLyricsOpen] = useState(false)
+  const lyrics = useLyrics(spotifyId)
+
   const { setVolume } = sdk
   const changeVolume = useCallback(
     (next) => {
@@ -130,150 +139,170 @@ export default function PlayerBar({
   )
 
   return (
-    <div className="playerbar" role="region" aria-label="Player">
-      <div className="playerbar__now">
-        <span className="playerbar__cover">
-          {track.album_image_url ? (
-            <img src={track.album_image_url} alt="" width="52" height="52" />
-          ) : (
-            <span className="cover--empty" />
-          )}
-        </span>
-
-        <span className="playerbar__meta">
-          <span className="playerbar__track">{track.name}</span>
-          <span className="playerbar__artists">
-            {creditsOf(track).map((credit, index) => (
-              <Fragment key={credit.key}>
-                {index > 0 && ", "}
-                <button type="button" className="linkish" onClick={() => onOpenArtist(credit)}>
-                  {credit.name}
-                </button>
-              </Fragment>
-            ))}
-          </span>
-        </span>
-
-        <a
-          className="playerbar__link"
-          href={track.spotify_url}
-          target="_blank"
-          rel="noreferrer noopener"
-          title="Open in Spotify"
-          aria-label={`Open ${track.name} in Spotify`}
-        >
-          <ExternalIcon size={15} />
-        </a>
-      </div>
-
-      <div className="playerbar__center">
-        <div className="transport">
-          <button
-            type="button"
-            className="transport__btn"
-            onClick={onPrev}
-            disabled={!hasPrev}
-            aria-label="Previous track"
-          >
-            <PrevIcon size={18} />
-          </button>
-
-          <button
-            type="button"
-            className="transport__btn transport__btn--main"
-            onClick={togglePlay}
-            disabled={!controllable}
-            aria-label={playback.isPaused ? "Play" : "Pause"}
-          >
-            {playback.isPaused ? <PlayIcon size={20} /> : <PauseIcon size={20} />}
-          </button>
-
-          <button
-            type="button"
-            className="transport__btn"
-            onClick={onNext}
-            disabled={!hasNext}
-            aria-label="Next track"
-          >
-            <NextIcon size={18} />
-          </button>
-        </div>
-
-        <div className="scrubber">
-          <span className="scrubber__time">{clock(playback.position)}</span>
-
-          <input
-            className="scrubber__range"
-            type="range"
-            min="0"
-            max={total || 1}
-            step="1000"
-            value={Math.min(playback.position, total || 1)}
-            onChange={(event) => seek(Number(event.target.value))}
-            disabled={!controllable || total === 0}
-            aria-label="Seek"
-            style={{ "--progress": `${total ? (playback.position / total) * 100 : 0}%` }}
-          />
-
-          <span className="scrubber__time">{clock(total)}</span>
-        </div>
-      </div>
-
-      <div className="playerbar__side">
-        <VolumeArea
-          state={sdk.state}
-          volume={sdk.volume}
-          onChange={changeVolume}
+    <>
+      {lyricsOpen && (
+        <LyricsPanel
+          state={lyrics.state}
+          plainLyrics={lyrics.plainLyrics}
+          syncedLines={lyrics.syncedLines}
+          instrumental={lyrics.instrumental}
+          position={playback.position}
+          onClose={() => setLyricsOpen(false)}
         />
+      )}
 
-        <button
-          type="button"
-          className={`icon-toggle ${autoplay ? "icon-toggle--on" : ""}`}
-          onClick={onToggleAutoplay}
-          aria-pressed={autoplay}
-          title="Play the next track automatically"
-        >
-          <ShuffleIcon size={16} />
-          <span className="icon-toggle__label">Autoplay</span>
-        </button>
+      <div className="playerbar" role="region" aria-label="Player">
+        <div className="playerbar__now">
+          <span className="playerbar__cover">
+            {track.album_image_url ? (
+              <img src={track.album_image_url} alt="" width="52" height="52" />
+            ) : (
+              <span className="cover--empty" />
+            )}
+          </span>
 
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close player">
-          <CloseIcon size={14} />
-        </button>
+          <span className="playerbar__meta">
+            <span className="playerbar__track">{track.name}</span>
+            <span className="playerbar__artists">
+              {creditsOf(track).map((credit, index) => (
+                <Fragment key={credit.key}>
+                  {index > 0 && ", "}
+                  <button type="button" className="linkish" onClick={() => onOpenArtist(credit)}>
+                    {credit.name}
+                  </button>
+                </Fragment>
+              ))}
+            </span>
+          </span>
+
+          <a
+            className="playerbar__link"
+            href={track.spotify_url}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Open in Spotify"
+            aria-label={`Open ${track.name} in Spotify`}
+          >
+            <ExternalIcon size={15} />
+          </a>
+        </div>
+
+        <div className="playerbar__center">
+          <div className="transport">
+            <button
+              type="button"
+              className="transport__btn"
+              onClick={onPrev}
+              disabled={!hasPrev}
+              aria-label="Previous track"
+            >
+              <PrevIcon size={18} />
+            </button>
+
+            <button
+              type="button"
+              className="transport__btn transport__btn--main"
+              onClick={togglePlay}
+              disabled={!controllable}
+              aria-label={playback.isPaused ? "Play" : "Pause"}
+            >
+              {playback.isPaused ? <PlayIcon size={20} /> : <PauseIcon size={20} />}
+            </button>
+
+            <button
+              type="button"
+              className="transport__btn"
+              onClick={onNext}
+              disabled={!hasNext}
+              aria-label="Next track"
+            >
+              <NextIcon size={18} />
+            </button>
+          </div>
+
+          <div className="scrubber">
+            <span className="scrubber__time">{clock(playback.position)}</span>
+
+            <input
+              className="scrubber__range"
+              type="range"
+              min="0"
+              max={total || 1}
+              step="1000"
+              value={Math.min(playback.position, total || 1)}
+              onChange={(event) => seek(Number(event.target.value))}
+              disabled={!controllable || total === 0}
+              aria-label="Seek"
+              style={{ "--progress": `${total ? (playback.position / total) * 100 : 0}%` }}
+            />
+
+            <span className="scrubber__time">{clock(total)}</span>
+          </div>
+        </div>
+
+        <div className="playerbar__side">
+          <VolumeArea state={sdk.state} volume={sdk.volume} onChange={changeVolume} />
+
+          <button
+            type="button"
+            className={`icon-toggle ${lyricsOpen ? "icon-toggle--on" : ""}`}
+            onClick={() => setLyricsOpen((open) => !open)}
+            aria-pressed={lyricsOpen}
+            title="Show lyrics"
+          >
+            <NoteIcon size={16} />
+            <span className="icon-toggle__label">Lyrics</span>
+          </button>
+
+          <button
+            type="button"
+            className={`icon-toggle ${autoplay ? "icon-toggle--on" : ""}`}
+            onClick={onToggleAutoplay}
+            aria-pressed={autoplay}
+            title="Play the next track automatically"
+          >
+            <ShuffleIcon size={16} />
+            <span className="icon-toggle__label">Autoplay</span>
+          </button>
+
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close player">
+            <CloseIcon size={14} />
+          </button>
+        </div>
+
+        {/* Spotify's API replaces this node with the embed iframe. It stays in
+            the layout at 1px so the custom transport above drives it — removing
+            it from the flow would tear down playback. */}
+        <div className={`playerbar__embed ${controllable ? "playerbar__embed--hidden" : ""}`}>
+          <div ref={containerRef} />
+
+          {embed.state === "loading" && <p className="playerbar__hint">Loading the player…</p>}
+
+          {/* The transport above talks to the embed through Spotify's script. With
+              the script blocked there is nothing on the other end, so the play
+              button and the scrubber are disabled — and a dead button with no
+              explanation reads as a broken site. The fallback below does play;
+              this says so. */}
+          {embed.state === "unavailable" && (
+            <p className="playerbar__hint">
+              Something on this browser is blocking Spotify&apos;s player script, so the
+              controls above can&apos;t reach it. Play from here instead.
+            </p>
+          )}
+
+          {embed.state === "unavailable" && (
+            <iframe
+              title={`Player for ${track.name}`}
+              src={`https://open.spotify.com/embed/track/${track.spotify_id}?theme=0`}
+              width="100%"
+              height="80"
+              frameBorder="0"
+              loading="lazy"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            />
+          )}
+        </div>
       </div>
-
-      {/* Spotify's API replaces this node with the embed iframe. It stays in
-          the layout at 1px so the custom transport above drives it — removing
-          it from the flow would tear down playback. */}
-      <div className={`playerbar__embed ${controllable ? "playerbar__embed--hidden" : ""}`}>
-        <div ref={containerRef} />
-
-        {embed.state === "loading" && <p className="playerbar__hint">Loading the player…</p>}
-
-        {/* The transport above talks to the embed through Spotify's script. With
-            the script blocked there is nothing on the other end, so the play
-            button and the scrubber are disabled — and a dead button with no
-            explanation reads as a broken site. The fallback below does play;
-            this says so. */}
-        {embed.state === "unavailable" && (
-          <p className="playerbar__hint">
-            Something on this browser is blocking Spotify&apos;s player script, so the
-            controls above can&apos;t reach it. Play from here instead.
-          </p>
-        )}
-
-        {embed.state === "unavailable" && (
-          <iframe
-            title={`Player for ${track.name}`}
-            src={`https://open.spotify.com/embed/track/${track.spotify_id}?theme=0`}
-            width="100%"
-            height="80"
-            frameBorder="0"
-            loading="lazy"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          />
-        )}
-      </div>
-    </div>
+    </>
   )
 }

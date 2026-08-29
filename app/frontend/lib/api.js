@@ -67,6 +67,15 @@ export function fetchPlaylists({ signal } = {}) {
   return request("/api/playlists", { signal })
 }
 
+export function fetchYoutubeMatches(ids, { signal } = {}) {
+  const params = new URLSearchParams({ ids: ids.join(",") })
+  return request(`/api/tracks/youtube_matches?${params}`, { signal })
+}
+
+export function fetchLyrics(spotifyTrackId, { signal } = {}) {
+  return request(`/api/tracks/${encodeURIComponent(spotifyTrackId)}/lyrics`, { signal })
+}
+
 export function fetchPlaylistTracks(playlistId, { signal } = {}) {
   return request(`/api/playlists/${encodeURIComponent(playlistId)}/tracks`, { signal })
 }

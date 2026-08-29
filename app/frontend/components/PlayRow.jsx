@@ -1,9 +1,18 @@
 import { creditsOf } from "../lib/derive"
 import { duration, relativeTime, timeOfDay } from "../lib/format"
 import { ListenerTag } from "./Listener"
-import { ExternalIcon, PauseIcon, PlayIcon } from "./icons"
+import { ExternalIcon, PauseIcon, PlayIcon, YoutubeIcon } from "./icons"
 
-export default function PlayRow({ play, index, isSelected, onSelect, onOpenArtist, showListener, onPickListener }) {
+export default function PlayRow({
+  play,
+  index,
+  isSelected,
+  onSelect,
+  onOpenArtist,
+  showListener,
+  onPickListener,
+  youtubeUrl,
+}) {
   const { track } = play
   const relative = relativeTime(play.played_at)
 
@@ -87,6 +96,19 @@ export default function PlayRow({ play, index, isSelected, onSelect, onOpenArtis
 
         {track.duration_ms && <span className="row__duration">{duration(track.duration_ms)}</span>}
       </div>
+
+      {youtubeUrl && (
+        <a
+          className="row__external"
+          href={youtubeUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          title="Watch the video clip on YouTube"
+          aria-label={`Watch ${track.name} on YouTube`}
+        >
+          <YoutubeIcon size={15} />
+        </a>
+      )}
 
       <a
         className="row__external"

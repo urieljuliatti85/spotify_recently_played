@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_192658) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_29_091313) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "image_url"
@@ -44,6 +44,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_192658) do
     t.datetime "updated_at", null: false
     t.index ["spotify_account_id"], name: "index_invites_on_spotify_account_id"
     t.index ["token_digest"], name: "index_invites_on_token_digest", unique: true
+  end
+
+  create_table "lyrics", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "instrumental", default: false, null: false
+    t.datetime "matched_at"
+    t.text "plain_lyrics"
+    t.string "spotify_track_id", null: false
+    t.text "synced_lyrics"
+    t.datetime "updated_at", null: false
+    t.index ["spotify_track_id"], name: "index_lyrics_on_spotify_track_id", unique: true
   end
 
   create_table "plays", force: :cascade do |t|
@@ -104,6 +115,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_192658) do
     t.datetime "updated_at", null: false
     t.index ["spotify_album_id"], name: "index_tracks_on_spotify_album_id"
     t.index ["spotify_id"], name: "index_tracks_on_spotify_id", unique: true
+  end
+
+  create_table "youtube_matches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "matched_at"
+    t.string "spotify_track_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "video_id"
+    t.index ["spotify_track_id"], name: "index_youtube_matches_on_spotify_track_id", unique: true
   end
 
   add_foreign_key "invites", "spotify_accounts"

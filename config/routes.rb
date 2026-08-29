@@ -36,6 +36,8 @@ Rails.application.routes.draw do
     resources :playlists, only: :index do
       get :tracks, on: :member
     end
+    get "tracks/youtube_matches", to: "tracks#youtube_matches", as: :track_youtube_matches
+    get "tracks/:id/lyrics", to: "tracks#lyrics", as: :track_lyrics
     get "top_items", to: "top_items#index"
     resource :status, only: :show, controller: "status"
 

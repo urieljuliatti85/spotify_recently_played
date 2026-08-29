@@ -6,6 +6,14 @@ default: &default
     # losing history while keeping API usage moderate.
     schedule: every 1 minute
 
+  backfill_youtube_matches:
+    class: BackfillYoutubeMatchesJob
+    queue: default
+    # One search every 30 minutes is 48 a day — comfortably under the
+    # YouTube Data API's default 100-search daily quota even alongside
+    # whatever a visitor's own page load resolves in the foreground.
+    schedule: every 30 minutes
+
 development:
   <<: *default
 

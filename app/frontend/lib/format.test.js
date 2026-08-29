@@ -1,5 +1,14 @@
 import { describe, expect, test } from "vitest"
-import { dayKey, dayLabel, duration, groupByDay, relativeTime, timeOfDay } from "./format"
+import {
+  activeLyricIndex,
+  dayKey,
+  dayLabel,
+  duration,
+  groupByDay,
+  parseSyncedLyrics,
+  relativeTime,
+  timeOfDay,
+} from "./format"
 
 describe("timeOfDay", () => {
   test("formats an ISO string as a local clock time", () => {
@@ -102,5 +111,60 @@ describe("groupByDay", () => {
 
   test("returns no groups for no plays", () => {
     expect(groupByDay([])).toEqual([])
+  })
+})
+
+describe("parseSyncedLyrics", () => {
+  test("parses timestamps and text off each tagged line", () => {
+    const lrc = "[00:01.00]First line\n[00:05.50]Second line"
+
+    expect(parseSyncedLyrics(lrc)).toEqual([
+      { time: 1, text: "First line" },
+      { time: 5.5, text: "Second line" },
+    ])
+  })
+
+  test("minutes are folded into seconds", () => {
+    expect(parseSyncedLyrics("[01:02.00]Line")).toEqual([{ time: 62, text: "Line" }])
+  })
+
+  test("drops a tagged line with no text — a musical pause carries no lyric", () => {
+    const lrc = "[00:01.00]First\n[00:03.00]\n[00:05.00]Second"
+
+    expect(parseSyncedLyrics(lrc)).toEqual([
+      { time: 1, text: "First" },
+      { time: 5, text: "Second" },
+    ])
+  })
+
+  test("is empty for untagged text or nothing at all", () => {
+    expect(parseSyncedLyrics("just plain lyrics\nno timestamps")).toEqual([])
+    expect(parseSyncedLyrics(null)).toEqual([])
+    expect(parseSyncedLyrics("")).toEqual([])
+  })
+})
+
+describe("activeLyricIndex", () => {
+  const lines = [
+    { time: 0, text: "First" },
+    { time: 10, text: "Second" },
+    { time: 20, text: "Third" },
+  ]
+
+  test("is -1 before the first line's timestamp", () => {
+    expect(activeLyricIndex(lines, 0)).toBe(0)
+    expect(activeLyricIndex([ { time: 5, text: "Later" } ], 0)).toBe(-1)
+  })
+
+  test("is the last line whose timestamp has passed", () => {
+    expect(activeLyricIndex(lines, 15_000)).toBe(1)
+  })
+
+  test("is the final line once playback runs past the last timestamp", () => {
+    expect(activeLyricIndex(lines, 999_000)).toBe(2)
+  })
+
+  test("is -1 for no lines", () => {
+    expect(activeLyricIndex([], 5_000)).toBe(-1)
   })
 })

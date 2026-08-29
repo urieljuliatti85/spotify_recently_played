@@ -53,6 +53,36 @@ export function duration(ms) {
   return `${minutes}:${seconds}`
 }
 
+// lrclib's synced format: one "[mm:ss.xx]text" tag per line. A line with no
+// tag (or no text after it) carries no timing information and is dropped —
+// activeLyricIndex only needs to know the last real line whose timestamp has
+// passed, and a blank line can't be that.
+const LRC_LINE = /^\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\](.*)$/
+
+export function parseSyncedLyrics(text) {
+  if (!text) return []
+
+  return text
+    .split("\n")
+    .map((line) => LRC_LINE.exec(line))
+    .filter((match) => match && match[3].trim())
+    .map((match) => ({ time: Number(match[1]) * 60 + Number(match[2]), text: match[3].trim() }))
+}
+
+// The index of the last line whose timestamp has passed — -1 before the
+// first line, or when there is nothing to sync.
+export function activeLyricIndex(lines, positionMs) {
+  const positionSeconds = positionMs / 1000
+  let active = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].time > positionSeconds) break
+    active = i
+  }
+
+  return active
+}
+
 export function groupByDay(plays) {
   const groups = []
 
