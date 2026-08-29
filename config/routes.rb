@@ -51,6 +51,10 @@ Rails.application.routes.draw do
     get "top_items", to: "top_items#index"
     resource :status, only: :show, controller: "status"
 
+    # Spotify's catalogue — tracks and albums this feed has never played, for
+    # the top bar search box's "reach past what's already here" case.
+    get "search", to: "search#index"
+
     # The Discogs shelf: browsing comes from the sibling discogs_shelf app,
     # playability from Spotify.
     get "discogs/status",       to: "discogs#status", as: :discogs_status

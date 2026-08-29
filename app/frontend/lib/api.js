@@ -38,6 +38,12 @@ export function fetchPlays({ before, limit = 30, listener, signal } = {}) {
   return request(`/api/plays?${params}`, { signal })
 }
 
+// Spotify's catalogue, not the plays already in memory — see CatalogSearch.
+export function searchCatalog(query, { signal } = {}) {
+  const params = new URLSearchParams({ q: query })
+  return request(`/api/search?${params}`, { signal })
+}
+
 export function fetchStatus({ signal } = {}) {
   return request("/api/status", { signal })
 }

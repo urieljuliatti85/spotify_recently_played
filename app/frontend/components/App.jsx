@@ -20,6 +20,7 @@ import ListenersView from "./ListenersView"
 import MetricsView from "./MetricsView"
 import PlayerBar from "./PlayerBar"
 import PlaylistView from "./PlaylistView"
+import SearchView from "./SearchView"
 import SetupNotice from "./SetupNotice"
 import Sidebar from "./Sidebar"
 import TopBar, { VIEWS } from "./TopBar"
@@ -224,6 +225,19 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [])
 
+  // A catalogue search result (CatalogSearch) points at an album nobody here
+  // has played, so there is no local `album` record to hand AlbumsView the
+  // way the grid does — mirrors showArtist: push the shareable URL and mount
+  // the tab, which reads the id straight back off it (AlbumsView#openAlbumById).
+  const showAlbum = useCallback((albumId) => {
+    setView("albums")
+    const url = new URL(window.location.href)
+    url.pathname = `/albums/${encodeURIComponent(albumId)}/tracks`
+    url.searchParams.delete("view")
+    window.history.pushState({ view: "albums", album: albumId }, "", url)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [])
+
   // Leaving the artist page without changing tabs — back to the grid, which
   // lives at /?view=artists again rather than under the artist's path.
   const closeArtist = useCallback(() => {
@@ -335,7 +349,10 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
 
   const showSetup = site && !site.connected && plays.length === 0
   const isReady = feedStatus === "ready"
-  const noMatches = isReady && plays.length > 0 && queue.length === 0
+  // Whatever tab is open, typing turns the query into its own screen rather
+  // than filtering that tab in place — see SearchView.
+  const searching = query.trim().length > 0
+  const noMatches = isReady && !searching && plays.length > 0 && queue.length === 0
 
   return (
     <div className="app">
@@ -371,7 +388,20 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             </div>
           )}
 
-          {isReady && plays.length === 0 && !showSetup && !STANDALONE_VIEWS.has(view) && (
+          {isReady && !showSetup && searching && (
+            <SearchView
+              query={query}
+              matches={queue}
+              onSelect={handleSelect}
+              selectedPlayId={selected?.id}
+              onOpenArtist={showArtist}
+              showListener={showListener}
+              onPickListener={(listener) => changeListener(listener.id)}
+              onOpenAlbum={showAlbum}
+            />
+          )}
+
+          {isReady && !searching && plays.length === 0 && !showSetup && !STANDALONE_VIEWS.has(view) && (
             <div className="notice">
               <h2>Nothing here yet</h2>
               <p>
@@ -383,7 +413,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             </div>
           )}
 
-          {isReady && plays.length > 0 && profile && (
+          {isReady && !searching && plays.length > 0 && profile && (
             <ArtistView
               profile={profile}
               selectedPlayId={selected?.id}
@@ -393,17 +423,17 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             />
           )}
 
-          {isReady && !profile && view === "playlists" && (
+          {isReady && !searching && !profile && view === "playlists" && (
             <PlaylistView onSelect={handleSelect} connectPath={connectPath} />
           )}
 
-          {isReady && !profile && view === "albums" && (
+          {isReady && !searching && !profile && view === "albums" && (
             <AlbumsView albums={recentAlbums} onSelect={handleSelect} />
           )}
 
-          {isReady && !profile && view === "metrics" && <MetricsView />}
+          {isReady && !searching && !profile && view === "metrics" && <MetricsView />}
 
-          {isReady && !profile && view === "listeners" && (
+          {isReady && !searching && !profile && view === "listeners" && (
             <ListenersView
               listeners={listenerCards}
               onSelect={handleSelect}
@@ -414,7 +444,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
             />
           )}
 
-          {isReady && plays.length > 0 && !profile && !STANDALONE_VIEWS.has(view) && (
+          {isReady && !searching && plays.length > 0 && !profile && !STANDALONE_VIEWS.has(view) && (
             <>
               {view === "overview" && (
                 <>
@@ -487,10 +517,7 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
               {noMatches && (
                 <div className="notice">
                   <h2>No tracks match</h2>
-                  <p>
-                    Nothing in this range{query && <> for “{query}”</>}. Try a wider range or a
-                    different search.
-                  </p>
+                  <p>Nothing in this range. Try a wider range.</p>
                 </div>
               )}
             </>

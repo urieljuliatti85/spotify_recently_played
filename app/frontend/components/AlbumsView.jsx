@@ -102,19 +102,24 @@ export default function AlbumsView({ albums, onSelect }) {
         const artists = first?.artists ?? ""
         setSelected({ albumId, name, artists, imageUrl: first?.album_image_url ?? null })
 
+        // A separate try, not chained onto the tracks fetch above: a dead
+        // Discogs Shelf must not make a perfectly good track list report
+        // itself as failed too (see openAlbum, which keeps these apart for
+        // the same reason).
         setReleasesState("loading")
-        return fetchAlbumReleases({ title: name, artist: artists })
-      })
-      .then((payload) => {
-        if (!payload) return
-        setReleases(payload.releases ?? [])
-        setReleasesState("ready")
+        fetchAlbumReleases({ title: name, artist: artists })
+          .then((payload) => {
+            setReleases(payload.releases ?? [])
+            setReleasesState("ready")
+          })
+          .catch((cause) => {
+            setReleasesError(cause)
+            setReleasesState("error")
+          })
       })
       .catch((cause) => {
         setError(cause)
         setState("error")
-        setReleasesError(cause)
-        setReleasesState("error")
       })
   }, [])
 
