@@ -8,7 +8,6 @@ if (mount) {
   createRoot(mount).render(
     <App
       connectPath={mount.dataset.connectPath}
-      ownerPath={mount.dataset.ownerPath}
       flash={mount.dataset.flash || null}
       clientId={mount.dataset.clientId || null}
       listenRedirectUri={mount.dataset.listenRedirectUri}

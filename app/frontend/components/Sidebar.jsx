@@ -2,7 +2,7 @@ import { RANGES } from "../lib/derive"
 import { signOut } from "../lib/spotifyPkce"
 import ListenerPicker from "./Listener"
 import { ClockIcon, DiscIcon, NoteIcon } from "./icons"
-import wordmarkUrl from "../images/dekslayer.png"
+import wordmarkUrl from "../images/spotplayer.png"
 
 const RANGE_ICONS = { today: NoteIcon, week: ClockIcon, all: DiscIcon }
 
@@ -25,7 +25,7 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <a className="sidebar__home" href="/" aria-label="Go to the main page">
-        <img className="sidebar__wordmark" src={wordmarkUrl} alt="DekSlayer" />
+        <img className="sidebar__wordmark" src={wordmarkUrl} alt="SpotPlayer" />
       </a>
 
       {signedIn && (

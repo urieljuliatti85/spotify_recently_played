@@ -1,6 +1,10 @@
 /* Layout and chrome follow the reference web-player comp: fixed left rail,
-   sticky tab bar, hero, horizontal shelves, fixed transport bar. The palette
-   stays DekSlayer's — near-black ground, neon red edge, steel-blue metal. */
+   sticky tab bar, hero, horizontal shelves, fixed transport bar. Palette:
+   near-black ground, Spotify-green edge, sage-teal metal — rounder cards
+   and softer shadows than the original red/steel comp, closer to a
+   dashboard's floating panels. --danger is kept apart from --accent on
+   purpose: once the brand color is green, "this failed" needs its own
+   color or a Metrics failure bar would read as healthy. */
 :root {
   --bg: #0b0f16;
   --bg-side: #070a10;
@@ -11,15 +15,17 @@
   --text: #f4f7fa;
   --text-muted: #93a7bb;
   --text-faint: #64788e;
-  --accent: #ff1723;
-  --accent-deep: #f20b18;
-  --accent-soft: rgba(242, 11, 24, 0.14);
-  --steel: #7f9fbd;
-  --steel-deep: #173d61;
+  --accent: #1DB954;
+  --accent-deep: #14833c;
+  --accent-soft: rgba(20, 131, 60, 0.14);
+  --danger: #ff1723;
+  --steel: #6fae94;
+  --steel-deep: #12352a;
   --rail: 288px;
   --bar: 92px;
   --gutter: clamp(20px, 2.6vw, 44px);
-  --radius: 10px;
+  --radius: 14px;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -81,14 +87,14 @@ button {
 }
 
 .btn--filled {
-  background: linear-gradient(120deg, var(--accent), #b8121b);
+  background: linear-gradient(120deg, var(--accent), #0f5c2c);
   color: #fff;
-  box-shadow: 0 10px 26px rgba(242, 11, 24, 0.32);
+  box-shadow: 0 10px 26px rgba(20, 131, 60, 0.32);
 }
 
 .btn--outline {
   background: transparent;
-  border-color: rgba(255, 23, 35, 0.6);
+  border-color: rgba(20, 131, 60, 0.6);
   color: var(--accent);
 }
 
@@ -306,7 +312,7 @@ button {
 
 .listener__avatar--initial,
 .listener__avatar--all {
-  background: linear-gradient(140deg, var(--accent), #6d0b12);
+  background: linear-gradient(140deg, var(--accent), #0a3a1e);
   color: #fff;
   font-weight: 700;
 }
@@ -315,7 +321,7 @@ button {
   width: 32px;
   height: 32px;
   font-size: 13px;
-  background: linear-gradient(140deg, var(--steel-deep), #0d2136);
+  background: linear-gradient(140deg, var(--steel-deep), #0a2a20);
   color: var(--steel);
 }
 
@@ -582,7 +588,7 @@ button {
 }
 
 .lcard__now--playing {
-  box-shadow: inset 0 0 0 1px rgba(242, 11, 24, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(20, 131, 60, 0.4);
 }
 
 .lcard__now:focus-visible {
@@ -954,7 +960,7 @@ button {
 }
 
 .sync__hint--error {
-  color: var(--accent);
+  color: var(--danger);
 }
 
 /* Main ---------------------------------------------------------------------*/
@@ -1538,7 +1544,7 @@ button {
   border-radius: 18px;
   overflow: hidden;
   background:
-    radial-gradient(90% 120% at 88% 30%, rgba(242, 11, 24, 0.28) 0%, transparent 58%),
+    radial-gradient(90% 120% at 88% 30%, rgba(20, 131, 60, 0.28) 0%, transparent 58%),
     radial-gradient(70% 100% at 0% 0%, rgba(23, 61, 97, 0.55) 0%, transparent 60%),
     linear-gradient(115deg, #0d141d 0%, #131c28 100%);
 }
@@ -1569,7 +1575,7 @@ button {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
-  text-shadow: 0 0 18px rgba(242, 11, 24, 0.5);
+  text-shadow: 0 0 18px rgba(20, 131, 60, 0.5);
 }
 
 .hero__title {
@@ -1698,7 +1704,7 @@ button {
   width: 176px;
   height: 176px;
   margin-bottom: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--bg-panel);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
@@ -1772,7 +1778,7 @@ button {
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 160ms ease, transform 160ms ease;
-  box-shadow: 0 8px 20px rgba(242, 11, 24, 0.45);
+  box-shadow: 0 8px 20px rgba(20, 131, 60, 0.45);
 }
 
 /* 12px up from the bottom of the 152px round art, which starts at the top of
@@ -1936,7 +1942,7 @@ button {
   border: 1px solid var(--border-soft);
   border-radius: 18px;
   background:
-    radial-gradient(80% 130% at 82% 20%, rgba(242, 11, 24, 0.24) 0%, transparent 60%),
+    radial-gradient(80% 130% at 82% 20%, rgba(20, 131, 60, 0.24) 0%, transparent 60%),
     linear-gradient(115deg, #0d141d 0%, #131c28 100%);
 }
 
@@ -2018,7 +2024,7 @@ button {
 
 .ranking__row--selected {
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px rgba(242, 11, 24, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(20, 131, 60, 0.4);
 }
 
 .ranking__main {
@@ -2180,7 +2186,7 @@ button {
 
 .row--selected {
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px rgba(242, 11, 24, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(20, 131, 60, 0.4);
 }
 
 .row__main {
@@ -2363,7 +2369,7 @@ button {
 
 .row__external:hover {
   color: var(--accent);
-  background: rgba(242, 11, 24, 0.1);
+  background: rgba(20, 131, 60, 0.1);
 }
 
 .feed__more {
@@ -2389,6 +2395,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--bg-panel);
+  box-shadow: var(--shadow);
 }
 
 .notice h2 {
@@ -2412,7 +2419,7 @@ button {
 }
 
 .notice--warning {
-  border-color: rgba(242, 11, 24, 0.45);
+  border-color: rgba(255, 23, 35, 0.45);
   background: #17080a;
 }
 
@@ -2463,7 +2470,7 @@ button {
   padding: 12px var(--gutter);
   background: rgba(7, 10, 16, 0.94);
   backdrop-filter: blur(18px);
-  border-top: 1px solid rgba(242, 11, 24, 0.35);
+  border-top: 1px solid rgba(20, 131, 60, 0.35);
 }
 
 .playerbar--idle {
@@ -2636,7 +2643,7 @@ button {
   border: 0;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(242, 11, 24, 0.28);
+  box-shadow: 0 0 0 4px rgba(20, 131, 60, 0.28);
 }
 
 .scrubber__range::-moz-range-thumb {
@@ -2645,7 +2652,7 @@ button {
   border: 0;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(242, 11, 24, 0.28);
+  box-shadow: 0 0 0 4px rgba(20, 131, 60, 0.28);
 }
 
 .playerbar__side {
@@ -2673,7 +2680,7 @@ button {
 }
 
 .icon-toggle--on {
-  border-color: rgba(242, 11, 24, 0.55);
+  border-color: rgba(20, 131, 60, 0.55);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -2732,7 +2739,7 @@ button {
   border: 0;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(242, 11, 24, 0.28);
+  box-shadow: 0 0 0 3px rgba(20, 131, 60, 0.28);
 }
 
 .volume__range::-moz-range-thumb {
@@ -2741,7 +2748,7 @@ button {
   border: 0;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(242, 11, 24, 0.28);
+  box-shadow: 0 0 0 3px rgba(20, 131, 60, 0.28);
 }
 
 /* Sits beside the toggles but is not one of them: no border, no hover, no
@@ -3061,6 +3068,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-panel);
+  box-shadow: var(--shadow);
 }
 
 .metrics-panel__head {
@@ -3116,7 +3124,7 @@ button {
 }
 
 .metrics-bars__fill--bad {
-  background: var(--accent);
+  background: var(--danger);
 }
 
 .metrics-bars__value {

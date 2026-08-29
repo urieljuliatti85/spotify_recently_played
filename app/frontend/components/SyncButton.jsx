@@ -1,10 +1,8 @@
 import { useState } from "react"
 import { syncNow } from "../lib/api"
 
-// Owner-only (POST /spotify/sync, guarded by HTTP Basic — see
-// AdminAuthenticated) — shown to everyone, since the browser only ever
-// replays those credentials once they have been handed over somewhere, and
-// that is what a 401 here is for: a way to ask for them.
+// Public (POST /spotify/sync) — anyone can trigger a sync, rate-limited
+// server-side to keep it from burning through Spotify's quota.
 function summarize(payload) {
   const listeners = payload?.listeners ?? []
   if (listeners.length === 0) return "Nothing to sync"
@@ -16,14 +14,12 @@ function summarize(payload) {
   return failed === 0 ? `Synced ${plays}` : `Synced ${plays} — ${failed} listener${failed === 1 ? "" : "s"} failed`
 }
 
-export default function SyncButton({ ownerPath, view }) {
+export default function SyncButton() {
   const [state, setState] = useState("idle")
   const [message, setMessage] = useState(null)
-  const [needsOwner, setNeedsOwner] = useState(false)
 
   function sync() {
     setState("syncing")
-    setNeedsOwner(false)
     setMessage(null)
 
     syncNow()
@@ -36,10 +32,7 @@ export default function SyncButton({ ownerPath, view }) {
         window.location.reload()
       })
       .catch((cause) => {
-        // A 401 means the browser has never handed over ADMIN_PASSWORD —
-        // there is nothing to say about it beyond how to fix that.
-        setNeedsOwner(cause.status === 401)
-        setMessage(cause.status === 401 ? null : cause.message)
+        setMessage(cause.status === 429 ? "Too many syncs — try again in a bit" : cause.message)
         setState("error")
       })
   }
@@ -50,12 +43,7 @@ export default function SyncButton({ ownerPath, view }) {
         {state === "syncing" ? "Syncing…" : "Sync"}
       </button>
 
-      {state === "error" && needsOwner && ownerPath && (
-        <a className="sync__hint" href={`${ownerPath}?view=${encodeURIComponent(view)}`}>
-          Sign in to sync
-        </a>
-      )}
-      {state === "error" && !needsOwner && (
+      {state === "error" && (
         <span className="sync__hint sync__hint--error">{message || "Sync failed"}</span>
       )}
       {state === "done" && <span className="sync__hint">{message}</span>}

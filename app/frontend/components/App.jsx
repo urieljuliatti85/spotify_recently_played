@@ -14,7 +14,6 @@ import {
 } from "../lib/derive"
 import ArtistView from "./ArtistView"
 import AlbumsView from "./AlbumsView"
-import DiscogsView from "./DiscogsView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
 import ListenersView from "./ListenersView"
@@ -34,7 +33,7 @@ const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
 const RANGE_IDS = new Set(RANGES.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
-const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs", "metrics"])
+const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "metrics"])
 
 // Mirrors the album page's /albums/:id/tracks shape.
 const ARTIST_PATH = /^\/artists\/([^/]+)\/tracks\/?$/
@@ -78,7 +77,7 @@ function readAutoplayPreference() {
   }
 }
 
-export default function App({ connectPath, ownerPath, flash, clientId, listenRedirectUri }) {
+export default function App({ connectPath, flash, clientId, listenRedirectUri }) {
   // A visitor signing in to get a volume slider is a different thing from the
   // accounts this site mirrors: the token lives in their browser only, and no
   // listener row is ever created for them.
@@ -371,7 +370,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
           query={query}
           onQueryChange={setQuery}
           lastSyncedAt={lastSyncedAt}
-          ownerPath={ownerPath}
         />
 
         <main className="main">
@@ -416,10 +414,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
 
           {isReady && !profile && view === "albums" && (
             <AlbumsView albums={recentAlbums} onSelect={handleSelect} />
-          )}
-
-          {isReady && !profile && view === "discogs" && (
-            <DiscogsView query={query} onSelect={handleSelect} selectedPlayId={selected?.id} />
           )}
 
           {isReady && !profile && view === "metrics" && <MetricsView />}

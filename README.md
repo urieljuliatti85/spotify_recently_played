@@ -97,7 +97,7 @@ registered in your Spotify app's dashboard.
 The app requests four scopes: `user-read-recently-played` (history),
 `playlist-read-private` (the playlists tab), `playlist-modify-public`
 (building a playlist from that tab) and `user-top-read` (the Overview's
-"DekSlayer's Top Items" box). Friends grant only the first. If you connected
+"SpotPlayer's Top Items" box). Friends grant only the first. If you connected
 the account before one of these was asked for, redo `/spotify/connect`—without
 the scope, the feature returns 403 and explains this on screen.
 
@@ -150,7 +150,7 @@ subsequent syncs happen automatically.
 The navigation has eight tabs, and the selected tab is reflected in the URL
 (`?view=tracks`), so the browser's back button works:
 
-- **Overview:** the recent feed, "DekSlayer's Top Items" (Spotify's own
+- **Overview:** the recent feed, "SpotPlayer's Top Items" (Spotify's own
   algorithmic top artists and tracks, `user-top-read`—distinct from the
   locally-derived shelves below it), plus album and artist shelves.
 - **Tracks:** the complete history, grouped by day.
@@ -212,7 +212,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /spotify/connect` | owner | Starts OAuth for the owner |
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
 | `GET /spotify/callback` | state | Receives the code and saves tokens |
-| `POST /spotify/sync` | owner | Syncs every listener now, without waiting for the job |
+| `POST /spotify/sync` | public | Syncs every listener now, without waiting for the job (rate-limited to 5/min) |
 | `GET/POST /spotify/invites` | owner | List and issue invite links |
 | `DELETE /spotify/invites/:id` | owner | Revoke an unclaimed invite |
 | `DELETE /spotify` | owner | Unlinks the owner |
@@ -306,13 +306,15 @@ Manual sync:
 ```bash
 bin/rails spotify:sync
 # ou
-curl -u owner:$ADMIN_PASSWORD -X POST http://127.0.0.1:3000/spotify/sync
+curl -X POST http://127.0.0.1:3000/spotify/sync
 ```
 
-The top-right **Sync** button does the same thing from the browser. It shows
-to every visitor, not just the owner—clicking it just answers 401 if the
-browser has never handed over `ADMIN_PASSWORD`, with a link to `/spotify/owner`
-(the only route that exists to prompt for it) to fix that.
+The top-right **Sync** button does the same thing from the browser—no
+`ADMIN_PASSWORD` needed, same as the rest of the public feed. It still spends
+real Spotify quota, one request per connected account, so `Spotify::SyncsController`
+rate-limits it to 5 requests/minute (a burst past that answers 429) and
+`CrossSiteGuarded` still refuses a cross-site post, so another page a visitor
+has open cannot trigger this on their behalf.
 
 `/api-docs` is a Swagger UI you can fire real requests from, gated by the same
 `ADMIN_PASSWORD` as the routes above. It reads `swagger/v1/swagger.yaml`, which

@@ -25,7 +25,7 @@ export default function Hero({ listeners = [], selectedListener, visibleCount, o
 
       <div className="hero__body">
         <p className="hero__eyebrow">Spotify · Listening history</p>
-        <h1 className="hero__title">DekSlayer&apos;s Latest Activity</h1>
+        <h1 className="hero__title">SpotPlayer&apos;s Latest Activity</h1>
 
         <p className="hero__lead">
           {describe(listeners, selectedListener)}

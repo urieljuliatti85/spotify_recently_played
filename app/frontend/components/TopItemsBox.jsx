@@ -42,7 +42,7 @@ export default function TopItemsBox({ onSelect, onOpenArtist, connectPath }) {
 
     return (
       <section className="section">
-        <h2 className="section__title">DekSlayer&apos;s Top Items</h2>
+        <h2 className="section__title">SpotPlayer&apos;s Top Items</h2>
         <p className="section__hint">
           Spotify top items permission is missing.
           {connectPath && <> <a href={connectPath}>Reconnect Spotify</a> to grant it.</>}
@@ -55,7 +55,7 @@ export default function TopItemsBox({ onSelect, onOpenArtist, connectPath }) {
 
   return (
     <section className="section">
-      <h2 className="section__title">DekSlayer&apos;s Top Items</h2>
+      <h2 className="section__title">SpotPlayer&apos;s Top Items</h2>
       <p className="section__hint">Spotify's own picks — not just what made it into this feed.</p>
 
       {artists.length > 0 && (

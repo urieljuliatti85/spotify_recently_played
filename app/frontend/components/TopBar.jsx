@@ -8,14 +8,13 @@ export const VIEWS = [
   { id: "artists", label: "Artists" },
   { id: "listeners", label: "Listeners" },
   { id: "playlists", label: "Playlists" },
-  { id: "discogs", label: "Discogs" },
   // Public, same as the data behind it (Spotify::MetricsController) —
   // request counts, latency and sync outcomes are operational detail, not
   // anything private about a listener.
   { id: "metrics", label: "Metrics" },
 ]
 
-export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt, ownerPath }) {
+export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt }) {
   const syncedAt = lastSyncedAt && new Date(lastSyncedAt)
 
   return (
@@ -52,7 +51,7 @@ export default function TopBar({ view, onViewChange, query, onQueryChange, lastS
           </p>
         )}
 
-        <SyncButton ownerPath={ownerPath} view={view} />
+        <SyncButton />
       </div>
     </div>
   )

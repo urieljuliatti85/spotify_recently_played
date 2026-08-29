@@ -1,16 +1,22 @@
 module Spotify
-  # Owner-only: pull recent plays for every linked listener right now instead
-  # of waiting for the schedule.
+  # Public: pull recent plays for every linked listener right now instead of
+  # waiting for the schedule. No ADMIN_PASSWORD required — anyone can press
+  # the Sync button. One call here still means one Spotify request per
+  # connected account, though, so the rate limit below is what stands between
+  # that and burning through Spotify's quota (see CrossSiteGuarded below for
+  # the other half: stopping a page from doing this on a visitor's behalf).
   class SyncsController < ApplicationController
-    include AdminAuthenticated
     include CrossSiteGuarded
 
-    # Triggered from a terminal or a cron-style hook, not from a browser form;
-    # HTTP Basic auth is what guards it.
+    rate_limit to: 5, within: 1.minute,
+               with: -> { render json: { error: "Too many requests" }, status: :too_many_requests }
+
+    # Triggered from a terminal or a cron-style hook, not from a browser form.
     skip_forgery_protection
 
-    # Without the CSRF token, this is what stops a page the owner visits from
-    # posting here on their behalf and burning the Spotify quota.
+    # What stops a page the owner (or anyone) visits from posting here on
+    # their behalf and burning the Spotify quota, now that this needs no
+    # credential of its own to check instead.
     before_action :reject_cross_site_requests
 
     def create
