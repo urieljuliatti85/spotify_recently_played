@@ -1,0 +1,31 @@
+// Scrapes this app's /metrics over Railway's private network (no public
+// exposure needed — Alloy and the Rails app just need to share a project)
+// and ships it to Grafana Cloud's hosted Prometheus, which is also where the
+// Grafana dashboard lives. See ../README.md for the env vars this expects
+// and how to wire the Railway service reference for APP_METRICS_HOST.
+prometheus.scrape "spotify_recently_played" {
+	targets = [
+		{ "__address__" = sys.env("APP_METRICS_HOST") + ":" + sys.env("APP_METRICS_PORT") },
+	]
+	metrics_path    = "/metrics"
+	scheme          = "http" // stays inside Railway's private network
+	scrape_interval = "30s"
+
+	basic_auth {
+		username = "admin" // AdminBasicAuth only checks the password
+		password = sys.env("ADMIN_PASSWORD")
+	}
+
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USERNAME")
+			password = sys.env("GRAFANA_CLOUD_PROMETHEUS_API_KEY")
+		}
+	}
+}

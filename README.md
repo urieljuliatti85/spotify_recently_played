@@ -269,8 +269,16 @@ The owner-only `?view=metrics` tab (`Spotify::MetricsController`,
 `app/frontend/components/MetricsView.jsx`) charts the same numbers without
 leaving the app—no Prometheus required, just `ADMIN_PASSWORD`. For history
 beyond "since this process last booted", and for alerting, point an actual
-Prometheus + Grafana at `/metrics`: `observability/docker-compose.yml` runs
-both, pre-wired with a datasource and a matching dashboard.
+Prometheus + Grafana at `/metrics`. Two ways to do that, depending on where
+this is deployed:
+
+- **A host you control** (local, or a VPS via Kamal): `observability/docker-compose.yml`
+  runs Prometheus + Grafana side by side, pre-wired with a datasource and a
+  matching dashboard.
+- **Railway** (or any PaaS with no SSH access to the box): `observability/railway/`
+  runs a small Grafana Alloy service instead, which scrapes `/metrics` over
+  Railway's private network and forwards it to a free Grafana Cloud stack—see
+  `observability/railway/README.md`.
 
 ```bash
 cp observability/prometheus.yml.example observability/prometheus.yml   # fill in ADMIN_PASSWORD
