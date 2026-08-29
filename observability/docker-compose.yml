@@ -1,0 +1,41 @@
+# Standalone monitoring stack — not part of the app's own deployment (see
+# ../README.md#deployment, which uses Kamal). Run from this directory:
+#
+#   cp prometheus.yml.example prometheus.yml   # fill in ADMIN_PASSWORD
+#   docker compose up
+#
+# Prometheus at http://localhost:9090, Grafana at http://localhost:3300
+# (admin / admin unless GRAFANA_ADMIN_PASSWORD is set) with the datasource
+# and "Spotify Recently Played" dashboard already provisioned.
+services:
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    # Linux needs this to resolve host.docker.internal; Docker Desktop
+    # (Mac/Windows) already provides it, and the extra entry is harmless there.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3300:3000"
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

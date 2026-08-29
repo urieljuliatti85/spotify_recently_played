@@ -1,0 +1,20 @@
+# Copy to prometheus.yml (gitignored, same reasoning as .env — it carries
+# ADMIN_PASSWORD in plain text since Prometheus has no secret-file directive
+# for basic_auth) and fill in the password:
+#
+#   cp observability/prometheus.yml.example observability/prometheus.yml
+#
+# host.docker.internal resolves to the Docker host from inside the
+# prometheus container (docker-compose.yml adds the extra_hosts entry Linux
+# needs for it; Docker Desktop on Mac/Windows already provides it) — the app
+# itself runs on the host via `bin/dev`, not inside this compose file.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: spotify_recently_played
+    basic_auth:
+      username: admin
+      password: CHANGE_ME # same value as ADMIN_PASSWORD in .env
+    static_configs:
+      - targets: [ "host.docker.internal:3000" ]
