@@ -38,6 +38,9 @@ Rails.application.routes.draw do
     end
     get "tracks/youtube_matches", to: "tracks#youtube_matches", as: :track_youtube_matches
     get "tracks/:id/lyrics", to: "tracks#lyrics", as: :track_lyrics
+    # format: false — this is a literal filename to hotlink
+    # (<img src=".../api/now_playing.svg">), not a resource with formats.
+    get "now_playing.svg", to: "now_playing#show", as: :now_playing_svg, format: false
     get "top_items", to: "top_items#index"
     resource :status, only: :show, controller: "status"
 

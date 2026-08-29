@@ -9,6 +9,7 @@ import {
   listenersFrom,
   matching,
   playsOfArtist,
+  RANGES,
   withinRange,
 } from "../lib/derive"
 import ArtistView from "./ArtistView"
@@ -26,10 +27,10 @@ import TopItemsBox from "./TopItemsBox"
 import { AlbumCard, ArtistCard, Shelf } from "./Shelf"
 
 const AUTOPLAY_KEY = "autoplay"
-const SIDEBAR_TRACKS = 8
 const SHELF_SIZE = 20
 const ARTIST_GRID_SIZE = 60
 const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
+const RANGE_IDS = new Set(RANGES.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
 const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs"])
@@ -49,6 +50,14 @@ function viewFromUrl() {
 
   const requested = new URLSearchParams(window.location.search).get("view")
   return VIEW_IDS.has(requested) ? requested : "overview"
+}
+
+// The range lens gets its own shareable/reloadable URL, same as the view
+// tabs — a link to "This Week" has to land on this week, not on whatever the
+// visitor who copied it happened to be looking at.
+function rangeFromUrl() {
+  const requested = new URLSearchParams(window.location.search).get("range")
+  return RANGE_IDS.has(requested) ? requested : "all"
 }
 
 // The artist's id lives in the path (/artists/:id/tracks) rather than a query
@@ -80,7 +89,7 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
   const [site, setSite] = useState(null)
   const [selected, setSelected] = useState(null)
   const [autoplay, setAutoplay] = useState(readAutoplayPreference)
-  const [range, setRange] = useState("all")
+  const [range, setRange] = useState(rangeFromUrl)
   const [view, setView] = useState(viewFromUrl)
   const [query, setQuery] = useState("")
   const [openArtist, setOpenArtist] = useState(() => {
@@ -115,9 +124,24 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
     return () => controller.abort()
   }, [])
 
+  // A link straight to "This Week" or "All Time" (?range=) has to show the
+  // same thing clicking that tab would — which, like the click handler,
+  // means loading past the first page rather than filtering only the 30
+  // most recent plays. Fires once, the moment the first page is in.
+  useEffect(() => {
+    if (feedStatus !== "ready") return
+    if (!new URLSearchParams(window.location.search).has("range")) return
+
+    loadAll()
+    // Keyed on feedStatus alone: loadAll's own `cursor` guard makes a repeat
+    // call a no-op once everything is in, so there's no need to also depend
+    // on loadAll itself just to satisfy a dependency list.
+  }, [feedStatus])
+
   useEffect(() => {
     function handlePopState() {
       setView(viewFromUrl())
+      setRange(rangeFromUrl())
       const key = artistFromUrl()
       setOpenArtist(key ? { key, name: null } : null)
     }
@@ -230,6 +254,14 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
   function changeRange(next) {
     setRange(next)
     loadAll()
+
+    const url = new URL(window.location.href)
+    if (next === "all") {
+      url.searchParams.delete("range")
+    } else {
+      url.searchParams.set("range", next)
+    }
+    window.history.pushState({ ...window.history.state, range: next }, "", url)
   }
 
   // Jump from a listener's card into the feed, filtered to them.
@@ -326,9 +358,6 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
         onListenerChange={pickListener}
         range={range}
         onRangeChange={changeRange}
-        recent={queue.slice(0, SIDEBAR_TRACKS)}
-        selectedPlayId={selected?.id}
-        onSelect={handleSelect}
         signedIn={signedIn}
         onSignIn={clientId ? signIn : null}
         onSignedOut={handleSignedOut}

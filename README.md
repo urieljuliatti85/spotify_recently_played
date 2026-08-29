@@ -104,6 +104,7 @@ SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/spotify/callback
 ADMIN_PASSWORD=any_password
 DISCOGS_SHELF_URL=http://127.0.0.1:3001   # optional, for the Discogs tab
 SPOTIFY_MARKET=BR                         # optional, see Discogs below
+YOUTUBE_API_KEY=your_youtube_api_key      # optional, for the feed's video clip links
 ```
 
 `.env` is already in `.gitignore`. Credentials can also be stored in
@@ -197,6 +198,9 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /api/playlists` | public | Owner's public playlists (5-minute cache) |
 | `GET /api/playlists/:id/tracks` | public | The playlist's own name/cover plus its tracks |
 | `GET /api/top_items` | public | The owner's algorithmic top artists/tracks (6-hour cache) |
+| `GET /api/tracks/youtube_matches?ids=` | public | Cached YouTube clip links for a batch of tracks (needs `YOUTUBE_API_KEY`) |
+| `GET /api/tracks/:id/lyrics` | public | Cached lrclib.net lyrics (plain and, when available, synced) for one track |
+| `GET /api/now_playing.svg` | public | Hotlinkable "now playing" badge (`?listener=` to scope to one person) — see below |
 | `GET /api/discogs/status` | public | Whether the shelf is configured and answering |
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
@@ -213,11 +217,27 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `DELETE /spotify` | owner | Unlinks the owner |
 | `DELETE /spotify/listeners/:id` | owner | Unlinks one listener |
 
-Public routes use the owner's Spotify quota, so they all pass through a
+Most public routes use the owner's Spotify quota, so they all pass through a
 `rate_limit` of 60 requests per minute: a burst would cause a Spotify 429 for the
 entire app, also blocking synchronization—and a blocked sync, with only 50 plays
 stored on Spotify's side, means permanently lost history. Spotify responses are
-cached to avoid repeating the call on every visit.
+cached to avoid repeating the call on every visit. `plays`, `status` and
+`now_playing.svg` spend no Spotify quota at all—they read only the local
+mirror—and `tracks/youtube_matches`/`tracks/:id/lyrics` spend YouTube's and
+lrclib's own quotas instead, not Spotify's; the same rate limit still applies
+to all of them to keep any one from being hammered.
+
+`GET /api/now_playing.svg` is meant to be hotlinked from outside the app—a
+GitHub profile README, a personal site:
+
+```markdown
+[![Now playing](https://your-domain/api/now_playing.svg)](https://your-domain/)
+```
+
+It renders whatever the local mirror last synced, not a live call to Spotify,
+and guesses "still playing" from the track's own duration—so it can lag by up
+to a sync cycle, but never spends anyone's Spotify quota no matter how often
+it gets viewed.
 
 Owner routes are protected by HTTP Basic with `ADMIN_PASSWORD` (the username can
 be anything; only the password matters). In development, when the variable is

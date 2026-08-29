@@ -199,19 +199,6 @@ button {
   color: var(--text-faint);
 }
 
-.sidebar__list {
-  flex: 1;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.sidebar__empty {
-  padding: 4px 26px;
-  color: var(--text-faint);
-  font-size: 13px;
-}
-
 .sidebar__account {
   margin: 4px 24px 24px;
   padding: 14px;
@@ -239,105 +226,6 @@ button {
   justify-content: center;
   padding: 9px 14px;
   font-size: 11px;
-}
-
-.mini {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 8px 26px;
-  border: 0;
-  border-left: 2px solid transparent;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.mini:hover {
-  background: rgba(148, 175, 202, 0.05);
-}
-
-.mini--selected {
-  background: rgba(148, 175, 202, 0.08);
-  border-left-color: var(--accent);
-}
-
-.mini__index {
-  width: 18px;
-  flex-shrink: 0;
-  color: var(--text-faint);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.mini--selected .mini__index {
-  color: var(--accent);
-}
-
-.mini__cover {
-  position: relative;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--bg-panel);
-}
-
-.mini__cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mini__cover-overlay {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.mini:hover .mini__cover-overlay,
-.mini--selected .mini__cover-overlay {
-  opacity: 1;
-}
-
-.mini--selected .mini__cover-overlay {
-  color: var(--accent);
-}
-
-.mini__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.mini__title,
-.mini__artists {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mini__title {
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.mini--selected .mini__title {
-  color: var(--accent);
-}
-
-.mini__artists {
-  color: var(--text-faint);
-  font-size: 12px;
 }
 
 /* Listeners ----------------------------------------------------------------*/
@@ -2956,8 +2844,7 @@ button {
     padding: 0;
   }
 
-  .sidebar__label,
-  .sidebar__list {
+  .sidebar__label {
     display: none;
   }
 

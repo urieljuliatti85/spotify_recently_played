@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { fetchPlays } from "../lib/api"
 
 const REFRESH_INTERVAL = 60_000
+// loadAll pages through the *entire* history in one go — at the feed's own
+// page size (30) a real history of a few hundred plays is 15-20 requests
+// back to back, enough on its own to trip Api::BaseController's 60/min rate
+// limit after a couple of reloads. The API's own ceiling (Api::PlaysController
+// ::MAX_LIMIT) cuts that to a handful of requests for the same data.
+const LOAD_ALL_PAGE_SIZE = 100
 
 // Owns the feed: first page, cursor pagination, and a quiet poll that
 // prepends whatever the background sync has picked up since.
@@ -68,7 +74,7 @@ export function usePlays({ pageSize = 30, listener = null } = {}) {
 
     try {
       while (nextCursor) {
-        const data = await fetchPlays({ before: nextCursor, limit: pageSize, listener })
+        const data = await fetchPlays({ before: nextCursor, limit: LOAD_ALL_PAGE_SIZE, listener })
         setPlays((current) => [...current, ...data.plays])
         nextCursor = data.next_cursor
         setCursor(nextCursor)
@@ -78,7 +84,7 @@ export function usePlays({ pageSize = 30, listener = null } = {}) {
     } finally {
       setLoadingMore(false)
     }
-  }, [cursor, loadingMore, pageSize, listener])
+  }, [cursor, loadingMore, listener])
 
   // Poll for fresher plays without disturbing what's already on screen.
   useEffect(() => {
