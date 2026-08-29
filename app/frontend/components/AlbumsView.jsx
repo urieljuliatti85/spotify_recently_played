@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
-import { fetchAlbumDiscogs, fetchAlbumReleases, fetchAlbumTracks } from "../lib/api"
+import { fetchAlbumReleases, fetchAlbumTracks } from "../lib/api"
 import { duration } from "../lib/format"
 import { ChevronLeftIcon, PlayIcon } from "./icons"
+
+// A plain Discogs marketplace search for the album, independent of the
+// owner's linked Discogs Shelf — every album gets a buy link, not just the
+// releases someone has already opened from the synced collection.
+function discogsBuyUrl(title, artist) {
+  const params = new URLSearchParams({ q: [artist, title].filter(Boolean).join(" "), type: "release" })
+  return `https://www.discogs.com/sell/list?${params}`
+}
 
 // The open album's Spotify id lives in the path, so a link to one is a URL
 // someone can share (and reload) rather than state that only exists in
@@ -30,26 +38,9 @@ export default function AlbumsView({ albums, onSelect }) {
   const [tracks, setTracks] = useState([])
   const [state, setState] = useState("ready")
   const [error, setError] = useState(null)
-  const [discogsUrls, setDiscogsUrls] = useState({})
   const [releases, setReleases] = useState([])
   const [releasesState, setReleasesState] = useState("idle")
   const [releasesError, setReleasesError] = useState(null)
-
-  useEffect(() => {
-    const albumsWithIds = albums.filter((album) => album.albumId)
-    if (albumsWithIds.length === 0) return undefined
-
-    const controller = new AbortController()
-    Promise.all(
-      albumsWithIds.map((album) =>
-        fetchAlbumDiscogs(album.albumId, { signal: controller.signal }).then(({ url }) => [album.key, url])
-      )
-    )
-      .then((results) => setDiscogsUrls(Object.fromEntries(results.filter(([, url]) => url))))
-      .catch(() => {})
-
-    return () => controller.abort()
-  }, [albums])
 
   const openAlbum = useCallback((album) => {
     setSelected(album)
@@ -261,16 +252,14 @@ export default function AlbumsView({ albums, onSelect }) {
             <span className="card__name">{album.name}</span>
             <span className="card__sub">{album.artists}</span>
             </button>
-            {discogsUrls[album.key] && (
-              <a
-                className="btn btn--outline albums__buy"
-                href={discogsUrls[album.key]}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Buy this album
-              </a>
-            )}
+            <a
+              className="btn btn--outline albums__buy"
+              href={discogsBuyUrl(album.name, album.artists)}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Buy this album
+            </a>
           </article>
         ))}
         {albums.length === 0 && <p className="section__hint">No albums found.</p>}
