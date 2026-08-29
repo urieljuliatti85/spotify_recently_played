@@ -19,6 +19,11 @@ concurrency:
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
+    permissions:
+      # Uploading Brakeman's findings to the repository's Security tab,
+      # alongside CodeQL's (see codeql.yml).
+      security-events: write
+      contents: read
 
     steps:
       - name: Checkout code
@@ -31,7 +36,24 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
+      # A second, non-blocking run (a full scan of this app takes well under
+      # a second) just to get a SARIF report out of it — the step above
+      # already decides pass/fail, so this one runs regardless of that
+      # result (`if: always()`) and never fails the job on its own account
+      # (`--no-exit-on-warn`), purely to hand the same findings to the
+      # Security tab, next to CodeQL's (see codeql.yml).
+      - name: Generate a SARIF report of the findings above
+        if: always()
+        run: bin/brakeman -f sarif -o brakeman-results.sarif -q --no-exit-on-warn --no-pager
+
+      - name: Upload Brakeman findings to the Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: brakeman-results.sarif
+          category: brakeman
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
 
