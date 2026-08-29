@@ -351,7 +351,7 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
   const noMatches = isReady && plays.length > 0 && queue.length === 0
 
   return (
-    <div className={`app ${selected ? "app--playing" : ""}`}>
+    <div className="app">
       <Sidebar
         listeners={listeners}
         selectedListenerId={listenerId}
@@ -516,23 +516,21 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
         </main>
       </div>
 
-      {selected && (
-        <PlayerBar
-          play={selected}
-          autoplay={autoplay}
-          onToggleAutoplay={toggleAutoplay}
-          onEnded={handleTrackEnded}
-          onClose={() => setSelected(null)}
-          onPrev={() => step(-1)}
-          onNext={() => step(1)}
-          onOpenArtist={showArtist}
-          hasPrev={hasPrev}
-          hasNext={hasNext}
-          clientId={clientId}
-          signedIn={signedIn}
-          onSignedOut={handleSignedOut}
-        />
-      )}
+      <PlayerBar
+        play={selected}
+        autoplay={autoplay}
+        onToggleAutoplay={toggleAutoplay}
+        onEnded={handleTrackEnded}
+        onClose={() => setSelected(null)}
+        onPrev={() => step(-1)}
+        onNext={() => step(1)}
+        onOpenArtist={showArtist}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+        clientId={clientId}
+        signedIn={signedIn}
+        onSignedOut={handleSignedOut}
+      />
     </div>
   )
 }

@@ -3,10 +3,17 @@ Rails.application.routes.draw do
   # swagger/v1/swagger.yaml (rswag-specs, which generates it from tests,
   # requires RSpec — this repo uses Minitest). Owner-only, like the other
   # administrative routes: it lets a caller fire real requests at the app.
-  ui_docs = Rack::Builder.new { use AdminBasicAuth; run Rswag::Ui::Engine }.to_app
-  api_docs = Rack::Builder.new { use AdminBasicAuth; run Rswag::Api::Engine }.to_app
+  ui_docs = Rack::Builder.new { use AdminBasicAuth; use SwaggerCsp; run Rswag::Ui::Engine }.to_app
+  api_docs = Rack::Builder.new { use AdminBasicAuth; use SwaggerCsp; run Rswag::Api::Engine }.to_app
   mount ui_docs => "/api-docs"
   mount api_docs => "/api-docs"
+
+  # Prometheus exposition format (Yabeda::Prometheus::Exporter answers
+  # standalone as a Rack app, no controller needed). Owner-only, same as
+  # /api-docs above — the request counts and timings it exposes are
+  # operational detail, not something a public route should hand out.
+  metrics = Rack::Builder.new { use AdminBasicAuth; run Yabeda::Prometheus::Exporter }.to_app
+  mount metrics => "/metrics"
 
   root "pages#index"
 

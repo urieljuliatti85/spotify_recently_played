@@ -113,12 +113,6 @@ export default function PlayerBar({
   const { containerRef } = embed
   const { playback, togglePlay, seek } = sdkDriving ? sdk : embed
 
-  const { track } = play
-  // The engine reports the track's real duration once it loads; until then the
-  // stored duration keeps the scrubber from rendering at zero width.
-  const total = playback.duration || track.duration_ms || 0
-  const controllable = sdkDriving || embed.state === "ready"
-
   // Fetched eagerly on every track change, panel open or not: lrclib has no
   // daily quota to protect (unlike the feed's YouTube matches), so there is
   // no reason to make a visitor click first to find out whether lyrics exist.
@@ -137,6 +131,27 @@ export default function PlayerBar({
     },
     [setVolume]
   )
+
+  // Nothing selected yet: every hook above already tolerates a missing
+  // spotifyId (they just stay idle), so this has to come after all of them
+  // — hooks can't be conditional, and this early return can't skip any.
+  // The bar itself stays on screen either way; only its content changes.
+  if (!play) {
+    return (
+      <div className="playerbar playerbar--idle" role="region" aria-label="Player">
+        <p className="playerbar__idle-hint">
+          <NoteIcon size={16} />
+          Pick a track from the feed to start listening.
+        </p>
+      </div>
+    )
+  }
+
+  const { track } = play
+  // The engine reports the track's real duration once it loads; until then the
+  // stored duration keeps the scrubber from rendering at zero width.
+  const total = playback.duration || track.duration_ms || 0
+  const controllable = sdkDriving || embed.state === "ready"
 
   return (
     <>
@@ -265,7 +280,7 @@ export default function PlayerBar({
             <span className="icon-toggle__label">Autoplay</span>
           </button>
 
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close player">
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Stop playback" title="Stop playback">
             <CloseIcon size={14} />
           </button>
         </div>

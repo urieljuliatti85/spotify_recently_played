@@ -934,11 +934,9 @@ button {
 
 .main {
   flex: 1;
-  padding: 28px var(--gutter) 72px;
-}
-
-.app--playing .main {
-  padding-bottom: calc(var(--bar) + 48px);
+  /* The player bar is always docked at the bottom (even with nothing
+     selected), so this always has to clear it — never just 72px. */
+  padding: 28px var(--gutter) calc(var(--bar) + 48px);
 }
 
 .section {
@@ -2439,6 +2437,22 @@ button {
   background: rgba(7, 10, 16, 0.94);
   backdrop-filter: blur(18px);
   border-top: 1px solid rgba(242, 11, 24, 0.35);
+}
+
+.playerbar--idle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-color: var(--border);
+}
+
+.playerbar__idle-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 13.5px;
 }
 
 .playerbar__now {

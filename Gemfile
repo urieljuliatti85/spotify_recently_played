@@ -29,6 +29,13 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# Observability: exposes request/response metrics in Prometheus's exposition
+# format at GET /metrics (owner-only, see config/routes.rb) — an external
+# Prometheus server scrapes it from there. [https://github.com/yabeda-rb/yabeda]
+gem "yabeda"
+gem "yabeda-prometheus"
+gem "yabeda-rails"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

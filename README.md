@@ -205,6 +205,7 @@ Params and response shape for the `/api/*` endpoints are in [docs/API.md](docs/A
 | `GET /api/discogs/releases?list=&q=&genre=&sort=&page=` | public | The shelf's collection or wantlist (2-minute cache) |
 | `GET /api/discogs/releases/:discogs_id` | public | One record, its tracklist, and its Spotify match |
 | `GET /api-docs` | owner | Interactive Swagger UI over every `/api/*` endpoint above |
+| `GET /metrics` | owner | Prometheus exposition format — point a Prometheus server's scrape config at it |
 | `GET /spotify/owner?view=` | owner | Asks the browser for `ADMIN_PASSWORD`, then returns to the feed |
 | `GET /spotify/connect` | owner | Starts OAuth for the owner |
 | `GET /spotify/join/:token` | invite | Starts OAuth for a friend |
@@ -238,6 +239,22 @@ It renders whatever the local mirror last synced, not a live call to Spotify,
 and guesses "still playing" from the track's own duration—so it can lag by up
 to a sync cycle, but never spends anyone's Spotify quota no matter how often
 it gets viewed.
+
+`GET /metrics` is [Yabeda](https://github.com/yabeda-rb/yabeda) +
+`yabeda-prometheus` + `yabeda-rails`—request counts, latency, view/DB time,
+per controller action. It only shows up under an actual `rails server`/Puma
+boot: `yabeda-rails` checks for `Rails::Server` before installing its
+counters, so `bin/rails console`, `bin/rails test` and rake tasks correctly
+see none of it—not a bug, just not a server. Add an app-specific metric (a
+sync failure counter, Solid Queue backlog, YouTube/lrclib lookup rates) the
+same way any gem does:
+
+```ruby
+Yabeda.configure do
+  group :spotify_sync
+  counter :failures_total, comment: "Failed SyncRecentlyPlayedJob runs", tags: %i[reason]
+end
+```
 
 Owner routes are protected by HTTP Basic with `ADMIN_PASSWORD` (the username can
 be anything; only the password matters). In development, when the variable is
