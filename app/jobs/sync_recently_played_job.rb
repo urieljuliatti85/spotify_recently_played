@@ -23,14 +23,8 @@ class SyncRecentlyPlayedJob < ApplicationJob
     account ||= SpotifyAccount.find_owner
     raise Spotify::NotConnectedError, "No Spotify account linked yet" if account.nil?
 
-    listener = account.display_name
     result = Spotify::RecentlyPlayedSync.call(account)
-    Rails.logger.info("[spotify] #{listener}: imported #{result.imported} play(s)")
-    Yabeda.spotify_sync.runs_total.increment(listener:, outcome: "success")
-    Yabeda.spotify_sync.plays_imported_total.increment({ listener: }, by: result.imported)
+    Rails.logger.info("[spotify] #{account.display_name}: imported #{result.imported} play(s)")
     result
-  rescue => e
-    Yabeda.spotify_sync.runs_total.increment(listener: listener || "unknown", outcome: e.class.name)
-    raise
   end
 end

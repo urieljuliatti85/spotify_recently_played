@@ -11,13 +11,20 @@ export const VIEWS = [
   { id: "discogs", label: "Discogs" },
 ]
 
-export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt, ownerPath }) {
+// Not in VIEWS: it's operational detail (see Spotify::MetricsSnapshot),
+// shown only once /api/status has said `admin`, same as the rest of the
+// owner-only surface — unlike a Sync button's 401, a visitor should never
+// even see this tab exists.
+const ADMIN_VIEWS = [ { id: "metrics", label: "Metrics" } ]
+
+export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt, ownerPath, isAdmin }) {
   const syncedAt = lastSyncedAt && new Date(lastSyncedAt)
+  const tabs = isAdmin ? [ ...VIEWS, ...ADMIN_VIEWS ] : VIEWS
 
   return (
     <div className="topbar">
       <nav className="tabs" aria-label="View">
-        {VIEWS.map(({ id, label }) => (
+        {tabs.map(({ id, label }) => (
           <button
             key={id}
             type="button"

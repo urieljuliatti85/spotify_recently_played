@@ -123,6 +123,12 @@ export function syncNow({ signal } = {}) {
   return request("/spotify/sync", { method: "POST", signal })
 }
 
+// Owner-only. The numbers /metrics exposes as Prometheus text, reshaped as
+// JSON by Spotify::MetricsSnapshot for the dashboard to chart.
+export function fetchMetrics({ signal } = {}) {
+  return request("/spotify/metrics", { signal })
+}
+
 export function createInvite(label, { signal } = {}) {
   return request("/spotify/invites", {
     method: "POST",

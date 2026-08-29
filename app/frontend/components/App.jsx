@@ -18,6 +18,7 @@ import DiscogsView from "./DiscogsView"
 import Hero from "./Hero"
 import PlayFeed from "./PlayFeed"
 import ListenersView from "./ListenersView"
+import MetricsView from "./MetricsView"
 import PlayerBar from "./PlayerBar"
 import PlaylistView from "./PlaylistView"
 import SetupNotice from "./SetupNotice"
@@ -29,11 +30,14 @@ import { AlbumCard, ArtistCard, Shelf } from "./Shelf"
 const AUTOPLAY_KEY = "autoplay"
 const SHELF_SIZE = 20
 const ARTIST_GRID_SIZE = 60
-const VIEW_IDS = new Set(VIEWS.map(({ id }) => id))
+// "metrics" isn't in TopBar's VIEWS (it's owner-only, offered only once
+// `site.admin` is known), but a direct/reloaded link to it should still
+// route there — MetricsView itself answers the "not signed in" case.
+const VIEW_IDS = new Set([ ...VIEWS.map(({ id }) => id), "metrics" ])
 const RANGE_IDS = new Set(RANGES.map(({ id }) => id))
 // Tabs that draw from their own source rather than from the plays feed, so
 // they render whether or not anything has been played yet.
-const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs"])
+const STANDALONE_VIEWS = new Set(["albums", "playlists", "listeners", "discogs", "metrics"])
 
 // Mirrors the album page's /albums/:id/tracks shape.
 const ARTIST_PATH = /^\/artists\/([^/]+)\/tracks\/?$/
@@ -371,6 +375,7 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
           onQueryChange={setQuery}
           lastSyncedAt={lastSyncedAt}
           ownerPath={ownerPath}
+          isAdmin={Boolean(site?.admin)}
         />
 
         <main className="main">
@@ -420,6 +425,8 @@ export default function App({ connectPath, ownerPath, flash, clientId, listenRed
           {isReady && !profile && view === "discogs" && (
             <DiscogsView query={query} onSelect={handleSelect} selectedPlayId={selected?.id} />
           )}
+
+          {isReady && !profile && view === "metrics" && <MetricsView ownerPath={ownerPath} />}
 
           {isReady && !profile && view === "listeners" && (
             <ListenersView

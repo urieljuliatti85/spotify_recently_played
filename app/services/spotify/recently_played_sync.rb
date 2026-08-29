@@ -12,7 +12,25 @@ module Spotify
       @client = client || Client.new(account)
     end
 
+    # The one choke point both the scheduled job and the owner's "Sync now"
+    # button go through, which is what makes it the right place to record
+    # spotify_sync_runs_total/plays_imported_total rather than the job —
+    # instrumenting only the job would miss every sync fired from the button.
     def call
+      result = sync
+      Yabeda.spotify_sync.runs_total.increment(listener: account.display_name, outcome: "success")
+      Yabeda.spotify_sync.plays_imported_total.increment({ listener: account.display_name }, by: result.imported)
+      result
+    rescue => e
+      Yabeda.spotify_sync.runs_total.increment(listener: account.display_name, outcome: e.class.name)
+      raise
+    end
+
+    private
+
+    attr_reader :account, :client
+
+    def sync
       items = Array(client.recently_played(after: account.last_played_at)&.fetch("items", nil))
       played_ats = items.map { |item| Time.parse(item["played_at"]) }
 
@@ -40,10 +58,6 @@ module Spotify
 
       Result.new(imported:, latest_played_at: account.last_played_at)
     end
-
-    private
-
-    attr_reader :account, :client
 
     def import(item, played_at)
       track = Track.upsert_from_spotify!(item["track"])
