@@ -6,7 +6,7 @@ without leaving the page.
 
 - **Backend:** Ruby on Rails 8.1 (API + pages)
 - **Frontend:** React 19 via Vite (`vite_rails`)
-- **Database:** SQLite
+- **Database:** SQLite (development/test), PostgreSQL (production)
 - **Player:** official Spotify embed
 
 ## How it works
@@ -439,11 +439,13 @@ Code.
 ## Deployment
 
 `config/recurring.yml` already schedules synchronization in production, so you
-only need to run Solid Queue (`bin/jobs`) alongside the web server. Since the
-database is SQLite, the disk must be persistent.
+only need to run Solid Queue (`bin/jobs`) alongside the web server.
 
 Before exposing the site publicly:
 
+- set `DATABASE_URL` to a PostgreSQL connection string (`config/database.yml`
+  derives four logical databases from it—primary, cache, queue, cable—by
+  suffixing the database name, mirroring the old per-purpose SQLite files);
 - set `ADMIN_PASSWORD` (without it, owner routes refuse to work);
 - generate `RAILS_MASTER_KEY` from `config/master.key`—it decrypts the Spotify
   tokens;
