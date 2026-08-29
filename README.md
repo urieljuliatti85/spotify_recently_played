@@ -504,6 +504,30 @@ in `script-src`/`frame-src`, images over HTTPS (covers come from CDNs that
 Spotify may change without notice), and disallows `object-src` and embedding in
 another page.
 
+### Continuous deployment (Railway)
+
+`.github/workflows/ci.yml`'s `deploy` job pushes to Railway automatically on
+every push to `main`, but only after `scan_ruby`, `scan_js`, `lint` and `test`
+have all passed—a red CI never reaches this job at all, so there is nothing
+separate to gate on. It needs two things set on the repo (**Settings → Secrets
+and variables → Actions**):
+
+- `RAILWAY_TOKEN` (a **secret**)—a Railway **project token**, from the
+  Railway dashboard: project → Settings → Tokens. A project token, not an
+  account token, so a leaked CI secret can only touch this one project.
+- `RAILWAY_SERVICE` (a **variable**, not a secret—it's just a name)—the
+  Railway service this app is deployed as, so the deploy lands on the right
+  one if the project also runs other services (`observability/railway/`'s
+  Alloy service, say).
+
+Railway itself builds the image from this repo's `Dockerfile` on every
+deploy—the workflow only tells it to start one, via the
+[Railway CLI](https://docs.railway.com/reference/cli-api)'s
+`railway up --service "$RAILWAY_SERVICE" --detach`. Not tested against a real
+Railway project as part of writing this—the CLI invocation follows Railway's
+documented usage, but confirm the first deploy actually lands before relying
+on it.
+
 ## Privacy
 
 The site publishes what you listen to, and what anyone who accepts an invite

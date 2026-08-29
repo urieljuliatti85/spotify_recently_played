@@ -171,6 +171,30 @@ jobs:
           bin/rails db:test:prepare
           bin/rails test
 
+  # Only after every other job on this push has passed — a push to main that
+  # fails scan_ruby/scan_js/lint/test never reaches this job at all, so
+  # there is no separate "did CI pass" check to write. Railway builds the
+  # image itself from this same commit (see the Dockerfile) — this step
+  # only tells it to start. See README's Deployment section for what
+  # RAILWAY_TOKEN and RAILWAY_SERVICE need to be set to.
+  deploy:
+    name: Deploy to Railway
+    needs: [ scan_ruby, scan_js, lint, test ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy
+        run: railway up --service "$RAILWAY_SERVICE" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+
   # A failure here means nobody is watching — main just broke, or the weekly
   # scan just found a new advisory against a dependency nobody touched. A PR
   # failure is already visible to whoever opened it, so this only fires for
@@ -179,7 +203,7 @@ jobs:
   # tracker every time someone pushes before it is fixed.
   notify_on_failure:
     name: Notify on CI failure
-    needs: [ scan_ruby, scan_js, lint, test ]
+    needs: [ scan_ruby, scan_js, lint, test, deploy ]
     if: |
       always() &&
       (github.event_name == 'push' || github.event_name == 'schedule') &&

@@ -1,17 +1,11 @@
-import { RANGES } from "../lib/derive"
 import { signOut } from "../lib/spotifyPkce"
 import ListenerPicker from "./Listener"
-import { ClockIcon, DiscIcon, NoteIcon } from "./icons"
 import wordmarkUrl from "../images/spotplayer.png"
-
-const RANGE_ICONS = { today: NoteIcon, week: ClockIcon, all: DiscIcon }
 
 export default function Sidebar({
   listeners,
   selectedListenerId,
   onListenerChange,
-  range,
-  onRangeChange,
   signedIn,
   onSignIn,
   onSignedOut,
@@ -61,26 +55,6 @@ export default function Sidebar({
           </button>
         </div>
       )}
-
-      <nav className="sidebar__nav" aria-label="Time range">
-        {RANGES.map(({ id, label }) => {
-          const Icon = RANGE_ICONS[id]
-          const isActive = id === range
-
-          return (
-            <button
-              key={id}
-              type="button"
-              className={`sidebar__nav-item ${isActive ? "sidebar__nav-item--active" : ""}`}
-              onClick={() => onRangeChange(id)}
-              aria-pressed={isActive}
-            >
-              <Icon size={16} />
-              <span>{label}</span>
-            </button>
-          )
-        })}
-      </nav>
 
       <ListenerPicker
         listeners={listeners}

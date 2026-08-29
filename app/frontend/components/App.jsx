@@ -251,19 +251,6 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
     window.history.pushState({ view: next }, "", url)
   }
 
-  function changeRange(next) {
-    setRange(next)
-    loadAll()
-
-    const url = new URL(window.location.href)
-    if (next === "all") {
-      url.searchParams.delete("range")
-    } else {
-      url.searchParams.set("range", next)
-    }
-    window.history.pushState({ ...window.history.state, range: next }, "", url)
-  }
-
   // Jump from a listener's card into the feed, filtered to them.
   function openListenerFeed(id) {
     changeListener(id)
@@ -356,8 +343,6 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
         listeners={listeners}
         selectedListenerId={listenerId}
         onListenerChange={pickListener}
-        range={range}
-        onRangeChange={changeRange}
         signedIn={signedIn}
         onSignIn={clientId ? signIn : null}
         onSignedOut={handleSignedOut}
