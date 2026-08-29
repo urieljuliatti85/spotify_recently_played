@@ -297,15 +297,24 @@ export default function PlayerBar({
               the script blocked there is nothing on the other end, so the play
               button and the scrubber are disabled — and a dead button with no
               explanation reads as a broken site. The fallback below does play;
-              this says so. */}
-          {embed.state === "unavailable" && (
+              this says so.
+
+              Gated on `!sdkDriving`: the API-loading effect inside
+              useSpotifyEmbed runs unconditionally, even when this hook was
+              handed a null id because the SDK already owns playback — so
+              embed.state still lands on "unavailable" in that case. Without
+              this guard, a signed-in Premium listener whose browser also
+              blocks open.spotify.com's script would get a second, actually
+              autoplaying iframe layered under the one the SDK is already
+              playing through. */}
+          {!sdkDriving && embed.state === "unavailable" && (
             <p className="playerbar__hint">
               Something on this browser is blocking Spotify&apos;s player script, so the
               controls above can&apos;t reach it. Play from here instead.
             </p>
           )}
 
-          {embed.state === "unavailable" && (
+          {!sdkDriving && embed.state === "unavailable" && (
             <iframe
               title={`Player for ${track.name}`}
               src={`https://open.spotify.com/embed/track/${track.spotify_id}?theme=0`}
