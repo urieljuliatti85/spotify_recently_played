@@ -31,6 +31,7 @@ module Api
         }
       end
       client.define_singleton_method(:search_call) { @search_call }
+      client.define_singleton_method(:me) { { "country" => "BR" } }
       client
     end
 
