@@ -2954,6 +2954,18 @@ button {
   .listener__meta {
     display: none;
   }
+
+  /* The absolute time is redundant with the row already being grouped under
+     a day heading; the title/artist need the width more on a narrow phone. */
+  .row__timing time {
+    display: none;
+  }
+
+  .row__external {
+    width: 30px;
+    height: 30px;
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 860px) {
