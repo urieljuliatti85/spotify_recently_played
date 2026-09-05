@@ -2925,9 +2925,16 @@ button {
     min-width: 0;
     flex-wrap: nowrap;
     overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     gap: 14px;
     padding: 14px var(--gutter);
+    /* Same affordance as .tabs: without it, a roster that overflows the
+       screen reads as "that's everyone" instead of "there's more here".
+       Wider than the tabs' fade because the trailing content here is a
+       small icon, not a word — a narrow fade barely registers on it. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
   }
 
   .sidebar__home {
@@ -2944,7 +2951,7 @@ button {
 
   .listeners {
     flex-direction: row;
-    padding: 0;
+    padding: 0 48px 0 0;
   }
 
   .listener-row {
