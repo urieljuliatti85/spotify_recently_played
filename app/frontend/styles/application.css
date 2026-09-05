@@ -36,6 +36,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
@@ -2890,6 +2891,8 @@ button {
   .sidebar__nav {
     flex-direction: row;
     padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar__label {
@@ -2917,17 +2920,68 @@ button {
   }
 }
 
+@media (max-width: 640px) {
+  .sidebar {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+    padding: 14px var(--gutter);
+  }
+
+  .sidebar__home {
+    flex-shrink: 0;
+  }
+
+  .sidebar__wordmark {
+    width: 108px;
+  }
+
+  .sidebar__nav {
+    flex-shrink: 1;
+  }
+
+  .listeners {
+    flex-direction: row;
+    padding: 0;
+  }
+
+  .listener-row {
+    flex-shrink: 0;
+  }
+
+  .listener__meta {
+    display: none;
+  }
+}
+
 @media (max-width: 860px) {
   .topbar {
     flex-wrap: wrap;
   }
 
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs__tab {
+    flex-shrink: 0;
+  }
+
   .topbar__right {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .search {
     width: 100%;
+  }
+
+  .topbar__synced {
+    white-space: normal;
   }
 
   .hero__art {
@@ -3025,6 +3079,66 @@ button {
      it gives up half its width. */
   .volume__range {
     width: 48px;
+  }
+
+  .invite__controls {
+    flex-wrap: wrap;
+  }
+
+  .invite__controls .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section__head {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .section__head .search {
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 14px;
+    justify-items: stretch;
+  }
+
+  .card--artist {
+    width: auto;
+  }
+
+  .card__art--round {
+    width: 100%;
+    max-width: 152px;
+    aspect-ratio: 1;
+    height: auto;
+  }
+
+  .albums > .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 14px;
+  }
+
+  .albums > .grid .card {
+    width: auto;
+    max-width: none;
+  }
+
+  .albums > .grid .card__art {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .discogs-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .discogs-filters__lists {
+    flex-wrap: wrap;
   }
 }
 
