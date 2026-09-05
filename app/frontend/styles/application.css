@@ -2977,10 +2977,19 @@ button {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Fades the right edge so a tab bar wider than the screen reads as
+       scrollable rather than as a list that stops mid-word. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
   }
 
   .tabs__tab {
     flex-shrink: 0;
+  }
+
+  .tabs__tab:last-child {
+    /* Otherwise the mask fades out real content, not just trailing space. */
+    margin-right: 28px;
   }
 
   .topbar__right {
