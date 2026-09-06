@@ -24,7 +24,6 @@ import SearchView from "./SearchView"
 import SetupNotice from "./SetupNotice"
 import Sidebar from "./Sidebar"
 import TopBar, { VIEWS } from "./TopBar"
-import TopItemsBox from "./TopItemsBox"
 import { AlbumCard, ArtistCard, Shelf } from "./Shelf"
 
 const AUTOPLAY_KEY = "autoplay"
@@ -455,8 +454,6 @@ export default function App({ connectPath, flash, clientId, listenRedirectUri })
                     onPlayLatest={() => queue[0] && handleSelect(queue[0])}
                     onShuffle={() => shuffleFrom(queue)}
                   />
-
-                  <TopItemsBox onSelect={handleSelect} onOpenArtist={showArtist} connectPath={connectPath} />
 
                   {albums.length > 0 && (
                     <Shelf title="Recent Albums">
