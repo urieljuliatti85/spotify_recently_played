@@ -1,4 +1,5 @@
-import { SearchIcon } from "./icons"
+import { useEffect, useRef, useState } from "react"
+import { ChevronDownIcon, SearchIcon } from "./icons"
 import SyncButton from "./SyncButton"
 
 export const VIEWS = [
@@ -13,6 +14,71 @@ export const VIEWS = [
   // anything private about a listener.
   { id: "metrics", label: "Metrics" },
 ]
+
+// Below ~640px the seven-tab row no longer fits, and scrolling it sideways
+// just moved the "too long" problem instead of fixing it. This collapses to
+// a single button naming the current view, which opens a vertical list —
+// both live in the DOM at once and CSS picks one per breakpoint, so there is
+// no layout jump at the boundary and no separate mobile-only data path.
+function ViewMenu({ view, onViewChange }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  const current = VIEWS.find((v) => v.id === view) ?? VIEWS[0]
+
+  useEffect(() => {
+    if (!open) return
+
+    function handlePointerDown(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setOpen(false)
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className="view-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="view-menu__trigger"
+        onClick={() => setOpen((was) => !was)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {current.label}
+        <ChevronDownIcon size={16} />
+      </button>
+
+      {open && (
+        <ul className="view-menu__list" role="listbox">
+          {VIEWS.map(({ id, label }) => (
+            <li key={id}>
+              <button
+                type="button"
+                className={`view-menu__option ${id === view ? "view-menu__option--active" : ""}`}
+                role="option"
+                aria-selected={id === view}
+                onClick={() => {
+                  onViewChange(id)
+                  setOpen(false)
+                }}
+              >
+                {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export default function TopBar({ view, onViewChange, query, onQueryChange, lastSyncedAt }) {
   const syncedAt = lastSyncedAt && new Date(lastSyncedAt)
@@ -32,6 +98,8 @@ export default function TopBar({ view, onViewChange, query, onQueryChange, lastS
           </button>
         ))}
       </nav>
+
+      <ViewMenu view={view} onViewChange={onViewChange} />
 
       <div className="topbar__right">
         <label className="search">

@@ -878,6 +878,73 @@ button {
   background: var(--accent);
 }
 
+/* Collapsed replacement for .tabs on narrow screens — see the <640px
+   breakpoint below, which swaps which of the two is display:none. Lives in
+   the DOM at both sizes so there is no state to keep in sync across a
+   resize. */
+.view-menu {
+  position: relative;
+  display: none;
+}
+
+.view-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-menu__trigger:hover {
+  border-color: var(--accent-deep);
+}
+
+.view-menu__list {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+  list-style: none;
+}
+
+.view-menu__option {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-menu__option:hover,
+.view-menu__option:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text);
+  outline: 0;
+}
+
+.view-menu__option--active {
+  color: var(--accent);
+}
+
 .topbar__right {
   display: flex;
   align-items: center;
@@ -2921,6 +2988,24 @@ button {
 }
 
 @media (max-width: 640px) {
+  /* The seven-tab row no longer fits, and scrolling it sideways just moved
+     the "too long" problem instead of fixing it — swap it for the single
+     dropdown trigger (see TopBar.jsx's ViewMenu). */
+  .tabs {
+    display: none;
+  }
+
+  .view-menu {
+    display: block;
+    order: -1;
+    width: 100%;
+  }
+
+  .view-menu__trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .sidebar {
     min-width: 0;
     flex-wrap: nowrap;

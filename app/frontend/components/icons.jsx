@@ -82,6 +82,12 @@ export const ChevronRightIcon = (props) => (
   </Glyph>
 )
 
+export const ChevronDownIcon = (props) => (
+  <Glyph {...props}>
+    <path d="M4.6 8.6L6 7.2l6 6 6-6 1.4 1.4L12 16z" />
+  </Glyph>
+)
+
 export const NoteIcon = (props) => (
   <Glyph {...props}>
     <path d="M20 3v12.2a3.4 3.4 0 11-2-3.1V7.4l-8 1.9v8.9a3.4 3.4 0 11-2-3.1V6.6z" />
