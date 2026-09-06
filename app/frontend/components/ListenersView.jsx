@@ -5,11 +5,41 @@ import { createInvite } from "../lib/api"
 import { ListenerAvatar } from "./Listener"
 import { PlayIcon, SearchIcon } from "./icons"
 
+// There is no Spotify endpoint to search people by name, so the only honest
+// suggestions are ids typed here before. Kept in localStorage rather than
+// fetched from /spotify/invites: that route answers HTTP Basic's 401, which
+// makes the browser pop its own native login dialog instead of failing the
+// request — this admin-only form has no business triggering that.
+const PAST_IDS_KEY = "spotify_recently_played:invited_ids"
+
+function loadPastIds() {
+  try {
+    return JSON.parse(localStorage.getItem(PAST_IDS_KEY)) ?? []
+  } catch {
+    return []
+  }
+}
+
+function rememberPastId(id) {
+  const ids = loadPastIds()
+  if (ids.includes(id)) return ids
+
+  const next = [id, ...ids]
+  try {
+    localStorage.setItem(PAST_IDS_KEY, JSON.stringify(next))
+  } catch {
+    // Private browsing or a full quota — the suggestion is a nicety, not
+    // worth surfacing an error for.
+  }
+  return next
+}
+
 function InviteForm() {
   const [spotifyUserId, setSpotifyUserId] = useState("")
   const [invite, setInvite] = useState(null)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [pastIds, setPastIds] = useState(loadPastIds)
 
   async function submit(event) {
     event.preventDefault()
@@ -22,6 +52,7 @@ function InviteForm() {
     try {
       setInvite(await createInvite(value))
       setSpotifyUserId("")
+      setPastIds(rememberPastId(value))
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -45,8 +76,16 @@ function InviteForm() {
               onChange={(event) => setSpotifyUserId(event.target.value)}
               placeholder="Their Spotify user id"
               autoComplete="off"
+              list="invite-past-ids"
               required
             />
+            {pastIds.length > 0 && (
+              <datalist id="invite-past-ids">
+                {pastIds.map((id) => (
+                  <option key={id} value={id} />
+                ))}
+              </datalist>
+            )}
           </div>
           <button className="btn btn--primary" type="submit" disabled={saving || !spotifyUserId.trim()}>
             {saving ? "Creating…" : "Create invite"}
